@@ -1,0 +1,14 @@
+{
+  "pins" : [
+    {
+      "identity" : "idzswiftcommoncrypto",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/iosdevzone/IDZSwiftCommonCrypto.git",
+      "state" : {
+        "revision" : "d824371e670bd57eb456bbc41139b4997f7207b8",
+        "version" : "0.13.1"
+      }
+    }
+  ],
+  "version" : 2
+}
