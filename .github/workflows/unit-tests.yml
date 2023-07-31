@@ -1,16 +1,14 @@
-name: Swift
+name: Internxt Swift Core Unit Tests
 
 on: [push]
 
 jobs:
   build:
-    strategy:
-      matrix:
-        swift: ["5"]
     runs-on: macos-latest
     steps:
-      - name: Swift version
-        run: swift --version
+      - uses: swift-actions/setup-swift@v1
+        with:
+          swift-version: "5"
       - uses: actions/checkout@v3
       - name: Build Internxt Swift Core
         run: swift build
