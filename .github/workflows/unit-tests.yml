@@ -6,9 +6,11 @@ jobs:
   build:
     strategy:
       matrix:
-        swift: ["5.8"]
+        swift: ["5"]
     runs-on: macos-latest
     steps:
+      - name: Swift version
+        run: swift --version
       - uses: actions/checkout@v3
       - name: Build Internxt Swift Core
         run: swift build
