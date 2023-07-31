@@ -9,7 +9,6 @@ jobs:
       - uses: swift-actions/setup-swift@v1
         with:
           swift-version: "5"
-      - uses: actions/checkout@v3
       - name: Build Internxt Swift Core
         run: swift build
       - name: Run tests
