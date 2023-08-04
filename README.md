@@ -1,3 +1,3 @@
 # InternxtSwiftCore
 
-A description of this package.
+Core API in Swift available for MacOS, iOS and IpadOS

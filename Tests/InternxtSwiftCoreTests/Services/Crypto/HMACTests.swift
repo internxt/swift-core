@@ -26,5 +26,12 @@ final class HMACTests: XCTestCase {
        
         XCTAssertEqual(utils.bytesToHexString(result), "c681abb62f0af0fe21c175450d3844b32a3eb16ec52041b3acbdce9182eef685a0c2c04b560c9c1cbc2255cf63f56de9c4ba8bd42915291c414f1dc6b6323e3c")
     }
+    
+    func testRipemd160Output() throws {
+        let message = "imanstring".data(using: .utf8)!
+        let result = sut.ripemd160(message: message)
+       
+        XCTAssertEqual(result.toHexString(), "3300bbe3a379f6209490fabcaa539d42fc53ab7c")
+    }
 
 }

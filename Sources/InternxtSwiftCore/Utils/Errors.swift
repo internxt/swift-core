@@ -14,3 +14,20 @@ enum CryptoError: Error {
     case encryptionFailed
     case decryptionFailed
 }
+
+
+enum ConfigLoaderError: Error {
+    case NoConfigLoaded(String)
+    case MissingConfigProperty(String)
+}
+
+
+enum APIError: Error {
+    case decoding
+    case server(String)
+}
+
+
+enum ExtensionError: Error {
+    case InvalidHex(String)
+}

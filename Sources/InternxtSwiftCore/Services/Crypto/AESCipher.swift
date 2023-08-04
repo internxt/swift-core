@@ -9,6 +9,7 @@ import Foundation
 import IDZSwiftCommonCrypto
 
 
+@available(macOS 10.15, *)
 class AESCipher {
     var utils = CryptoUtils()
     let bufferSize = 1024 * 8

@@ -7,7 +7,8 @@
 
 import Foundation
 import CryptoKit
-
+import IDZSwiftCommonCrypto
+import ripemd160_Swift
 enum HashInput {
     case message ([UInt8])
     case messages (Array<[UInt8]>)
@@ -48,6 +49,18 @@ struct HMAC {
         
         return result
     }
+    
+    func ripemd160(message:Data) ->  Data {
+        var hash = RIPEMD160.init()
+        
+        hash.update(data: message)
+        
+        return hash.finalize()
+    }
+    
+    
+    
+    
     
    
     

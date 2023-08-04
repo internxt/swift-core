@@ -17,4 +17,10 @@ extension StringProtocol {
             return UInt8(self[startIndex...endIndex], radix: 16)
         }
     }
+    
+    var isValidHex: Bool {
+        filter(\.isHexDigit).count == count
+    }
+    
+    
 }

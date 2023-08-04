@@ -1,4 +1,9 @@
+/**
+ * Initialize the InternxtSwiftCore package with the given config
+ */
 public struct InternxtSwiftCore {
-    public init() {
+    
+    public func initialize(config: Config) {
+        ConfigLoader().load(config: config)
     }
 }

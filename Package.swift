@@ -14,6 +14,8 @@ let package = Package(
     dependencies: [
         // Dependencies declare other packages that this package depends on.
         .package(url: "https://github.com/iosdevzone/IDZSwiftCommonCrypto.git", .upToNextMajor(from: "0.13.1")),
+        .package(url: "https://github.com/MiclausCorp/ripemd160-Swift.git", branch: "master")
+
     ],
     targets: [
         // Targets are the basic building blocks of a package. A target can define a module or a test suite.
@@ -22,6 +24,7 @@ let package = Package(
             name: "InternxtSwiftCore",
             dependencies: [
                 .product(name: "IDZSwiftCommonCrypto", package: "IDZSwiftCommonCrypto"),
+                .product(name: "ripemd160-Swift", package: "ripemd160-Swift"),
             ]),
         .testTarget(
             name: "InternxtSwiftCoreTests",
