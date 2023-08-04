@@ -11,7 +11,7 @@ import Foundation
 enum CryptoError: Error {
     case badIv
     case badKey
-    case badIndex("Index should be 32 bytes length")
+    case badIndex(String)
     case encryptionFailed
     case decryptionFailed
 }

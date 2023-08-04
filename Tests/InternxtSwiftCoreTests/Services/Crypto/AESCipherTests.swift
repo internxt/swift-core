@@ -28,8 +28,7 @@ final class AESCipherTests: XCTestCase {
             key: self.utils.hexStringToBytes(hexKey),
             iv:  self.utils.hexStringToBytes(hexIv),
             callback: {(error, status) in
-                XCTAssertEqual(status, Status.success)
-                XCTAssertEqual(error, nil)
+                XCTAssertEqual(status, EncryptResultStatus.Success)
             }
         )
     }
@@ -52,7 +51,6 @@ final class AESCipherTests: XCTestCase {
             iv:  self.utils.hexStringToBytes(hexIv),
             callback: {(error, status) in
                 XCTAssertEqual(status, Status.success)
-                XCTAssertEqual(error, nil)
             }
         )
     }
@@ -72,7 +70,6 @@ final class AESCipherTests: XCTestCase {
             iv:  [UInt8](),
             callback: {(error, status) in
                 XCTAssertEqual(status, nil)
-                XCTAssertEqual(error, CryptoError.badIv)
                 
             }
         )

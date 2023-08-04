@@ -38,7 +38,7 @@ struct Encrypt {
     
     func generateFileKey(mnemonic: String, bucketId: String, index: [UInt8]) throws -> [UInt8] {
         if(index.count != 32) {
-            throw CryptoError.badIndex()
+            throw CryptoError.badIndex("Index should be 32 bytes length")
         }
         let bucketKey = try cryptoUtils.generateBucketKey(mnemonic: mnemonic, bucketId: bucketId);
         let slicedBucketKey = bucketKey.prefix(upTo: bucketKey.index(bucketKey.startIndex, offsetBy: 32))
