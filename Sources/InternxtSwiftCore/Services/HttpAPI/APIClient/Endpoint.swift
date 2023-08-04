@@ -14,7 +14,7 @@ enum HTTPMethod: String {
 protocol Endpoint {
     var path: String { get }
     var method: HTTPMethod { get }
-    var body: [String: AnyObject]? { get }
+    var body: Codable? { get }
 }
 
 

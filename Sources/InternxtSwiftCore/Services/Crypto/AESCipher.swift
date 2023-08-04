@@ -9,6 +9,11 @@ import Foundation
 import IDZSwiftCommonCrypto
 
 
+enum EncryptResultStatus {
+    case Success
+    case Failed
+}
+
 @available(macOS 10.15, *)
 class AESCipher {
     var utils = CryptoUtils()
@@ -19,7 +24,7 @@ class AESCipher {
     
     // Encrypts an input stream to an output stream given a key and an IV
     // using AES256 CTR mode with No padding
-    public func encryptFromStream(input: InputStream, output:OutputStream, key: [UInt8], iv: [UInt8] ,callback: (_:CryptoError?, _: Status?) -> Void ) -> Void {
+    public func encryptFromStream(input: InputStream, output:OutputStream, key: [UInt8], iv: [UInt8] ,callback: (_:CryptoError?, _: EncryptResultStatus?) -> Void ) -> Void {
             let algorithm = StreamCryptor.Algorithm.aes
             
             
@@ -69,7 +74,12 @@ class AESCipher {
             input.close()
             output.close();
             
-            callback(nil,status)
+            if(status.rawValue == Status.success.rawValue) {
+                callback(nil,EncryptResultStatus.Success)
+            } else {
+                callback(nil, EncryptResultStatus.Failed)
+            }
+            
         
         
     }
@@ -130,3 +140,4 @@ class AESCipher {
         callback(nil,status)
     }
 }
+

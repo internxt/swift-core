@@ -11,6 +11,7 @@ import Foundation
 enum CryptoError: Error {
     case badIv
     case badKey
+    case badIndex("Index should be 32 bytes length")
     case encryptionFailed
     case decryptionFailed
 }
@@ -25,9 +26,18 @@ enum ConfigLoaderError: Error {
 enum APIError: Error {
     case decoding
     case server(String)
+    case noInternet
+    case failedRequest(String)
+    case invalidResponse
 }
 
 
 enum ExtensionError: Error {
     case InvalidHex(String)
 }
+
+enum UploadError: Error {
+    case InvalidIndex
+}
+
+

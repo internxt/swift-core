@@ -44,5 +44,16 @@ struct CryptoUtils {
         let seed = self.mnemonicToSeed(mnemonic: mnemonic, password: "")
         return getDeterministicKey(key: seed, data: self.hexStringToBytes(bucketId));
     }
+    
+    public func getRandomBytes(_ howMany: Int) -> [UInt8]? {
+        var bytes = [UInt8](repeating: 0, count:howMany)
+        let status = SecRandomCopyBytes(kSecRandomDefault, bytes.count, &bytes)
+
+        if status == errSecSuccess {
+            return bytes
+        } else {
+            return nil
+        }
+    }
 }
 
