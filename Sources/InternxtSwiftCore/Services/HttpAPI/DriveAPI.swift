@@ -10,7 +10,7 @@ import Foundation
 @available(macOS 10.15, *)
 public struct DriveAPI {
     private let apiClient: APIClient
-    private let configLoader = ConfigLoader()
+    private let configLoader = CoreConfigLoader()
     
     public init(authToken: String) {
         self.apiClient = APIClient(urlSession: URLSession.shared, token: authToken)

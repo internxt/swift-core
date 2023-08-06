@@ -11,7 +11,7 @@ import Foundation
 @available(macOS 10.15, *)
 public struct NetworkAPI {
     private let apiClient = APIClient()
-    private let configLoader = ConfigLoader()
+    private let configLoader = CoreConfigLoader()
     
     func startUpload(bucketId: String,  uploadSize: Int,parts: Int = 1) async throws -> UploadResult? {
         let base = try configLoader.getConfigProperty(configKey: "NETWORK_URL")
