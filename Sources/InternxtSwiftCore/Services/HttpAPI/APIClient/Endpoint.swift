@@ -8,8 +8,8 @@
 import Foundation
 
 enum HTTPMethod: String {
-    case POST
-    case GET
+    case POST = "POST"
+    case GET = "GET"
 }
 protocol Endpoint {
     var path: String { get }
