@@ -11,7 +11,7 @@ import Foundation
 public struct FolderChild: Decodable {
     // ISO string
     public let createdAt: String
-    public let encrypt_version: String
+    public let encrypt_version: String?
     public let id: Int
     public let name: String
     public let plain_name: String?
@@ -28,7 +28,7 @@ public struct DriveFileData: Decodable {
     public let createdAt: String
     public let created_at: String
     public let deleted: Bool
-    public let encrypt_version: String
+    public let encrypt_version: String?
     public let fileId: String
     public let folderId: Int
     public let folder_id: Int
@@ -47,7 +47,7 @@ public struct FetchFolderContentResponse: Decodable {
     public let files: Array<DriveFileData>
     // ISO string
     public let createdAt: String
-    public let encrypt_version: String
+    public let encrypt_version: String?
     public let id: Int
     public let name: String
     public let plain_name: String?
