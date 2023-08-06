@@ -7,24 +7,24 @@
 
 import Foundation
 
-struct NetworkUploadPayload: Codable {
+public struct NetworkUploadPayload: Codable {
     let index: Int
     let size: Int
 }
-struct StartUploadPayload: Codable {
+public struct StartUploadPayload: Codable {
     let uploads: Array<NetworkUploadPayload>
     
     
 }
 
-struct UploadResult: Decodable {
+public struct UploadResult: Decodable {
     let uuid: String
     let url: String?
     let urls: Array<String>
     let UploadId: String?
 }
 
-struct StartUploadEndpoint: Endpoint {
+public struct StartUploadEndpoint: Endpoint {
     let body: Codable?
     
     let method =  HTTPMethod.POST

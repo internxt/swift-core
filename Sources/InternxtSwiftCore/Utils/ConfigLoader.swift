@@ -16,7 +16,7 @@ public struct Config {
 var loadedConfig: Mirror? = nil
 
 
-struct ConfigLoader {
+public struct ConfigLoader {
     func load(config: Config) {
         loadedConfig = Mirror(reflecting: config)
     }

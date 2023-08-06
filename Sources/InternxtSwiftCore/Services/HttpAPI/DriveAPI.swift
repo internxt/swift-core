@@ -12,7 +12,7 @@ public struct DriveAPI {
     private let apiClient: APIClient
     private let configLoader = ConfigLoader()
     
-    init(authToken: String) {
+    public init(authToken: String) {
         self.apiClient = APIClient(urlSession: URLSession.shared, token: authToken)
     }
     struct GetFolderContentEndpoint: Endpoint {
@@ -20,7 +20,7 @@ public struct DriveAPI {
         let method =  HTTPMethod.GET
     }
     
-    func getFolderContent(folderId: String) async throws -> FetchFolderContentResponse {
+    public func getFolderContent(folderId: String) async throws -> FetchFolderContentResponse {
         let base = try configLoader.getConfigProperty(configKey: "DRIVE_URL")
         
         let path =   "\(base)/storage/v2/folder/\(folderId)"

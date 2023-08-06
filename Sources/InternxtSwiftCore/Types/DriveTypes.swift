@@ -8,7 +8,7 @@
 import Foundation
 
 
-struct FolderChild: Decodable {
+public struct FolderChild: Decodable {
     let bucket: String
     let color: String
     // ISO string
@@ -27,7 +27,7 @@ struct FolderChild: Decodable {
     let user_id: Int
 }
 
-struct DriveFileData: Decodable {
+public struct DriveFileData: Decodable {
     let bucket: String
     // ISO string
     let createdAt: String
@@ -46,7 +46,7 @@ struct DriveFileData: Decodable {
     let updatedAt: String
 }
 
-struct FetchFolderContentResponse: Decodable {
+public struct FetchFolderContentResponse: Decodable {
     let bucket: String
     let children: Array<FolderChild>
     let files: Array<DriveFileData>
