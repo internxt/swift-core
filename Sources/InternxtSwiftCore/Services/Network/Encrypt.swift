@@ -13,7 +13,7 @@ struct EncryptConfig {
 }
 
 @available(macOS 10.15, *)
-struct Encrypt {
+public struct Encrypt {
     private let AES = AESCipher()
     private let cryptoUtils = CryptoUtils()
     

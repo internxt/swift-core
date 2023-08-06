@@ -8,7 +8,7 @@
 import Foundation
 
 @available(macOS 10.15, *)
-struct Upload {
+public struct Upload {
     private let encrypt = Encrypt()
     private let cryptoUtils = CryptoUtils()
     private let networkApi = NetworkAPI()

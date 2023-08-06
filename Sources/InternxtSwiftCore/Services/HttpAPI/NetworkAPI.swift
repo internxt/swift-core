@@ -9,7 +9,7 @@ import Foundation
 
 
 @available(macOS 10.15, *)
-struct NetworkAPI {
+public struct NetworkAPI {
     private let apiClient = APIClient()
     private let configLoader = ConfigLoader()
     

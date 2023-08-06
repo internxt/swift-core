@@ -8,7 +8,7 @@
 import Foundation
 
 @available(macOS 10.15, *)
-struct DriveAPI {
+public struct DriveAPI {
     private let apiClient: APIClient
     private let configLoader = ConfigLoader()
     

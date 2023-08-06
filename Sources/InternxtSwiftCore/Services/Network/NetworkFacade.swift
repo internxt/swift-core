@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct NetworkFacade {
+public struct NetworkFacade {
     private let apiUrl: String
     private let bridgeUser: String
     init(apiUrl: String , bridgeUser: String, userId: String) {
