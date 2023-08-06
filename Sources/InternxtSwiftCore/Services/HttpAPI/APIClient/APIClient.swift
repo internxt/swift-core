@@ -68,7 +68,7 @@ struct APIClient {
         }
    
         var urlRequest = URLRequest(url: url )
-        urlRequest.httpMethod = endpoint.method.rawValue
+        urlRequest.httpMethod = endpoint.method.rawValue.lowercased()
         
         print("METHOD")
         print(endpoint.method.rawValue)

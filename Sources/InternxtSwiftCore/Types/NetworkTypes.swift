@@ -27,6 +27,8 @@ public struct UploadResult: Decodable {
 public struct StartUploadEndpoint: Endpoint {
     var path: String
     
+    
+    
     let body: Codable?
     
     let method =  HTTPMethod.POST
