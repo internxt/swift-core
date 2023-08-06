@@ -20,12 +20,14 @@ public struct DriveAPI {
     struct GetFolderContentEndpoint: Endpoint {
         let body: Codable? = nil
         let method =  HTTPMethod.GET
+        let path: String
+        init(path: String) {
+            self.path = path
+        }
     }
     
     public func getFolderContent(folderId: String) async throws -> FetchFolderContentResponse {
-        
-        let path =   "\(self.baseUrl)/storage/v2/folder/\(folderId)"
-        let endpoint = GetFolderContentEndpoint()
+        let endpoint = GetFolderContentEndpoint(path: "\(self.baseUrl)/storage/v2/folder/\(folderId)")
         
         return try await apiClient.fetch(type: FetchFolderContentResponse.self, endpoint)
     }
