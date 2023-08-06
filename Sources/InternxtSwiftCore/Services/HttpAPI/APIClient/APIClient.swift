@@ -70,6 +70,8 @@ struct APIClient {
         var urlRequest = URLRequest(url: url )
         urlRequest.httpMethod = endpoint.method.rawValue
         
+        print("METHOD")
+        print(endpoint.method.rawValue)
         
         if(self.token.isEmpty == false) {
             urlRequest.setValue("Bearer \(self.token)", forHTTPHeaderField:"Authorization")
