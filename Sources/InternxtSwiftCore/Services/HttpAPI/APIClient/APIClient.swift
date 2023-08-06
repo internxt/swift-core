@@ -23,6 +23,9 @@ struct APIClient {
     func fetch<T: Decodable>(type: T.Type , _ endpoint: Endpoint) async throws -> T  {
        
         return try await withCheckedThrowingContinuation { continuation in
+            
+            
+            
             let request = self.buildURLRequest(endpoint: endpoint)
                     
             if(request == nil) {
@@ -49,16 +52,17 @@ struct APIClient {
                 }
             }
         }
-        
-        
-        
     }
     
     
     private func buildURLRequest(endpoint: Endpoint) -> URLRequest? {
         var urlRequest = URLRequest(url: URL(string: endpoint.path)!)
         urlRequest.httpMethod = endpoint.method.rawValue
-                
+        
+        
+        if(self.token.isEmpty == false) {
+            urlRequest.setValue("Bearer \(self.token)", forHTTPHeaderField:"Authorization")
+        }
         if let body = endpoint.parameters,
             !body.isEmpty,
             let postData = (try? JSONSerialization.data(withJSONObject: endpoint.body as Any, options: [])) {

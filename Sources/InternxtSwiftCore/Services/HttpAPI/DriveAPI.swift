@@ -9,9 +9,12 @@ import Foundation
 
 @available(macOS 10.15, *)
 struct DriveAPI {
-    private let apiClient = APIClient()
+    private let apiClient: APIClient
     private let configLoader = ConfigLoader()
     
+    init(authToken: String) {
+        self.apiClient = APIClient(urlSession: URLSession.shared, token: authToken)
+    }
     struct GetFolderContentEndpoint: Endpoint {
         let body: Codable? = nil
         let method =  HTTPMethod.GET
