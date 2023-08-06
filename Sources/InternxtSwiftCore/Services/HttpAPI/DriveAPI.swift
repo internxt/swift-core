@@ -9,21 +9,22 @@ import Foundation
 
 @available(macOS 10.15, *)
 public struct DriveAPI {
+    private let baseUrl: String
     private let apiClient: APIClient
-    private let configLoader = CoreConfigLoader()
     
-    public init(authToken: String) {
+    public init(baseUrl: String, authToken: String) {
+        self.baseUrl = baseUrl
         self.apiClient = APIClient(urlSession: URLSession.shared, token: authToken)
     }
+    
     struct GetFolderContentEndpoint: Endpoint {
         let body: Codable? = nil
         let method =  HTTPMethod.GET
     }
     
     public func getFolderContent(folderId: String) async throws -> FetchFolderContentResponse {
-        let base = try configLoader.getConfigProperty(configKey: "DRIVE_URL")
         
-        let path =   "\(base)/storage/v2/folder/\(folderId)"
+        let path =   "\(self.baseUrl)/storage/v2/folder/\(folderId)"
         let endpoint = GetFolderContentEndpoint()
         
         return try await apiClient.fetch(type: FetchFolderContentResponse.self, endpoint)
