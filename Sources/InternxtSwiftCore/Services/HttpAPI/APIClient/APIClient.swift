@@ -24,7 +24,7 @@ struct APIClient {
     }
     
   
-    func fetch<T: Decodable>(type: T.Type , _ endpoint: Endpoint) async throws -> T  {
+    func fetch<T: Decodable>(type: T.Type , _ endpoint: Endpoint, debugResponse: Bool?) async throws -> T  {
         let request: URLRequest = try buildURLRequest(endpoint: endpoint)
 
         return try await withCheckedThrowingContinuation { continuation in
@@ -36,9 +36,17 @@ struct APIClient {
                 }
                 
                 do {
+                    
                     if(data == nil) {
+                        if(debugResponse == true) {
+                            print("\(endpoint.path) response is nil")
+                        }
                         continuation.resume(with:.failure(APIError.invalidResponse))
                         return
+                    }
+                    
+                    if(debugResponse == true) {
+                        print("\(endpoint.path) response is \(data?.description)")
                     }
                     let json = try JSONDecoder().decode(T.self, from: data!)
                     continuation.resume(with:.success(json))
