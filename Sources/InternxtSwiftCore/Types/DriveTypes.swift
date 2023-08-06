@@ -59,9 +59,13 @@ public struct FetchFolderContentResponse: Decodable {
     public let user_id: Int
 }
 
-public struct CreateFolderPayload: Codable {
+public struct CreateFolderPayload: Encodable {
     public let parentFolderId: Int
     public let folderName: String
+    init(parentFolderId: Int, folderName: String)  {
+        self.parentFolderId = parentFolderId
+        self.folderName = folderName
+    }
 }
 public struct CreateFolderResponse: Decodable {
     public let bucket: String
