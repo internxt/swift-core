@@ -46,7 +46,7 @@ struct APIClient {
                     }
                     
                     if(debugResponse == true) {
-                        print("\(endpoint.path) response is \(data?.description)")
+                        print("\(endpoint.path) response is \(String(decoding: data!, as: UTF8.self))")
                     }
                     let json = try JSONDecoder().decode(T.self, from: data!)
                     continuation.resume(with:.success(json))

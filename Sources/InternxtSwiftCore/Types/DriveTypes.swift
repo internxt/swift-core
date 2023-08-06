@@ -51,8 +51,8 @@ public struct FetchFolderContentResponse: Decodable {
     let id: Int
     let name: String
     let plain_name: String?
-    let parentId: Int
-    let parent_id: Int
+    let parentId: Int?
+    let parent_id: Int?
     // ISO string
     let updatedAt: String
     let userId: Int
