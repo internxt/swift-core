@@ -9,14 +9,9 @@ import Foundation
 
 
 public struct FolderChild: Decodable {
-    let bucket: String
-    let color: String?
     // ISO string
     let createdAt: String
     let encrypt_version: String
-    let icon: String?
-    let iconId: Int?
-    let icon_id: Int?
     let id: Int
     let name: String
     let plain_name: String?
@@ -50,7 +45,6 @@ public struct FetchFolderContentResponse: Decodable {
     let bucket: String?
     let children: Array<FolderChild>
     let files: Array<DriveFileData>
-    let color: String?
     // ISO string
     let createdAt: String
     let encrypt_version: String
