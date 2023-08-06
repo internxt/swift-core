@@ -31,4 +31,22 @@ public struct DriveAPI {
         
         return try await apiClient.fetch(type: FetchFolderContentResponse.self, endpoint, debugResponse: debug)
     }
+    
+    
+    struct CreateFolderEndpoint: Endpoint {
+        let body: Codable?
+        let method =  HTTPMethod.POST
+        let path: String
+        init(path: String, body: CreateFolderPayload) {
+            self.path = path
+            self.body = body
+        }
+    }
+    
+    
+    public func createFolder(parentFolderId: String, folderName: String, debug: Bool?) async throws -> CreateFolderResponse {
+        let endpoint = GetFolderContentEndpoint(path: "\(self.baseUrl)/storage/v2/folder")
+        
+        return try await apiClient.fetch(type: CreateFolderResponse.self, endpoint, debugResponse: debug)
+    }
 }

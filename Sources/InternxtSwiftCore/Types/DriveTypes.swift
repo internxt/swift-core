@@ -58,3 +58,19 @@ public struct FetchFolderContentResponse: Decodable {
     public let userId: Int
     public let user_id: Int
 }
+
+public struct CreateFolderPayload: Codable {
+    public let parentFolderId: Int
+    public let folderName: String
+}
+public struct CreateFolderResponse: Decodable {
+    public let bucket: String
+    public let id: Int
+    public let name: String
+    public let plain_name: String?
+    public let parentId: Int?
+    // ISO Date
+    public let createdAt: String
+    public let updatedAt: String
+    public let userId: Int
+}
