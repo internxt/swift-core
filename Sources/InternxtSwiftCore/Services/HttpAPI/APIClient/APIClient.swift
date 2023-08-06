@@ -74,11 +74,11 @@ struct APIClient {
         if(self.token.isEmpty == false) {
             urlRequest.setValue("Bearer \(self.token)", forHTTPHeaderField:"Authorization")
         }
-        if let body = endpoint.parameters,
-            !body.isEmpty,
-            let postData = (try? JSONSerialization.data(withJSONObject: endpoint.body as Any, options: [])) {
-            urlRequest.httpBody = postData
+        if endpoint.body != nil {
+            urlRequest.httpBody = try JSONSerialization.data(withJSONObject: endpoint.body as Any, options: [])
         }
+            
+        
         
         urlRequest.setValue("application/json", forHTTPHeaderField: "Content-Type")
         
