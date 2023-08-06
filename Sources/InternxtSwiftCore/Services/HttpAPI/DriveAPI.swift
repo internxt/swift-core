@@ -26,7 +26,7 @@ public struct DriveAPI {
         }
     }
     
-    public func getFolderContent(folderId: String, debug: Bool? = false) async throws -> FetchFolderContentResponse {
+    public func getFolderContent(folderId: String, debug: Bool?) async throws -> FetchFolderContentResponse {
         let endpoint = GetFolderContentEndpoint(path: "\(self.baseUrl)/storage/v2/folder/\(folderId)")
         
         return try await apiClient.fetch(type: FetchFolderContentResponse.self, endpoint, debugResponse: debug)
