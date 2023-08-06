@@ -17,9 +17,3 @@ protocol Endpoint {
     var body: Codable? { get }
 }
 
-
-extension Endpoint {
-    var path: String { "" }
-    var method: HTTPMethod { .GET }
-    var parameters: [String: AnyObject]? { nil }
-}

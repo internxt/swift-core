@@ -35,7 +35,7 @@ public struct DriveAPI {
     
     struct CreateFolderEndpoint: Endpoint {
         let body: Codable?
-        let method =  HTTPMethod.POST
+        let method: HTTPMethod =  HTTPMethod.POST
         let path: String
         init(path: String, body: CreateFolderPayload) {
             self.path = path
