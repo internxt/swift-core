@@ -36,7 +36,7 @@ struct APIClient {
                 }
                 
                 do {
-                    
+                    print("Response status code is \((response as! HTTPURLResponse).statusCode)")
                     if(data == nil) {
                         if(debugResponse == true) {
                             print("\(endpoint.path) response is nil")
@@ -70,13 +70,11 @@ struct APIClient {
         var urlRequest = URLRequest(url: url )
         urlRequest.httpMethod = endpoint.method.rawValue.lowercased()
         
-        print("METHOD")
-        print(endpoint.method.rawValue)
-        
         if(self.token.isEmpty == false) {
             urlRequest.setValue("Bearer \(self.token)", forHTTPHeaderField:"Authorization")
         }
         if endpoint.body != nil {
+            print("Endpoint body \(String(data: endpoint.body!, encoding: .utf8))")
             urlRequest.httpBody = endpoint.body!
         }
             
