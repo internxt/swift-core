@@ -79,6 +79,11 @@ public struct CreateFolderResponse: Decodable {
     public let userId: Int
 }
 
-public struct UpdateFolderPayload: Encodable {
+public struct MetadataUpdatePayload: Encodable {
     public let itemName: String
+}
+
+
+public struct UpdateFolderPayload: Encodable {
+    public let metadata: MetadataUpdatePayload
 }

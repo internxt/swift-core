@@ -61,7 +61,9 @@ public struct DriveAPI {
     }
     
     public func updateFolder(folderId: String, folderName: String, debug: Bool?) async throws -> CreateFolderResponse {
-        let endpoint = UpdateFolderEndpoint(path: "\(self.baseUrl)/storage/folder/\(folderId)/meta", body: UpdateFolderPayload(itemName: folderName).toJson())
+        let endpoint = UpdateFolderEndpoint(path: "\(self.baseUrl)/storage/folder/\(folderId)/meta", body: UpdateFolderPayload(
+            metadata: MetadataUpdatePayload(itemName: folderName)
+        ).toJson())
         
         return try await apiClient.fetch(type: CreateFolderResponse.self, endpoint, debugResponse: debug)
     }
