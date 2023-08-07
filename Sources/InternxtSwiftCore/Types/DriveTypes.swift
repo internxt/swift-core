@@ -68,7 +68,7 @@ public struct CreateFolderPayload: Encodable {
     }
 }
 public struct CreateFolderResponse: Decodable {
-    public let bucket: String
+    public let bucket: String?
     public let id: Int
     public let name: String
     public let plain_name: String?
