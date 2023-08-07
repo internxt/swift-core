@@ -6,8 +6,9 @@
 //
 
 import Foundation
+import Combine
 
-
+@available(macOS 10.15, *)
 struct APIClient {
     private let urlSession: URLSession
     private let token: String
@@ -18,33 +19,41 @@ struct APIClient {
         self.token = token
     }
     
-    
-    func fetch<T>(with endpoint: Endpoint, completionBlock: @escaping (Result<Optional<T>, Error>) -> ()) {
-        let urlRequest = buildURLRequest(endpoint: endpoint)!
-        
-        let task = urlSession.dataTask(with: urlRequest) {
-            data, response, error in
-            guard let error = error else {
-                if(data == nil) {
-                    completionBlock(.success(nil))
+  
+    func fetch<T: Decodable>(type: T.Type , _ endpoint: Endpoint) async throws -> T?  {
+       
+        return try await withCheckedThrowingContinuation { continuation in
+            let request = self.buildURLRequest(endpoint: endpoint)
+                    
+            if(request == nil) {
+                continuation.resume(throwing: APIError.failedRequest("Unable to build request"))
+            }
+            
+            let task = URLSession(configuration: .default).dataTask(with: request!) { (data, response, error) in
+                if let error = error {
+                    continuation.resume(with: .failure(APIError.failedRequest(error.localizedDescription)))
                     return
                 }
                 
                 do {
-                    let json = try JSONSerialization.jsonObject(with: data!, options: [])
-                    completionBlock(.success(json as? T))
-                    return
+                    if(data == nil) {
+                        continuation.resume(with:.success(nil))
+                        return
+                    }
+                    let json = try JSONDecoder().decode(T.self, from: data!)
+                    continuation.resume(with:.success(json))
                 } catch {
-                    completionBlock(.failure(error))
-                    return
+                    print("Unable to Decode Response \(error)")
+                    continuation.resume(with:.failure(APIError.invalidResponse))
+                    
                 }
-                
             }
-            completionBlock(.failure(error))
         }
-
-        task.resume()
+        
+        
+        
     }
+    
     
     private func buildURLRequest(endpoint: Endpoint) -> URLRequest? {
         var urlRequest = URLRequest(url: URL(string: endpoint.path)!)
@@ -57,7 +66,6 @@ struct APIClient {
         }
         
         urlRequest.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        urlRequest.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         
         return urlRequest
     }
