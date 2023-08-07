@@ -37,6 +37,9 @@ struct APIClient {
                 
                 do {
                     
+                    let httpResponse = response as! HTTPURLResponse
+                    
+                    print("Response status code: \(httpResponse.statusCode)")
                     if(data?.isEmpty == true) {
                         if(debugResponse == true) {
                             print("\(endpoint.path) response is empty")
