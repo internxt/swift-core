@@ -36,7 +36,7 @@ struct APIClient {
                 }
                 
                 do {
-                    print("Response status code is \((response as! HTTPURLResponse).statusCode)")
+                    
                     if(data == nil) {
                         if(debugResponse == true) {
                             print("\(endpoint.path) response is nil")
