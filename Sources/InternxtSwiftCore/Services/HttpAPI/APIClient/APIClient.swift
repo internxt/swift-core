@@ -37,9 +37,9 @@ struct APIClient {
                 
                 do {
                     
-                    if(data == nil) {
+                    if(data?.isEmpty == true) {
                         if(debugResponse == true) {
-                            print("\(endpoint.path) response is nil")
+                            print("\(endpoint.path) response is empty")
                         }
                         continuation.resume(with:.failure(APIError.invalidResponse))
                         return
