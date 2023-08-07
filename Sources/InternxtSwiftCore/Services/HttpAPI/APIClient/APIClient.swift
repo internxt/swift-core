@@ -77,7 +77,7 @@ struct APIClient {
             urlRequest.setValue("Bearer \(self.token)", forHTTPHeaderField:"Authorization")
         }
         if endpoint.body != nil {
-            urlRequest.httpBody = try JSONSerialization.data(withJSONObject: endpoint.body as Any, options: [])
+            urlRequest.httpBody = endpoint.body!
         }
             
         

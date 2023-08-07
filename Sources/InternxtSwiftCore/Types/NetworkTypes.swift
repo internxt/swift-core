@@ -25,14 +25,12 @@ public struct UploadResult: Decodable {
 }
 
 public struct StartUploadEndpoint: Endpoint {
-    var body: Encodable?
-    
     var path: String
-    
+    let body: Data?
     
     let method =  HTTPMethod.POST
     
-    init(body: Encodable?) {
+    init(body: Data?) {
         self.body = body
         self.path = ""
     }

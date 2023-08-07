@@ -25,7 +25,7 @@ public struct NetworkAPI {
                 index: 0,
                 size: uploadSize
             )]
-        ))
+        ).toJson())
         
         return try await apiClient.fetch(type: UploadResult.self, endpoint, debugResponse: debug)
     }

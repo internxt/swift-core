@@ -18,7 +18,7 @@ public struct DriveAPI {
     }
     
     struct GetFolderContentEndpoint: Endpoint {
-        var body: Encodable? = nil
+        var body: Data? = nil
         let method =  HTTPMethod.GET
         let path: String
         init(path: String) {
@@ -34,10 +34,10 @@ public struct DriveAPI {
     
     
     struct CreateFolderEndpoint: Endpoint {
-        let body: Encodable?
+        var body: Data?
         let method: HTTPMethod =  HTTPMethod.POST
         let path: String
-        init(path: String, body: CreateFolderPayload) {
+        init(path: String, body: Data?) {
             self.path = path
             self.body = body
         }
@@ -45,7 +45,7 @@ public struct DriveAPI {
     
     
     public func createFolder(parentFolderId: Int, folderName: String, debug: Bool?) async throws -> CreateFolderResponse {
-        let endpoint = CreateFolderEndpoint(path: "\(self.baseUrl)/storage/v2/folder", body: CreateFolderPayload(parentFolderId: parentFolderId, folderName: folderName))
+        let endpoint = CreateFolderEndpoint(path: "\(self.baseUrl)/storage/v2/folder", body: CreateFolderPayload(parentFolderId: parentFolderId, folderName: folderName).toJson())
         
         return try await apiClient.fetch(type: CreateFolderResponse.self, endpoint, debugResponse: debug)
     }
