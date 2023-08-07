@@ -45,7 +45,7 @@ public struct DriveAPI {
     
     
     public func createFolder(parentFolderId: Int, folderName: String, debug: Bool?) async throws -> CreateFolderResponse {
-        let endpoint = CreateFolderEndpoint(path: "\(self.baseUrl)/storage/v2/folder", body: CreateFolderPayload(parentFolderId: parentFolderId, folderName: folderName).toJson())
+        let endpoint = CreateFolderEndpoint(path: "\(self.baseUrl)/storage/folder", body: CreateFolderPayload(parentFolderId: parentFolderId, folderName: folderName).toJson())
         
         return try await apiClient.fetch(type: CreateFolderResponse.self, endpoint, debugResponse: debug)
     }
