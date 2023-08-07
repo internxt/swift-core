@@ -49,4 +49,20 @@ public struct DriveAPI {
         
         return try await apiClient.fetch(type: CreateFolderResponse.self, endpoint, debugResponse: debug)
     }
+    
+    struct UpdateFolderEndpoint: Endpoint {
+        var body: Data?
+        let method: HTTPMethod =  HTTPMethod.POST
+        let path: String
+        init(path: String, body: Data?) {
+            self.path = path
+            self.body = body
+        }
+    }
+    
+    public func updateFolder(folderId: String, folderName: String, debug: Bool?) async throws -> CreateFolderResponse {
+        let endpoint = UpdateFolderEndpoint(path: "\(self.baseUrl)/storage/folder/\(folderId)/meta", body: UpdateFolderPayload(itemName: folderName).toJson())
+        
+        return try await apiClient.fetch(type: CreateFolderResponse.self, endpoint, debugResponse: debug)
+    }
 }

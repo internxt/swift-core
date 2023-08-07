@@ -78,3 +78,7 @@ public struct CreateFolderResponse: Decodable {
     public let updatedAt: String
     public let userId: Int
 }
+
+public struct UpdateFolderPayload: Encodable {
+    public let itemName: String
+}
