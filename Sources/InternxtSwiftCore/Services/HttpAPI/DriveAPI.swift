@@ -17,14 +17,7 @@ public struct DriveAPI {
         self.apiClient = APIClient(urlSession: URLSession.shared, token: authToken)
     }
     
-    struct GetFolderContentEndpoint: Endpoint {
-        var body: Data? = nil
-        let method =  HTTPMethod.GET
-        let path: String
-        init(path: String) {
-            self.path = path
-        }
-    }
+  
     
     public func getFolderContent(folderId: String, debug: Bool?) async throws -> FetchFolderContentResponse {
         let endpoint = GetFolderContentEndpoint(path: "\(self.baseUrl)/storage/v2/folder/\(folderId)")
@@ -33,32 +26,16 @@ public struct DriveAPI {
     }
     
     
-    struct CreateFolderEndpoint: Endpoint {
-        var body: Data?
-        let method: HTTPMethod =  HTTPMethod.POST
-        let path: String
-        init(path: String, body: Data?) {
-            self.path = path
-            self.body = body
-        }
-    }
-    
-    
+    /// Creates a folder inside the parentFolderId given with the given name
     public func createFolder(parentFolderId: Int, folderName: String, debug: Bool?) async throws -> CreateFolderResponse {
         let endpoint = CreateFolderEndpoint(path: "\(self.baseUrl)/storage/folder", body: CreateFolderPayload(parentFolderId: parentFolderId, folderName: folderName).toJson())
         
         return try await apiClient.fetch(type: CreateFolderResponse.self, endpoint, debugResponse: debug)
     }
     
-    struct UpdateFolderEndpoint: Endpoint {
-        var body: Data?
-        let method: HTTPMethod =  HTTPMethod.POST
-        let path: String
-        init(path: String, body: Data?) {
-            self.path = path
-            self.body = body
-        }
-    }
+    
+    /// Given a folderId, updates the folder name, if the folder name conflicts with
+    /// the remove folder name, an ApiClientError with 409 statusCode is throw
     
     public func updateFolder(folderId: String, folderName: String, debug: Bool?) async throws -> UpdateFolderResponse {
         let endpoint = UpdateFolderEndpoint(path: "\(self.baseUrl)/storage/folder/\(folderId)/meta", body: UpdateFolderPayload(
@@ -66,5 +43,9 @@ public struct DriveAPI {
         ).toJson())
         
         return try await apiClient.fetch(type: UpdateFolderResponse.self, endpoint, debugResponse: debug)
+    }
+    
+    public func trashItems() {
+        
     }
 }

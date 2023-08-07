@@ -8,10 +8,20 @@
 import Foundation
 import Combine
 
-public enum APIClientError: Error {
-    case buildUrlFailed
-    case buildRequestFailed
+public struct APIClientError: Error {
+    public var statusCode: Int
+    private var message: String
+    public var localizedDescription: String {
+        return self.message
+    }
+    public init(statusCode: Int, message: String) {
+        self.statusCode = statusCode
+        self.message = message
+    }
 }
+
+
+
 @available(macOS 10.15, *)
 struct APIClient {
     private let urlSession: URLSession
@@ -24,7 +34,7 @@ struct APIClient {
     }
     
   
-    func fetch<T: Decodable>(type: T.Type , _ endpoint: Endpoint, debugResponse: Bool?) async throws -> T  {
+    func fetch<T: Decodable>(type: T.Type? , _ endpoint: Endpoint, debugResponse: Bool?) async throws -> T  {
         let request: URLRequest = try buildURLRequest(endpoint: endpoint)
 
         return try await withCheckedThrowingContinuation { continuation in
@@ -34,19 +44,9 @@ struct APIClient {
                     continuation.resume(with: .failure(APIError.failedRequest(error.localizedDescription)))
                     return
                 }
-                
+                let httpResponse = response as! HTTPURLResponse
+
                 do {
-                    
-                    let httpResponse = response as! HTTPURLResponse
-                    
-                    print("Response status code: \(httpResponse.statusCode)")
-                    if(data?.isEmpty == true) {
-                        if(debugResponse == true) {
-                            print("\(endpoint.path) response is empty")
-                        }
-                        continuation.resume(with:.failure(APIError.invalidResponse))
-                        return
-                    }
                     
                     if(debugResponse == true) {
                         print("\(endpoint.path) response is \(String(decoding: data!, as: UTF8.self))")
@@ -55,7 +55,7 @@ struct APIClient {
                     continuation.resume(with:.success(json))
                 } catch {
                     print("Unable to Decode Response \(error)")
-                    continuation.resume(with:.failure(APIError.invalidResponse))
+                    continuation.resume(with:.failure(APIClientError(statusCode: httpResponse.statusCode, message: error.localizedDescription)))
                     
                 }
             }
@@ -67,7 +67,7 @@ struct APIClient {
     
     private func buildURLRequest(endpoint: Endpoint) throws -> URLRequest {
         guard let url = URL(string: endpoint.path) else {
-            throw APIClientError.buildRequestFailed
+            throw APIClientError(statusCode: -1, message: "Unable to build URL from \(endpoint.path)")
         }
    
         var urlRequest = URLRequest(url: url )
