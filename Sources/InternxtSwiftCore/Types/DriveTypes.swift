@@ -8,7 +8,7 @@
 import Foundation
 
 
-struct GetFolderContentEndpoint: Endpoint {
+struct GetFolderFilesEndpoint: Endpoint {
     var body: Data? = nil
     let method =  HTTPMethod.GET
     let path: String
@@ -17,56 +17,69 @@ struct GetFolderContentEndpoint: Endpoint {
     }
 }
 
-public struct FolderChild: Decodable {
-    // ISO string
-    public let createdAt: String
-    public let encrypt_version: String?
+public struct GetFolderFilesResult: Decodable {
     public let id: Int
-    public let name: String
-    public let plain_name: String?
-    public let parentId: Int
-    public let parent_id: Int
-    public let updatedAt: String
-    public let userId: Int
-    public let user_id: Int
-}
-
-public struct DriveFileData: Decodable {
-    public let bucket: String
-    // ISO string
-    public let createdAt: String
-    public let created_at: String
-    public let deleted: Bool
-    public let encrypt_version: String?
     public let fileId: String
+    public let name: String
+    public let type: String?
+    // Size string in bytes
+    public let size: String
+    public let bucket: String
     public let folderId: Int
-    public let folder_id: Int
-    public let id: Int
-    public let name: Int
-    public let plain_name: String?
-    public let size: Int
-    public let type: String
+    public let encryptVersion: String?
+    public let deleted: Bool
     // ISO string
-    public let updatedAt: String
-}
-
-public struct FetchFolderContentResponse: Decodable {
-    public let bucket: String?
-    public let children: Array<FolderChild>
-    public let files: Array<DriveFileData>
+    public let deletedAt: String?
+    public let userId: Int
+    public let modificationTime: String
     // ISO string
     public let createdAt: String
-    public let encrypt_version: String?
-    public let id: Int
-    public let name: String
-    public let plain_name: String?
-    public let parentId: Int?
-    public let parent_id: Int?
     // ISO string
     public let updatedAt: String
-    public let userId: Int
-    public let user_id: Int
+    public let plainName: String?
+    public let removed: Bool?
+    // ISO string
+    public let removedAt: String
+    public let status: String
 }
+
+public struct GetFolderFilesResponse: Decodable {
+    public let result: GetFolderFilesResult
+}
+
+struct GetFolderFoldersEndpoint: Endpoint {
+    var body: Data? = nil
+    let method =  HTTPMethod.GET
+    let path: String
+    init(path: String) {
+        self.path = path
+    }
+}
+
+public struct GetFolderFoldersResult: Decodable {
+    public let type: String
+    public let id: Int
+    public let parentId: Int
+    public let name: String
+    public let userId: Int
+    public let encryptVersion: String?
+    public let deleted: Bool
+    // ISO string
+    public let deletedAt: String?
+    // ISO string
+    public let createdAt: String?
+    // ISO string
+    public let updatedAt: String?
+    public let plainName: String?
+    public let removed: Bool
+    // ISO string
+    public let removedAt: String?
+}
+
+public struct GetFolderFoldersResponse: Decodable {
+    public let result: GetFolderFoldersResult
+}
+
 
 struct CreateFolderEndpoint: Endpoint {
     var body: Data?

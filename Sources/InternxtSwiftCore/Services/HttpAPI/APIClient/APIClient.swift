@@ -36,7 +36,7 @@ struct APIClient {
   
     func fetch<T: Decodable>(type: T.Type? , _ endpoint: Endpoint, debugResponse: Bool?) async throws -> T  {
         let request: URLRequest = try buildURLRequest(endpoint: endpoint)
-
+        
         return try await withCheckedThrowingContinuation { continuation in
             
             let task = URLSession(configuration: .default).dataTask(with: request) { (data, response, error) in
@@ -63,7 +63,6 @@ struct APIClient {
                     
                 }
             }
-            
             task.resume()
         }
     }

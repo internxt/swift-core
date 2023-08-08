@@ -19,10 +19,19 @@ public struct DriveAPI {
     
   
     
-    public func getFolderContent(folderId: String, debug: Bool = false) async throws -> FetchFolderContentResponse {
-        let endpoint = GetFolderContentEndpoint(path: "\(self.baseUrl)/storage/v2/folder/\(folderId)")
+    public func getFolderFiles(folderId: String, offset: Int = 0, limit: Int = 50, sort: String = "ASC", debug: Bool = false) async throws -> GetFolderFilesResponse {
         
-        return try await apiClient.fetch(type: FetchFolderContentResponse.self, endpoint, debugResponse: debug)
+        let query: String = "?offset=\(String(offset))&limit=\(String(limit))&sort=\(sort)"
+        let endpoint = GetFolderFilesEndpoint(path: "\(self.baseUrl)/folders/\(folderId)/files\(query)")
+        
+        return try await apiClient.fetch(type: GetFolderFilesResponse.self, endpoint, debugResponse: debug)
+    }
+    
+    public func getFolderFolders(folderId: String, offset: Int = 0, limit: Int = 50, sort: String = "ASC", debug: Bool = false) async throws -> GetFolderFoldersResponse {
+        let query: String = "?offset=\(String(offset))&limit=\(String(limit))&sort=\(sort)"
+        let endpoint = GetFolderFoldersEndpoint(path: "\(self.baseUrl)/folders/\(folderId)/folders\(query)")
+        
+        return try await apiClient.fetch(type: GetFolderFoldersResponse.self, endpoint, debugResponse: debug)
     }
     
     
