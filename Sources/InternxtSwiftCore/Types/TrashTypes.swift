@@ -27,7 +27,7 @@ public struct ItemToTrash: Encodable {
     public let id: Int
     public let type: String
     
-    init(id: Int, type: ItemToTrashType) {
+    public init(id: Int, type: ItemToTrashType) {
         self.id = id
         self.type = type.rawValue
     }
