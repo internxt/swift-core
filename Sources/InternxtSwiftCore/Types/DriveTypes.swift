@@ -44,7 +44,7 @@ public struct GetFolderFilesResult: Decodable {
 }
 
 public struct GetFolderFilesResponse: Decodable {
-    public let result: GetFolderFilesResult
+    public let result: Array<GetFolderFilesResult>
 }
 
 struct GetFolderFoldersEndpoint: Endpoint {
@@ -77,7 +77,7 @@ public struct GetFolderFoldersResult: Decodable {
 }
 
 public struct GetFolderFoldersResponse: Decodable {
-    public let result: GetFolderFoldersResult
+    public let result: Array<GetFolderFoldersResult>
 }
 
 
