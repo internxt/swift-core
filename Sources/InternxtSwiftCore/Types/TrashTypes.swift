@@ -34,7 +34,11 @@ public struct ItemToTrash: Encodable {
 }
 
 public struct AddItemsToTrashPayload: Encodable {
-    public let items: Array<ItemToTrash>
+    private let items: Array<ItemToTrash>
+    
+    public init(items: Array<ItemToTrash>) {
+        self.items = items
+    }
 }
 
 public struct AddItemsToTrashResponse: Decodable {
