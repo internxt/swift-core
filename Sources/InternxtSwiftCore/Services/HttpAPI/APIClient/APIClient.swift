@@ -48,6 +48,10 @@ struct APIClient {
 
                 do {
                     
+                    if data == nil {
+                        throw APIClientError(statusCode: httpResponse.statusCode, message: "Response is empty")
+                    }
+                    
                     if(debugResponse == true) {
                         print("\(endpoint.path) response is \(String(decoding: data!, as: UTF8.self))")
                     }

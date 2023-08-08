@@ -19,7 +19,7 @@ public struct DriveAPI {
     
   
     
-    public func getFolderContent(folderId: String, debug: Bool?) async throws -> FetchFolderContentResponse {
+    public func getFolderContent(folderId: String, debug: Bool = false) async throws -> FetchFolderContentResponse {
         let endpoint = GetFolderContentEndpoint(path: "\(self.baseUrl)/storage/v2/folder/\(folderId)")
         
         return try await apiClient.fetch(type: FetchFolderContentResponse.self, endpoint, debugResponse: debug)
@@ -27,7 +27,7 @@ public struct DriveAPI {
     
     
     /// Creates a folder inside the parentFolderId given with the given name
-    public func createFolder(parentFolderId: Int, folderName: String, debug: Bool?) async throws -> CreateFolderResponse {
+    public func createFolder(parentFolderId: Int, folderName: String, debug: Bool = false) async throws -> CreateFolderResponse {
         let endpoint = CreateFolderEndpoint(path: "\(self.baseUrl)/storage/folder", body: CreateFolderPayload(parentFolderId: parentFolderId, folderName: folderName).toJson())
         
         return try await apiClient.fetch(type: CreateFolderResponse.self, endpoint, debugResponse: debug)
@@ -37,7 +37,7 @@ public struct DriveAPI {
     /// Given a folderId, updates the folder name, if the folder name conflicts with
     /// the remove folder name, an ApiClientError with 409 statusCode is throw
     
-    public func updateFolder(folderId: String, folderName: String, debug: Bool?) async throws -> UpdateFolderResponse {
+    public func updateFolder(folderId: String, folderName: String, debug: Bool = false) async throws -> UpdateFolderResponse {
         let endpoint = UpdateFolderEndpoint(path: "\(self.baseUrl)/storage/folder/\(folderId)/meta", body: UpdateFolderPayload(
             metadata: MetadataUpdatePayload(itemName: folderName)
         ).toJson())
