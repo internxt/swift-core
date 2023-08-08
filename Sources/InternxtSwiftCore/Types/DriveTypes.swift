@@ -67,9 +67,9 @@ public struct GetFolderFoldersResult: Decodable {
     // ISO string
     public let deletedAt: String?
     // ISO string
-    public let createdAt: String?
+    public let createdAt: String
     // ISO string
-    public let updatedAt: String?
+    public let updatedAt: String
     public let plainName: String?
     public let removed: Bool
     // ISO string
