@@ -37,9 +37,9 @@ public struct GetFolderFilesResult: Decodable {
     // ISO string
     public let updatedAt: String
     public let plainName: String?
-    public let removed: Bool?
+    public let removed: Bool
     // ISO string
-    public let removedAt: String
+    public let removedAt: String?
     public let status: String
 }
 
