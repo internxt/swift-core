@@ -7,13 +7,18 @@
 
 import Foundation
 
-enum HTTPMethod: String {
+public enum HTTPMethod: String {
     case POST = "POST"
     case GET = "GET"
 }
-protocol Endpoint {
-    var path: String { get }
-    var method: HTTPMethod { get }
-    var body: Data? { get }
+
+
+public struct Endpoint {
+    public var path: String
+    public var method: HTTPMethod
+    public var body: Data?
+    init(path: String, method: HTTPMethod = HTTPMethod.GET, body: Data? = nil) {
+        
+    }
 }
 

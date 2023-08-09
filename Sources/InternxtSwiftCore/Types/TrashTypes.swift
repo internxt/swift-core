@@ -8,15 +8,7 @@
 import Foundation
 
 
-public struct AddItemsToTrashEndpoint: Endpoint {
-    var body: Data?
-    let method: HTTPMethod =  HTTPMethod.POST
-    let path: String
-    init(path: String, body: Data?) {
-        self.path = path
-        self.body = body
-    }
-}
+
 
 public enum ItemToTrashType: String {
     case File = "file"
@@ -41,6 +33,4 @@ public struct AddItemsToTrashPayload: Encodable {
     }
 }
 
-public struct AddItemsToTrashResponse: Decodable {
-    
-}
+public struct AddItemsToTrashResponse: Decodable {}

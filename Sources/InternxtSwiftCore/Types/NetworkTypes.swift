@@ -8,30 +8,65 @@
 import Foundation
 
 public struct NetworkUploadPayload: Codable {
-    let index: Int
-    let size: Int
+    public let index: Int
+    public let size: Int
 }
+
 public struct StartUploadPayload: Codable {
-    let uploads: Array<NetworkUploadPayload>
-    
-    
+    public let uploads: Array<NetworkUploadPayload>
 }
 
-public struct UploadResult: Decodable {
-    let uuid: String
-    let url: String?
-    let urls: Array<String>
-    let UploadId: String?
+public struct StartUploadResponse: Decodable {
+    public let uuid: String
+    public let url: String?
+    public let urls: Array<String>
+    public let UploadId: String?
 }
 
-public struct StartUploadEndpoint: Endpoint {
-    var path: String
-    let body: Data?
-    
-    let method =  HTTPMethod.POST
-    
-    init(body: Data?) {
-        self.body = body
-        self.path = ""
-    }
+
+public struct ShardUploadPayload: Codable {
+    public let hash: String
+    public let uuid: String
+}
+
+
+public struct FinishUploadPayload: Codable {
+    public let index: String
+    public let shards: Array<ShardUploadPayload>
+}
+
+
+public struct FinishUploadResponse: Decodable {
+    public let bucket: String
+    public let index: String
+    public let size: Int
+    public let version: Int
+    // ISO Date
+    public let created: String
+    // ISO Date
+    public let renewal: String
+    public let mimetype: String
+    public let filename: String
+    public let id: String
+}
+
+public struct GetFileInfoShard: Decodable {
+    public let index: Int
+    public let hash: String
+    public let url: String
+}
+
+public struct GetFileInfoResponse: Decodable {
+    public let bucket: String
+    public let index: String
+    public let size: Int
+    public let version: Int
+    // ISO Date
+    public let created: String
+    // ISO Date
+    public let renewal: String
+    public let mimetype: String
+    public let filename: String
+    public let id: String
+    public let shards: Array<GetFileInfoShard>
 }

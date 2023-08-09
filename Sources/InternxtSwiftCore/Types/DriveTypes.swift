@@ -8,15 +8,6 @@
 import Foundation
 
 
-struct GetFolderFilesEndpoint: Endpoint {
-    var body: Data? = nil
-    let method =  HTTPMethod.GET
-    let path: String
-    init(path: String) {
-        self.path = path
-    }
-}
-
 public struct GetFolderFilesResult: Decodable {
     public let id: Int
     public let fileId: String
@@ -47,14 +38,7 @@ public struct GetFolderFilesResponse: Decodable {
     public let result: Array<GetFolderFilesResult>
 }
 
-struct GetFolderFoldersEndpoint: Endpoint {
-    var body: Data? = nil
-    let method =  HTTPMethod.GET
-    let path: String
-    init(path: String) {
-        self.path = path
-    }
-}
+
 
 public struct GetFolderFoldersResult: Decodable {
     public let type: String
@@ -81,16 +65,6 @@ public struct GetFolderFoldersResponse: Decodable {
 }
 
 
-struct CreateFolderEndpoint: Endpoint {
-    var body: Data?
-    let method: HTTPMethod =  HTTPMethod.POST
-    let path: String
-    init(path: String, body: Data?) {
-        self.path = path
-        self.body = body
-    }
-}
-
 public struct CreateFolderPayload: Encodable {
     public let parentFolderId: Int
     public let folderName: String
@@ -112,16 +86,6 @@ public struct CreateFolderResponse: Decodable {
 }
 
 
-struct UpdateFolderEndpoint: Endpoint {
-    var body: Data?
-    let method: HTTPMethod =  HTTPMethod.POST
-    let path: String
-    init(path: String, body: Data?) {
-        self.path = path
-        self.body = body
-    }
-}
-
 public struct UpdateFolderResponse: Decodable {
     public let id: Int
     public let name: String
@@ -137,12 +101,24 @@ public struct UpdateFolderPayload: Encodable {
 }
 
 
-struct TrashFolderEndpoint: Endpoint {
-    var body: Data?
-    let method: HTTPMethod =  HTTPMethod.POST
-    let path: String
-    init(path: String, body: Data?) {
-        self.path = path
-        self.body = body
-    }
+public struct GetFolderMetaByIdResponse: Decodable {
+    public let id: Int
+    public let parentId: Int?
+    public let name: String
+    public let bucket: String?
+    public let userId: Int
+    public let encryptVersion: String?
+    public let deleted: Bool
+    // ISO Date
+    public let createdAt: String
+    public let updatedAt: String
+    public let deletedAt: String?
+    public let removedAt: String?
+    public let uuid: String?
+    public let plainName: String?
+    public let removed: Bool
+}
+
+public struct GetFileMetaByIdResponse: Decodable {
+   
 }
