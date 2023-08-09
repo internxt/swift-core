@@ -17,8 +17,6 @@ public struct DriveAPI {
         self.apiClient = APIClient(urlSession: URLSession.shared, token: authToken)
     }
     
-  
-    
     /// Get paginated files inside the given folder
     public func getFolderFiles(folderId: String, offset: Int = 0, limit: Int = 50, sort: String = "ASC", debug: Bool = false) async throws -> GetFolderFilesResponse {
         
@@ -37,7 +35,7 @@ public struct DriveAPI {
     }
     
     
-    /// Creates a folder inside the parentFolderId given with the given name
+    /// Creates a folder inside the given parentFolderId with the given name
     public func createFolder(parentFolderId: Int, folderName: String, debug: Bool = false) async throws -> CreateFolderResponse {
         let endpoint = Endpoint(
             path: "\(self.baseUrl)/storage/folder",
@@ -61,6 +59,8 @@ public struct DriveAPI {
         
         return try await apiClient.fetch(type: UpdateFolderResponse.self, endpoint, debugResponse: debug)
     }
+    
+    /// Retrieves the folder metadata by the folder id
     public func getFolderMetaById(id: String, debug: Bool = false) async throws -> GetFolderMetaByIdResponse {
         let endpoint = Endpoint(
             path: "\(self.baseUrl)/storage/folders/\(id)/metadata",
@@ -70,6 +70,7 @@ public struct DriveAPI {
         return try await apiClient.fetch(type: GetFolderMetaByIdResponse.self, endpoint, debugResponse: debug)
     }
     
+    /// Retrieves the filer metadata by the file id
     public func getFileMetaById(id: String, debug: Bool = false)  async throws -> GetFileMetaByIdResponse {
         let endpoint = Endpoint(
             path: "\(self.baseUrl)/storage/files/\(id)/metadata",

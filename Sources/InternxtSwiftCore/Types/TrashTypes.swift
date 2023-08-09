@@ -7,9 +7,6 @@
 
 import Foundation
 
-
-
-
 public enum ItemToTrashType: String {
     case File = "file"
     case Folder = "folder"

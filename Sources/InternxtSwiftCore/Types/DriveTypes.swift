@@ -7,7 +7,6 @@
 
 import Foundation
 
-
 public struct GetFolderFilesResult: Decodable {
     public let id: Int
     public let fileId: String
@@ -37,8 +36,6 @@ public struct GetFolderFilesResult: Decodable {
 public struct GetFolderFilesResponse: Decodable {
     public let result: Array<GetFolderFilesResult>
 }
-
-
 
 public struct GetFolderFoldersResult: Decodable {
     public let type: String

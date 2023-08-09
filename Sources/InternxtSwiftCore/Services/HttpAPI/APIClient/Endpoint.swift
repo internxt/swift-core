@@ -18,7 +18,9 @@ public struct Endpoint {
     public var method: HTTPMethod
     public var body: Data?
     init(path: String, method: HTTPMethod = HTTPMethod.GET, body: Data? = nil) {
-        
+        self.path = path
+        self.method = method
+        self.body = body
     }
 }
 
