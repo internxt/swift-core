@@ -89,7 +89,6 @@ public class Upload: NSObject {
             )
             
             request.httpMethod = "POST"
-            request.setValue("application/octet-stream", forHTTPHeaderField: "Content-Type")
             
             let task = urlSession.uploadTask(
                 with: request,
