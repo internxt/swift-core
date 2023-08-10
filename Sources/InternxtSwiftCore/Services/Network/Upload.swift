@@ -98,6 +98,7 @@ public class Upload: NSObject {
                     guard let error = error else {
                         let response = res as? HTTPURLResponse
                         print("UPLOAD RESPONSE")
+                        print(uploadUrl)
                         print(response?.statusCode)
                         print(data)
                         if response?.statusCode != 200 {
