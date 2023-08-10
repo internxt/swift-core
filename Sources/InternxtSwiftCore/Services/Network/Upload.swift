@@ -12,6 +12,8 @@ import Foundation
 public typealias Percentage = Double
 public typealias ProgressHandler = (Percentage) -> Void
 
+
+
 @available(macOS 10.15, *)
 extension Upload: URLSessionTaskDelegate {
     public func urlSession(
@@ -28,13 +30,18 @@ extension Upload: URLSessionTaskDelegate {
         }
 }
 
+
 @available(macOS 10.15, *)
-public class Upload: NSObject {
+public class Upload: NSObject  {
     private let encrypt = Encrypt()
     private let cryptoUtils = CryptoUtils()
     private let fileManager = FileManager.default
     private let networkAPI: NetworkAPI
-   
+    private lazy var urlSession = URLSession(
+           configuration: .default,
+           delegate: self,
+           delegateQueue: .main
+       )
     
     private var progressHandlersByTaskID = [Int : ProgressHandler]()
 
@@ -120,3 +127,4 @@ public class Upload: NSObject {
     
     
 }
+
