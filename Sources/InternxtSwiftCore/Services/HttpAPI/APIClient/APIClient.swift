@@ -25,12 +25,12 @@ public struct APIClientError: Error {
 @available(macOS 10.15, *)
 struct APIClient {
     private let urlSession: URLSession
-    private let token: String
+    private let authorizationHeaderValue: String?
         
     init(urlSession: URLSession = URLSession.shared,
-             token: String = "") {
+             authorizationHeaderValue: String? = nil) {
         self.urlSession = urlSession
-        self.token = token
+        self.authorizationHeaderValue = authorizationHeaderValue
     }
     
   
@@ -76,9 +76,12 @@ struct APIClient {
         var urlRequest = URLRequest(url: url )
         urlRequest.httpMethod = endpoint.method.rawValue.lowercased()
         
-        if(self.token.isEmpty == false) {
-            urlRequest.setValue("Bearer \(self.token)", forHTTPHeaderField:"Authorization")
+       
+        
+        if self.authorizationHeaderValue != nil {
+            urlRequest.setValue(self.authorizationHeaderValue, forHTTPHeaderField:"Authorization")
         }
+        
         if endpoint.body != nil {
             print("Endpoint body \(String(data: endpoint.body!, encoding: .utf8))")
             urlRequest.httpBody = endpoint.body!

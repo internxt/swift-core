@@ -7,32 +7,113 @@
 
 import Foundation
 
+
+
+public typealias Percentage = Double
+public typealias ProgressHandler = (Percentage) -> Void
+
 @available(macOS 10.15, *)
-public struct Upload {
+extension Upload: URLSessionTaskDelegate {
+    public func urlSession(
+            _ session: URLSession,
+            task: URLSessionTask,
+            didSendBodyData bytesSent: Int64,
+            totalBytesSent: Int64,
+            totalBytesExpectedToSend: Int64
+    ) {
+            let progress = Double(totalBytesSent) / Double(totalBytesExpectedToSend)
+            let handler = progressHandlersByTaskID[task.taskIdentifier]
+            handler?(progress)
+        }
+}
+
+@available(macOS 10.15, *)
+public class Upload: NSObject {
+    private let urlSession = URLSession.shared
     private let encrypt = Encrypt()
     private let cryptoUtils = CryptoUtils()
-    
+    private let fileManager = FileManager.default
+    private let networkAPI: NetworkAPI
    
-    func start( bucketId: String, mnemonic: String, filepath: String) throws -> Void {
-        let inputStream = InputStream(url: URL(fileURLWithPath: filepath))
-        
-        let outputFilePath = FileManager.default.temporaryDirectory
-                .appendingPathComponent(UUID().uuidString)
-                .appendingPathExtension("enc")
-        
-        let outputStream = OutputStream(url: outputFilePath, append: true)
-        
-        // Generate random index, IV and fileKey
-        let index = cryptoUtils.getRandomBytes(32)
-        if(index == nil) {
-            throw UploadError.InvalidIndex
-        }
-        let fullHexString = cryptoUtils.bytesToHexString(index!)
-        let hexIv = fullHexString.prefix(upTo: fullHexString.index(fullHexString.startIndex, offsetBy: 32))
-        let iv = cryptoUtils.hexStringToBytes(String(hexIv))
-        
-        let fileKey = try encrypt.generateFileKey(mnemonic: mnemonic, bucketId: bucketId, index: index!)
+    
+    private var progressHandlersByTaskID = [Int : ProgressHandler]()
+
+    init(networkAPI: NetworkAPI) {
+        self.networkAPI = networkAPI
+    }
+    func start(index: [UInt8], bucketId: String, mnemonic: String, filepath: String, debug: Bool = false, progressHandler: ProgressHandler? = nil) async throws -> FinishUploadResponse {
+        let source = URL(fileURLWithPath: filepath)
+         
         
         // File is encrypted at outputFilePath, make sure by reverse verifying the content hash
+        let fileSize = source.fileSize
+    
+        guard let hashInputStream = InputStream(fileAtPath: filepath) else {
+            throw UploadError.CannotGenerateFileHash
+        }
+        let fileHash = encrypt.getFileContentHash(stream: hashInputStream)
+        let uploadStart = try await networkAPI.startUpload(bucketId: bucketId, uploadSize: Int(fileSize), debug: debug)
+        
+        guard let uploadUrl = uploadStart.url else {
+            throw UploadError.MissingUploadUrl
+        }
+        
+        let successUpload = try await self.uploadEncryptedFile(uploadUrl: uploadUrl, encryptedFile: source, progressHandler: progressHandler)
+        
+        if successUpload == false {
+            throw UploadError.UploadNotSuccessful
+        }
+        
+        var shards: Array<ShardUploadPayload> = Array()
+        shards.append(ShardUploadPayload(
+            hash: cryptoUtils.bytesToHexString(Array(fileHash)),
+            uuid: uploadStart.uuid
+        ))
+        
+        return try await networkAPI.finishUpload(bucketId: bucketId, payload: FinishUploadPayload(
+                index:  cryptoUtils.bytesToHexString(index),
+                shards: shards
+            )
+        )
     }
+    
+    
+    private func uploadEncryptedFile(uploadUrl: String, encryptedFile: URL, progressHandler: ProgressHandler? = nil) async throws -> Bool {
+        return try await withCheckedThrowingContinuation { (continuation) in
+            var request = URLRequest(
+                url: URL(string: uploadUrl)!,
+                cachePolicy: .reloadIgnoringLocalCacheData
+            )
+            
+            request.httpMethod = "POST"
+            request.setValue("application/octet-stream", forHTTPHeaderField: "Content-Type")
+            
+            let task = urlSession.uploadTask(
+                with: request,
+                fromFile: encryptedFile,
+                completionHandler: { data, res, error in
+                    guard let error = error else {
+                        let response = res as? HTTPURLResponse
+                        if response?.statusCode != 200 {
+                            return continuation.resume(with: .failure(UploadError.UploadNotSuccessful))
+                        } else {
+                            return continuation.resume(with: .success(true))
+                        }
+                        
+                    }
+                    
+                    continuation.resume(throwing: error)
+                }
+            )
+            
+            if progressHandler != nil {
+                progressHandlersByTaskID[task.taskIdentifier] = progressHandler
+            }
+            
+            
+            task.resume()
+        }
+    }
+    
+    
 }

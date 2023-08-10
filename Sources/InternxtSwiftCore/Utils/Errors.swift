@@ -14,6 +14,7 @@ enum CryptoError: Error {
     case badIndex(String)
     case encryptionFailed
     case decryptionFailed
+    case bytesNotMatching
 }
 
 
@@ -38,6 +39,14 @@ enum ExtensionError: Error {
 
 enum UploadError: Error {
     case InvalidIndex
+    case CannotGenerateFileHash
+    case MissingUploadUrl
+    case UploadNotSuccessful
 }
 
 
+enum NetworkFacadeError: Error {
+    case EncryptionFailed
+    case FailedToOpenEncryptOutputStream
+    case EncryptedFileNotSameSizeAsOriginal
+}

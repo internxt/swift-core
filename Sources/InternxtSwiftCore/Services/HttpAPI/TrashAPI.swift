@@ -14,7 +14,7 @@ public struct TrashAPI {
     
     public init(baseUrl: String, authToken: String) {
         self.baseUrl = baseUrl
-        self.apiClient = APIClient(urlSession: URLSession.shared, token: authToken)
+        self.apiClient = APIClient(urlSession: URLSession.shared, authorizationHeaderValue: "Bearer \(authToken)")
     }
     
     public func trashItems(itemsToTrash: AddItemsToTrashPayload, debug: Bool = false) async throws -> Bool {

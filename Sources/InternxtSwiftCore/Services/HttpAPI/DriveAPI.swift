@@ -14,7 +14,7 @@ public struct DriveAPI {
     
     public init(baseUrl: String, authToken: String) {
         self.baseUrl = baseUrl
-        self.apiClient = APIClient(urlSession: URLSession.shared, token: authToken)
+        self.apiClient = APIClient(urlSession: URLSession.shared, authorizationHeaderValue: "Bearer \(authToken)")
     }
     
     /// Get paginated files inside the given folder
@@ -70,7 +70,7 @@ public struct DriveAPI {
         return try await apiClient.fetch(type: GetFolderMetaByIdResponse.self, endpoint, debugResponse: debug)
     }
     
-    /// Retrieves the filer metadata by the file id
+    /// Retrieves the file metadata by the file id
     public func getFileMetaById(id: String, debug: Bool = false)  async throws -> GetFileMetaByIdResponse {
         let endpoint = Endpoint(
             path: "\(self.baseUrl)/storage/files/\(id)/metadata",

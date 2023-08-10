@@ -31,7 +31,15 @@ final class EncryptionTests: XCTestCase {
         let result = try sut.generateFileKey(mnemonic: mnemonic, bucketId: bucketId, index: cryptoUtils.hexStringToBytes(indexHex))
         
         XCTAssertEqual(cryptoUtils.bytesToHexString(result), expected)
+    }
     
+    
+    func testGetFileContentHashCorrectly() throws {
+        let source = InputStream(data: Data("imTheContentOfThisFile".utf8))
+        let expectedValue = "4eef3af75813f505b9050f575b8d2e782c9db5d7"
+        let result = sut.getFileContentHash(stream: source)
+    print("stuff")
+        XCTAssertEqual(cryptoUtils.bytesToHexString(Array(result)), expectedValue)
     }
 
 }

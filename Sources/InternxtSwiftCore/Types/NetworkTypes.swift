@@ -27,12 +27,23 @@ public struct StartUploadResponse: Decodable {
 public struct ShardUploadPayload: Codable {
     public let hash: String
     public let uuid: String
+    
+    init(hash: String, uuid: String) {
+        self.hash = hash
+        self.uuid = uuid
+    }
 }
 
 
 public struct FinishUploadPayload: Codable {
     public let index: String
     public let shards: Array<ShardUploadPayload>
+    
+    public init(index: String, shards: Array<ShardUploadPayload>) throws {
+       
+        self.index = index
+        self.shards = shards
+    }
 }
 
 
