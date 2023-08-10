@@ -45,6 +45,16 @@ public struct DriveAPI {
         return try await apiClient.fetch(type: CreateFolderResponse.self, endpoint, debugResponse: debug)
     }
     
+    /// Creates a file inside the given parentFolderId with the given name
+    public func createFile(createFile: CreateFileData, debug: Bool = false) async throws -> CreateFileResponse {
+        let endpoint = Endpoint(
+            path: "\(self.baseUrl)/storage/file",
+            body: CreateFilePayload(file: createFile).toJson()
+        )
+        
+        return try await apiClient.fetch(type: CreateFileResponse.self, endpoint, debugResponse: debug)
+    }
+    
     
     /// Given a folderId, updates the folder name, if the folder name conflicts with
     /// the remove folder name, an ApiClientError with 409 statusCode is throw
