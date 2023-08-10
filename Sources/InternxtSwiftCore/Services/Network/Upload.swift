@@ -97,6 +97,9 @@ public class Upload: NSObject {
                 completionHandler: { data, res, error in
                     guard let error = error else {
                         let response = res as? HTTPURLResponse
+                        print("UPLOAD RESPONSE")
+                        print(response?.statusCode)
+                        print(data)
                         if response?.statusCode != 200 {
                             return continuation.resume(with: .failure(UploadError.UploadNotSuccessful))
                         } else {
