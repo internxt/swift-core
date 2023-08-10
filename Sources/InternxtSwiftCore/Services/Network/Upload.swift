@@ -88,7 +88,7 @@ public class Upload: NSObject {
                 cachePolicy: .reloadIgnoringLocalCacheData
             )
             
-            request.httpMethod = "POST"
+            request.httpMethod = "PUT"
             
             let task = urlSession.uploadTask(
                 with: request,
