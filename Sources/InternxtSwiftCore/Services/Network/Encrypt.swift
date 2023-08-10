@@ -20,7 +20,10 @@ public struct Encrypt {
     private let keyDerivation = KeyDerivation()
     private let hmac = HMAC()
     
-    func start(input: InputStream, output: OutputStream, config: EncryptConfig) async throws -> EncryptResultStatus  {
+    public init() {
+        
+    }
+    public func start(input: InputStream, output: OutputStream, config: EncryptConfig) async throws -> EncryptResultStatus  {
         
         return try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<EncryptResultStatus, Error>) -> Void in
             AESCipher().encryptFromStream(input: input, output: output, key: config.key, iv: config.iv, callback: {(error, status) in
@@ -75,7 +78,7 @@ public struct Encrypt {
     }
     
     
-    func encrypt(string: String, password: String, salt: [UInt8], iv: Data) throws -> Data{
+    public func encrypt(string: String, password: String, salt: [UInt8], iv: Data) throws -> Data{
 
         
         let key = keyDerivation.pbkdf2(password: password, salt: salt, rounds: 2145, derivedKeyLength: 32)
