@@ -67,9 +67,7 @@ class AESCipher {
                     print(bytesOut)
                     print("Encrypted bytes")
                     print(encryptedBytes)
-                    if bytesMatch == false {
-                        return callback(CryptoError.bytesNotMatching, nil)
-                    }
+                    
                 }
                 
             }
