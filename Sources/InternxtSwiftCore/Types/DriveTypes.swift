@@ -121,15 +121,26 @@ public struct GetFileMetaByIdResponse: Decodable {
 }
 
 
-public struct CreateFileData: Decodable {
+public struct CreateFileData: Encodable {
     public let fileId: String
-    public let type: String
+    public let type: String?
     public let bucket: String
     public let size: Int
     public let folder_id: Int
-    public let name: String
+    public let name: String?
     public let plain_name: String
     public let encrypt_version: String
+    
+    init(fileId: String, type: String?, bucket: String, size: Int, folderId: Int, name: String, plainName: String, encryptVersion: String = "03-aes") {
+        self.fileId = fileId
+        self.type = type
+        self.bucket = bucket
+        self.size = size
+        self.folder_id = folderId
+        self.name = name
+        self.plain_name = plainName
+        self.encrypt_version = encryptVersion
+    }
 }
 
 public struct CreateFilePayload: Encodable {
