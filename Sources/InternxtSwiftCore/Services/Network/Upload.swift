@@ -30,7 +30,6 @@ extension Upload: URLSessionTaskDelegate {
 
 @available(macOS 10.15, *)
 public class Upload: NSObject {
-    private let urlSession = URLSession.shared
     private let encrypt = Encrypt()
     private let cryptoUtils = CryptoUtils()
     private let fileManager = FileManager.default
