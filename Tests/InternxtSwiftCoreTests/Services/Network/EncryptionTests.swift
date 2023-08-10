@@ -11,7 +11,7 @@ import XCTest
 final class EncryptionTests: XCTestCase {
     let sut = Encrypt()
     let cryptoUtils = CryptoUtils()
-
+    
     func testGenerateFileKeyShouldFailIfNotCorrectLength() throws {
         let mnemonic = "essence renew fish any airport nature tape gallery tobacco inside there enlist hub bring meat wing crack review logic open husband excite bag reflect"
         
@@ -38,8 +38,18 @@ final class EncryptionTests: XCTestCase {
         let source = InputStream(data: Data("imTheContentOfThisFile".utf8))
         let expectedValue = "4eef3af75813f505b9050f575b8d2e782c9db5d7"
         let result = sut.getFileContentHash(stream: source)
-    print("stuff")
+        
         XCTAssertEqual(cryptoUtils.bytesToHexString(Array(result)), expectedValue)
+    }
+    
+    func testEncryptStringCorrectly() throws {
+        let ivHex = "d139cb9a2cd17092e79e1861cf9d7023"
+        let saltHex = "38dce0391b49efba88dbc8c39ebf868f0267eb110bb0012ab27dc52a528d61b1d1ed9d76f400ff58e3240028442b1eab9bb84e111d9dadd997982dbde9dbd25e"
+        let expectedBase64 = "ONzgORtJ77qI28jDnr+GjwJn6xELsAEqsn3FKlKNYbHR7Z129AD/WOMkAChEKx6rm7hOER2drdmXmC296dvSXtE5y5os0XCS554YYc+dcCOL3K8m3lqzQeazS5SkAzquf98NCcKSKe7a6sfSYtoS"
+        
+        let result = try sut.encrypt(string: "encryptthistext", password: "password123", salt: cryptoUtils.hexStringToBytes(saltHex), iv: Data(cryptoUtils.hexStringToBytes(ivHex)))
+        
+        XCTAssertEqual(result.base64EncodedString(), expectedBase64)
     }
 
 }

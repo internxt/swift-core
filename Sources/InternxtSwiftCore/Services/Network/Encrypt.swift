@@ -15,14 +15,15 @@ struct EncryptConfig {
 
 @available(macOS 10.15, *)
 public struct Encrypt {
-    private let AES = AESCipher()
+    
     private let cryptoUtils = CryptoUtils()
+    private let keyDerivation = KeyDerivation()
     private let hmac = HMAC()
     
     func start(input: InputStream, output: OutputStream, config: EncryptConfig) async throws -> EncryptResultStatus  {
         
         return try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<EncryptResultStatus, Error>) -> Void in
-            AES.encryptFromStream(input: input, output: output, key: config.key, iv: config.iv, callback: {(error, status) in
+            AESCipher().encryptFromStream(input: input, output: output, key: config.key, iv: config.iv, callback: {(error, status) in
                 if(error != nil) {
                     
                     continuation.resume(throwing: error!)
@@ -71,5 +72,23 @@ public struct Encrypt {
         }
         
         return hmac.ripemd160(message: Data(sha256Hash))
+    }
+    
+    
+    func encrypt(string: String, password: String, salt: [UInt8], iv: Data) throws -> Data{
+
+        
+        let key = keyDerivation.pbkdf2(password: password, salt: salt, rounds: 2145, derivedKeyLength: 32)
+        let sealedMessage = try AES.GCM.seal(Data(string.utf8), using: SymmetricKey(data: key), nonce: AES.GCM.Nonce(data: iv))
+            
+        var mergedData = Data()
+        
+        mergedData.append(salt, count: salt.count)
+        mergedData.append(Data(iv))
+        mergedData.append(sealedMessage.tag)
+        mergedData.append(sealedMessage.ciphertext)
+        
+        
+        return mergedData
     }
 }

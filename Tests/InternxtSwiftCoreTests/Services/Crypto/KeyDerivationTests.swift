@@ -22,6 +22,17 @@ final class KeyDerivationTests: XCTestCase {
         
         XCTAssertEqual(utils.bytesToHexString(result), "23c999c8753e1deec3aa8638cd4407f241b0184ad35f7b71be9af5266e6ad31c8025a88e1fe92a03a3815fa35d1b823294f6b4ba79619d52b911f215fe56ae24")
         
-    }    
+    }
+    
+    func testPbkdf2WithSaltBytes() throws {
+        let password = "password123"
+        let saltBytes: [UInt8] = [56, 220, 224, 57, 27, 73, 239, 186, 136, 219, 200, 195, 158, 191, 134, 143, 2, 103, 235, 17, 11, 176, 1, 42, 178, 125, 197, 42, 82, 141, 97, 177, 209, 237, 157, 118, 244, 0, 255, 88, 227, 36, 0, 40, 68, 43, 30, 171, 155, 184, 78, 17, 29, 157, 173, 217, 151, 152, 45, 189, 233, 219, 210, 94]
+        let rounds = 2145
+        let derivedKeyLength = 32
+        let result = sut.pbkdf2(password: password, salt: saltBytes, rounds: rounds, derivedKeyLength: derivedKeyLength)
+        
+        XCTAssertEqual(utils.bytesToHexString(result), "0ae7fc4587bbec27d6eb8c471eafdf35c7cbb37f0fe2f8535d67ca3114801e8c")
+        
+    }
 
 }
