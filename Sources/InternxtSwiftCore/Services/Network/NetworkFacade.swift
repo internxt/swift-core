@@ -49,6 +49,6 @@ public struct NetworkFacade {
             throw NetworkFacadeError.EncryptedFileNotSameSizeAsOriginal
         }
         
-        return try await upload.start(index: index, bucketId: bucketId, mnemonic: mnemonic, encryptedFileURL: encryptedOutput)
+        return try await upload.start(index: index, bucketId: bucketId, mnemonic: mnemonic, encryptedFileURL: encryptedOutput, progressHandler: progressHandler)
     }
 }
