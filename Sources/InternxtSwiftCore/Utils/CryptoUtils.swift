@@ -12,6 +12,11 @@ import IDZSwiftCommonCrypto
 public struct CryptoUtils {
     private let keyDerivation = KeyDerivation()
     private let hmac = HMAC()
+    
+    public init() {
+        
+    }
+    
     public func hexStringToBytes(_ hexString: String) -> [UInt8] {
         return arrayFrom(hexString: hexString)
     }
