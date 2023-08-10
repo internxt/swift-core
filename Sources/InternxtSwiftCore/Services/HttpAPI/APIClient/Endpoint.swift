@@ -7,19 +7,20 @@
 
 import Foundation
 
-enum HTTPMethod: String {
-    case POST
-    case GET
-}
-protocol Endpoint {
-    var path: String { get }
-    var method: HTTPMethod { get }
-    var body: Codable? { get }
+public enum HTTPMethod: String {
+    case POST = "POST"
+    case GET = "GET"
 }
 
 
-extension Endpoint {
-    var path: String { "" }
-    var method: HTTPMethod { .GET }
-    var parameters: [String: AnyObject]? { nil }
+public struct Endpoint {
+    public var path: String
+    public var method: HTTPMethod
+    public var body: Data?
+    init(path: String, method: HTTPMethod = HTTPMethod.GET, body: Data? = nil) {
+        self.path = path
+        self.method = method
+        self.body = body
+    }
 }
+

@@ -8,10 +8,11 @@
 import Foundation
 
 @available(macOS 10.15, *)
-struct Upload {
+public struct Upload {
     private let encrypt = Encrypt()
     private let cryptoUtils = CryptoUtils()
-    private let networkApi = NetworkAPI()
+    
+   
     func start( bucketId: String, mnemonic: String, filepath: String) throws -> Void {
         let inputStream = InputStream(url: URL(fileURLWithPath: filepath))
         
@@ -31,5 +32,7 @@ struct Upload {
         let iv = cryptoUtils.hexStringToBytes(String(hexIv))
         
         let fileKey = try encrypt.generateFileKey(mnemonic: mnemonic, bucketId: bucketId, index: index!)
+        
+        // File is encrypted at outputFilePath, make sure by reverse verifying the content hash
     }
 }

@@ -9,7 +9,7 @@ import Foundation
 import IDZSwiftCommonCrypto
 
 @available(macOS 10.15, *)
-struct CryptoUtils {
+public struct CryptoUtils {
     private let keyDerivation = KeyDerivation()
     private let hmac = HMAC()
     public func hexStringToBytes(_ hexString: String) -> [UInt8] {

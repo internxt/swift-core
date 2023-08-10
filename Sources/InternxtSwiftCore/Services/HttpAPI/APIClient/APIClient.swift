@@ -8,6 +8,20 @@
 import Foundation
 import Combine
 
+public struct APIClientError: Error {
+    public var statusCode: Int
+    private var message: String
+    public var localizedDescription: String {
+        return self.message
+    }
+    public init(statusCode: Int, message: String) {
+        self.statusCode = statusCode
+        self.message = message
+    }
+}
+
+
+
 @available(macOS 10.15, *)
 struct APIClient {
     private let urlSession: URLSession
@@ -20,50 +34,57 @@ struct APIClient {
     }
     
   
-    func fetch<T: Decodable>(type: T.Type , _ endpoint: Endpoint) async throws -> T?  {
-       
+    func fetch<T: Decodable>(type: T.Type? , _ endpoint: Endpoint, debugResponse: Bool?) async throws -> T  {
+        let request: URLRequest = try buildURLRequest(endpoint: endpoint)
+        
         return try await withCheckedThrowingContinuation { continuation in
-            let request = self.buildURLRequest(endpoint: endpoint)
-                    
-            if(request == nil) {
-                continuation.resume(throwing: APIError.failedRequest("Unable to build request"))
-            }
             
-            let task = URLSession(configuration: .default).dataTask(with: request!) { (data, response, error) in
+            let task = URLSession(configuration: .default).dataTask(with: request) { (data, response, error) in
                 if let error = error {
                     continuation.resume(with: .failure(APIError.failedRequest(error.localizedDescription)))
                     return
                 }
-                
+                let httpResponse = response as! HTTPURLResponse
+
                 do {
-                    if(data == nil) {
-                        continuation.resume(with:.success(nil))
-                        return
+                    
+                    if data == nil {
+                        throw APIClientError(statusCode: httpResponse.statusCode, message: "Response is empty")
+                    }
+                    
+                    if(debugResponse == true) {
+                        print("\(endpoint.path) response is \(String(decoding: data!, as: UTF8.self))")
                     }
                     let json = try JSONDecoder().decode(T.self, from: data!)
                     continuation.resume(with:.success(json))
                 } catch {
                     print("Unable to Decode Response \(error)")
-                    continuation.resume(with:.failure(APIError.invalidResponse))
+                    continuation.resume(with:.failure(APIClientError(statusCode: httpResponse.statusCode, message: error.localizedDescription)))
                     
                 }
             }
+            task.resume()
         }
-        
-        
-        
     }
     
     
-    private func buildURLRequest(endpoint: Endpoint) -> URLRequest? {
-        var urlRequest = URLRequest(url: URL(string: endpoint.path)!)
-        urlRequest.httpMethod = endpoint.method.rawValue
-                
-        if let body = endpoint.parameters,
-            !body.isEmpty,
-            let postData = (try? JSONSerialization.data(withJSONObject: endpoint.body as Any, options: [])) {
-            urlRequest.httpBody = postData
+    private func buildURLRequest(endpoint: Endpoint) throws -> URLRequest {
+        guard let url = URL(string: endpoint.path) else {
+            throw APIClientError(statusCode: -1, message: "Unable to build URL from \(endpoint.path)")
         }
+   
+        var urlRequest = URLRequest(url: url )
+        urlRequest.httpMethod = endpoint.method.rawValue.lowercased()
+        
+        if(self.token.isEmpty == false) {
+            urlRequest.setValue("Bearer \(self.token)", forHTTPHeaderField:"Authorization")
+        }
+        if endpoint.body != nil {
+            print("Endpoint body \(String(data: endpoint.body!, encoding: .utf8))")
+            urlRequest.httpBody = endpoint.body!
+        }
+            
+        
         
         urlRequest.setValue("application/json", forHTTPHeaderField: "Content-Type")
         

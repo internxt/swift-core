@@ -1,5 +1,5 @@
 //
-//  ConfigLoader.swift
+//  CoreConfigLoader.swift
 //  
 //
 //  Created by Robert Garcia on 1/8/23.
@@ -16,7 +16,7 @@ public struct Config {
 var loadedConfig: Mirror? = nil
 
 
-struct ConfigLoader {
+public struct CoreConfigLoader {
     func load(config: Config) {
         loadedConfig = Mirror(reflecting: config)
     }

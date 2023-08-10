@@ -11,7 +11,7 @@ import XCTest
 
 final class ConfigLoaderTests: XCTestCase {
 
-    let sut = ConfigLoader()
+    let sut = CoreConfigLoader()
 
     func testMustSetAConfig() throws {
         XCTAssertThrowsError(try sut.getConfigProperty(configKey: "Hello"))

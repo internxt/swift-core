@@ -4,6 +4,6 @@
 public struct InternxtSwiftCore {
     
     public func initialize(config: Config) {
-        ConfigLoader().load(config: config)
+        CoreConfigLoader().load(config: config)
     }
 }
