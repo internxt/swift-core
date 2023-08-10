@@ -23,6 +23,7 @@ extension Upload: URLSessionTaskDelegate {
     ) {
             let progress = Double(totalBytesSent) / Double(totalBytesExpectedToSend)
             let handler = progressHandlersByTaskID[task.taskIdentifier]
+            print("Found handler \(handler)")
             handler?(progress)
         }
 }
@@ -96,10 +97,6 @@ public class Upload: NSObject {
                 completionHandler: { data, res, error in
                     guard let error = error else {
                         let response = res as? HTTPURLResponse
-                        print("UPLOAD RESPONSE")
-                        print(uploadUrl)
-                        print(response?.statusCode)
-                        print(data)
                         if response?.statusCode != 200 {
                             return continuation.resume(with: .failure(UploadError.UploadNotSuccessful))
                         } else {
@@ -113,6 +110,7 @@ public class Upload: NSObject {
             )
             
             if progressHandler != nil {
+                print("Adding progress handler")
                 progressHandlersByTaskID[task.taskIdentifier] = progressHandler
             }
             
