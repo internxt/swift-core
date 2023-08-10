@@ -22,7 +22,7 @@ public struct NetworkFacade {
         self.upload = Upload(networkAPI: networkAPI)
     }
     
-    public func uploadFile(input: InputStream, encryptedOutputPath: String, fileSize: Int, bucketId: String, progressHandler: @escaping ProgressHandler) async throws -> FinishUploadResponse {
+    public func uploadFile(input: InputStream, encryptedOutput: URL, fileSize: Int, bucketId: String, progressHandler: @escaping ProgressHandler) async throws -> FinishUploadResponse {
         // Generate random index, IV and fileKey
         guard let index = cryptoUtils.getRandomBytes(32) else {
             throw UploadError.InvalidIndex
@@ -34,7 +34,7 @@ public struct NetworkFacade {
         
         let fileKey = try encrypt.generateFileKey(mnemonic: mnemonic, bucketId: bucketId, index: index)
         
-        guard let encryptedOutputStream = OutputStream(toFileAtPath: encryptedOutputPath, append: true) else {
+        guard let encryptedOutputStream = OutputStream(url: encryptedOutput, append: true) else {
             throw NetworkFacadeError.FailedToOpenEncryptOutputStream
         }
         let encryptStatus = try await encrypt.start(input: input, output: encryptedOutputStream, config: EncryptConfig(key: fileKey, iv: iv))
@@ -43,12 +43,12 @@ public struct NetworkFacade {
             throw NetworkFacadeError.EncryptionFailed
         }
         
-        let encryptedFileSize = URL(fileURLWithPath: encryptedOutputPath).fileSize
+        let encryptedFileSize = encryptedOutput.fileSize
         
         if fileSize != encryptedFileSize {
             throw NetworkFacadeError.EncryptedFileNotSameSizeAsOriginal
         }
         
-        return try await upload.start(index: index, bucketId: bucketId, mnemonic: mnemonic, filepath: encryptedOutputPath)
+        return try await upload.start(index: index, bucketId: bucketId, mnemonic: mnemonic, encryptedFileURL: encryptedOutput)
     }
 }

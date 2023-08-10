@@ -41,14 +41,14 @@ public class Upload: NSObject {
     init(networkAPI: NetworkAPI) {
         self.networkAPI = networkAPI
     }
-    func start(index: [UInt8], bucketId: String, mnemonic: String, filepath: String, debug: Bool = false, progressHandler: ProgressHandler? = nil) async throws -> FinishUploadResponse {
-        let source = URL(fileURLWithPath: filepath)
+    func start(index: [UInt8], bucketId: String, mnemonic: String, encryptedFileURL: URL, debug: Bool = false, progressHandler: ProgressHandler? = nil) async throws -> FinishUploadResponse {
+        let source = encryptedFileURL
          
         
         // File is encrypted at outputFilePath, make sure by reverse verifying the content hash
         let fileSize = source.fileSize
     
-        guard let hashInputStream = InputStream(fileAtPath: filepath) else {
+        guard let hashInputStream = InputStream(url: encryptedFileURL) else {
             throw UploadError.CannotGenerateFileHash
         }
         let fileHash = encrypt.getFileContentHash(stream: hashInputStream)
