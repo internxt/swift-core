@@ -54,7 +54,10 @@ public class Upload: NSObject {
         let fileHash = encrypt.getFileContentHash(stream: hashInputStream)
         let uploadStart = try await networkAPI.startUpload(bucketId: bucketId, uploadSize: Int(fileSize), debug: debug)
         
-        guard let uploadUrl = uploadStart.url else {
+        guard let uploadResult = uploadStart.uploads.first else {
+            throw UploadError.MissingUploadUrl
+        }
+        guard let uploadUrl = uploadResult.url else {
             throw UploadError.MissingUploadUrl
         }
         
@@ -67,7 +70,7 @@ public class Upload: NSObject {
         var shards: Array<ShardUploadPayload> = Array()
         shards.append(ShardUploadPayload(
             hash: cryptoUtils.bytesToHexString(Array(fileHash)),
-            uuid: uploadStart.uuid
+            uuid: uploadResult.uuid
         ))
         
         return try await networkAPI.finishUpload(bucketId: bucketId, payload: FinishUploadPayload(
