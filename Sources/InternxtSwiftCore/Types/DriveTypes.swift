@@ -131,7 +131,7 @@ public struct CreateFileData: Encodable {
     public let plain_name: String
     public let encrypt_version: String
     
-    public init(fileId: String, type: String?, bucket: String, size: Int, folderId: Int, name: String, plainName: String, encryptVersion: String = "03-aes") {
+    public init(fileId: String, type: String?, bucket: String, size: Int, folderId: Int, name: String?, plainName: String, encryptVersion: String = "03-aes") {
         self.fileId = fileId
         self.type = type
         self.bucket = bucket
