@@ -39,6 +39,7 @@ public struct DriveAPI {
     public func createFolder(parentFolderId: Int, folderName: String, debug: Bool = false) async throws -> CreateFolderResponse {
         let endpoint = Endpoint(
             path: "\(self.baseUrl)/storage/folder",
+            method: .POST,
             body: CreateFolderPayload(parentFolderId: parentFolderId, folderName: folderName).toJson()
         )
         
@@ -49,6 +50,7 @@ public struct DriveAPI {
     public func createFile(createFile: CreateFileData, debug: Bool = false) async throws -> CreateFileResponse {
         let endpoint = Endpoint(
             path: "\(self.baseUrl)/storage/file",
+            method: .POST,
             body: CreateFilePayload(file: createFile).toJson()
         )
         
