@@ -18,7 +18,7 @@ public struct NetworkAPI {
         self.apiClient = APIClient(urlSession: URLSession.shared, authorizationHeaderValue: "Basic \(basicAuthToken)")
     }
     
-    public func startUpload(bucketId: String,  uploadSize: Int,parts: Int = 1, debug: Bool = true) async throws -> StartUploadResponse {
+    public func startUpload(bucketId: String,  uploadSize: Int,parts: Int = 1, debug: Bool = false) async throws -> StartUploadResponse {
         let endpoint = Endpoint(
             path: "\(self.baseUrl)/v2/buckets/\(bucketId)/files/start?multiparts=\(String(parts))",
             method: .POST,
@@ -33,7 +33,7 @@ public struct NetworkAPI {
         return try await apiClient.fetch(type: StartUploadResponse.self, endpoint, debugResponse: debug)
     }
     
-    public func finishUpload(bucketId: String, payload: FinishUploadPayload, debug: Bool = true) async throws -> FinishUploadResponse {
+    public func finishUpload(bucketId: String, payload: FinishUploadPayload, debug: Bool = false) async throws -> FinishUploadResponse {
         let endpoint = Endpoint(
             path: "\(self.baseUrl)/v2/buckets/\(bucketId)/files/finish",
             method: .POST,
