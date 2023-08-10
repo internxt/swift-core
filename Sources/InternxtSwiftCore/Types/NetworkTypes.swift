@@ -20,7 +20,7 @@ public struct StartUploadPayload: Codable {
 public struct StartUploadResult: Decodable {
     public let uuid: String
     public let url: String?
-    public let urls: Array<String>
+    public let urls: Array<String>?
     public let UploadId: String?
 }
 public struct StartUploadResponse: Decodable {
