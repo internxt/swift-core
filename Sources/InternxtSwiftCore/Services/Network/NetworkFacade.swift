@@ -11,17 +11,14 @@ import Foundation
 
 public struct NetworkFacade {
     private let apiUrl: String
-    private let bridgeUser: String
     private let encrypt: Encrypt = Encrypt()
     private let cryptoUtils: CryptoUtils = CryptoUtils()
     private let mnemonic: String
     private let upload: Upload
     
-    init(apiUrl: String , bridgeUser: String, userId: String, mnemonic: String, networkAPI: NetworkAPI){
+    public init(apiUrl: String , mnemonic: String, networkAPI: NetworkAPI){
         self.apiUrl = apiUrl
-        self.bridgeUser = bridgeUser
         self.mnemonic = mnemonic
-        
         self.upload = Upload(networkAPI: networkAPI)
     }
     
