@@ -18,7 +18,7 @@ public struct TrashAPI {
     }
     
     public func trashItems(itemsToTrash: AddItemsToTrashPayload, debug: Bool = false) async throws -> Bool {
-        let endpoint = Endpoint(path: "\(self.baseUrl)/storage/trash/add", body: itemsToTrash.toJson())
+        let endpoint = Endpoint(path: "\(self.baseUrl)/storage/trash/add",method: .POST, body: itemsToTrash.toJson())
         
         do {
             try await apiClient.fetch(type: AddItemsToTrashResponse.self, endpoint, debugResponse: debug)
