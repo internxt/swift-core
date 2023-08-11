@@ -10,16 +10,14 @@ import Foundation
 @available(macOS 10.15, *)
 
 public struct NetworkFacade {
-    private let apiUrl: String
     private let encrypt: Encrypt = Encrypt()
     private let cryptoUtils: CryptoUtils = CryptoUtils()
     private let mnemonic: String
     private let upload: Upload
     
-    public init(apiUrl: String , mnemonic: String, networkAPI: NetworkAPI){
-        self.apiUrl = apiUrl
+    public init(mnemonic: String, networkAPI: NetworkAPI, urlSession: URLSession? = nil){
         self.mnemonic = mnemonic
-        self.upload = Upload(networkAPI: networkAPI)
+        self.upload = Upload(networkAPI: networkAPI, urlSession: urlSession)
     }
     
     public func uploadFile(input: InputStream, encryptedOutput: URL, fileSize: Int, bucketId: String, progressHandler: @escaping ProgressHandler) async throws -> FinishUploadResponse {
@@ -44,7 +42,6 @@ public struct NetworkFacade {
         }
         
         let encryptedFileSize = encryptedOutput.fileSize
-        
         if fileSize != encryptedFileSize {
             throw NetworkFacadeError.EncryptedFileNotSameSizeAsOriginal
         }

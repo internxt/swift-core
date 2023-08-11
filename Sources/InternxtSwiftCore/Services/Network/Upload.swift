@@ -7,11 +7,8 @@
 
 import Foundation
 
-
-
 public typealias Percentage = Double
 public typealias ProgressHandler = (Percentage) -> Void
-
 
 
 @available(macOS 10.15, *)
@@ -25,7 +22,6 @@ extension Upload: URLSessionTaskDelegate {
     ) {
             let progress = Double(totalBytesSent) / Double(totalBytesExpectedToSend)
             let handler = progressHandlersByTaskID[task.taskIdentifier]
-            print("Found handler \(handler)")
             handler?(progress)
         }
 }
@@ -45,21 +41,36 @@ public class Upload: NSObject  {
     
     private var progressHandlersByTaskID = [Int : ProgressHandler]()
 
-    init(networkAPI: NetworkAPI) {
+    init(networkAPI: NetworkAPI, urlSession: URLSession? = nil) {
         self.networkAPI = networkAPI
+        super.init()
+        if urlSession != nil {
+            self.urlSession = urlSession!
+        }
     }
     func start(index: [UInt8], bucketId: String, mnemonic: String, encryptedFileURL: URL, debug: Bool = false, progressHandler: ProgressHandler? = nil) async throws -> FinishUploadResponse {
         let source = encryptedFileURL
          
-        
-        // File is encrypted at outputFilePath, make sure by reverse verifying the content hash
         let fileSize = source.fileSize
     
         guard let hashInputStream = InputStream(url: encryptedFileURL) else {
             throw UploadError.CannotGenerateFileHash
         }
+        
         let fileHash = encrypt.getFileContentHash(stream: hashInputStream)
-        let uploadStart = try await networkAPI.startUpload(bucketId: bucketId, uploadSize: Int(fileSize), debug: debug)
+        var uploadStart: StartUploadResponse
+        
+        do {
+             uploadStart = try await networkAPI.startUpload(bucketId: bucketId, uploadSize: Int(fileSize), debug: debug)
+        } catch {
+            
+            guard let apiError = error as? APIClientError else {
+                throw StartUploadError(apiError: nil)
+            }
+            
+            throw StartUploadError(apiError: apiError)
+        }
+        
         
         guard let uploadResult = uploadStart.uploads.first else {
             throw UploadError.MissingUploadUrl
@@ -79,12 +90,18 @@ public class Upload: NSObject  {
             hash: cryptoUtils.bytesToHexString(Array(fileHash)),
             uuid: uploadResult.uuid
         ))
-        
-        return try await networkAPI.finishUpload(bucketId: bucketId, payload: FinishUploadPayload(
+        let finishUploadResult = try await networkAPI.finishUpload(bucketId: bucketId, payload: FinishUploadPayload(
                 index:  cryptoUtils.bytesToHexString(index),
                 shards: shards
             )
         )
+        
+        if finishUploadResult.size != Int(fileSize) {
+            throw UploadError.UploadedSizeNotMatching
+        }
+        
+        
+        return finishUploadResult
     }
     
     

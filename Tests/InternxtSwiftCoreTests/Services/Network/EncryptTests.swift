@@ -8,7 +8,7 @@
 import XCTest
 @testable import InternxtSwiftCore
 
-final class EncryptionTests: XCTestCase {
+final class EncryptTests: XCTestCase {
     let sut = Encrypt()
     let cryptoUtils = CryptoUtils()
     

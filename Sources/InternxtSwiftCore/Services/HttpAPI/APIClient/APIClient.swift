@@ -10,13 +10,15 @@ import Combine
 
 public struct APIClientError: Error {
     public var statusCode: Int
+    public var responseBody: Data
     private var message: String
     public var localizedDescription: String {
         return self.message
     }
-    public init(statusCode: Int, message: String) {
+    public init(statusCode: Int, message: String, responseBody: Data = Data()) {
         self.statusCode = statusCode
         self.message = message
+        self.responseBody = responseBody
     }
 }
 
@@ -39,7 +41,7 @@ struct APIClient {
         
         return try await withCheckedThrowingContinuation { continuation in
             
-            let task = URLSession(configuration: .default).dataTask(with: request) { (data, response, error) in
+            let task = urlSession.dataTask(with: request) { (data, response, error) in
                 if let error = error {
                     continuation.resume(with: .failure(APIError.failedRequest(error.localizedDescription)))
                     return
@@ -58,9 +60,7 @@ struct APIClient {
                     let json = try JSONDecoder().decode(T.self, from: data!)
                     continuation.resume(with:.success(json))
                 } catch {
-                    print("Unable to Decode Response \(error)")
-                    continuation.resume(with:.failure(APIClientError(statusCode: httpResponse.statusCode, message: error.localizedDescription)))
-                    
+                    continuation.resume(with:.failure(APIClientError(statusCode: httpResponse.statusCode, message: error.localizedDescription, responseBody: data ?? Data())))
                 }
             }
             task.resume()
@@ -87,8 +87,6 @@ struct APIClient {
             urlRequest.httpBody = endpoint.body!
         }
             
-        
-        
         urlRequest.setValue("application/json", forHTTPHeaderField: "Content-Type")
         
         return urlRequest

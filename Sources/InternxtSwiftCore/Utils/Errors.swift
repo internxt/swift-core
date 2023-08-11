@@ -34,19 +34,35 @@ enum APIError: Error {
 }
 
 
-enum ExtensionError: Error {
-    case InvalidHex(String)
+enum ExtensionError: Swift.Error, Equatable {
+    case InvalidHex
 }
 
 enum UploadError: Error {
     case InvalidIndex
     case CannotGenerateFileHash
+    case FailedToFinishUpload
     case MissingUploadUrl
     case UploadNotSuccessful
+    case UploadedSizeNotMatching
 }
 
 
-enum NetworkFacadeError: Error {
+public class StartUploadError: Error {
+    public var apiError: APIClientError? = nil
+    public init(apiError: APIClientError? = nil) {
+        self.apiError = apiError
+    }
+}
+
+public class FinishUploadError: Error {
+    public var apiError: APIClientError? = nil
+    public init(apiError: APIClientError? = nil) {
+        self.apiError = apiError
+    }
+}
+
+enum NetworkFacadeError: Swift.Error, Equatable {
     case EncryptionFailed
     case FailedToOpenEncryptOutputStream
     case EncryptedFileNotSameSizeAsOriginal

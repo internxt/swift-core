@@ -44,7 +44,7 @@ public struct CryptoUtils {
         let isValidHex = bucketId.isValidHex
     
         if(!isValidHex) {
-            throw ExtensionError.InvalidHex("BucketId must be a valid hex")
+            throw ExtensionError.InvalidHex
         }
         let seed = self.mnemonicToSeed(mnemonic: mnemonic, password: "")
         return getDeterministicKey(key: seed, data: self.hexStringToBytes(bucketId));
