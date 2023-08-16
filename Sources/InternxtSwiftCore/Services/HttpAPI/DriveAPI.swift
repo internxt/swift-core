@@ -64,6 +64,7 @@ public struct DriveAPI {
     public func updateFolder(folderId: String, folderName: String, debug: Bool = false) async throws -> UpdateFolderResponse {
         let endpoint = Endpoint(
             path: "\(self.baseUrl)/storage/folder/\(folderId)/meta",
+            method: .POST,
             body: UpdateFolderPayload(
                     metadata: MetadataUpdatePayload(itemName: folderName)
                     ).toJson()
