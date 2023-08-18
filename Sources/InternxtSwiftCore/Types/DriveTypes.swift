@@ -166,3 +166,22 @@ public struct CreateFileResponse: Decodable {
     public let createdAt: String
     public let deletedAt: String?
 }
+
+public struct InternxtUser: Decodable {
+    public let email: String
+    public let avatar: String
+    public let bridgeUser: String
+    public let bucket: String
+    public let createdAt: String
+    public let name: String
+    public let lastname: String
+    public let root_folder_id: Int
+    public let userId: String
+    public let username: String
+    public let uuid: String
+}
+
+public struct RefreshUserResponse: Decodable {
+    public let token: String
+    public let user: InternxtUser
+}
