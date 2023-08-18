@@ -92,4 +92,13 @@ public struct DriveAPI {
         
         return try await apiClient.fetch(type: GetFileMetaByIdResponse.self, endpoint, debugResponse: debug)
     }
+    
+    public func refreshUser(debug: Bool = false) async throws -> RefreshUserResponse  {
+        let endpoint = Endpoint(
+            path: "\(self.baseUrl)/api/user/refresh",
+            method: .GET
+        )
+        
+        return try await apiClient.fetch(type: RefreshUserResponse.self, endpoint, debugResponse: debug)
+    }
 }
