@@ -95,7 +95,7 @@ public struct DriveAPI {
     
     public func refreshUser(debug: Bool = false) async throws -> RefreshUserResponse  {
         let endpoint = Endpoint(
-            path: "\(self.baseUrl)/api/user/refresh",
+            path: "\(self.baseUrl)/user/refresh",
             method: .GET
         )
         
