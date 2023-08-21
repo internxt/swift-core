@@ -167,7 +167,7 @@ public struct CreateFileResponse: Decodable {
     public let deletedAt: String?
 }
 
-public struct InternxtUser: Decodable {
+public struct DriveUser: Decodable {
     public let email: String
     public let avatar: String?
     public let bridgeUser: String
@@ -183,5 +183,5 @@ public struct InternxtUser: Decodable {
 
 public struct RefreshUserResponse: Decodable {
     public let token: String
-    public let user: InternxtUser
+    public let user: DriveUser
 }
