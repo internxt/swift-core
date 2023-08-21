@@ -169,7 +169,7 @@ public struct CreateFileResponse: Decodable {
 
 public struct InternxtUser: Decodable {
     public let email: String
-    public let avatar: String
+    public let avatar: String?
     public let bridgeUser: String
     public let bucket: String
     public let createdAt: String
