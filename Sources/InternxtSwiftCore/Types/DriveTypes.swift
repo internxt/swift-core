@@ -88,13 +88,28 @@ public struct UpdateFolderResponse: Decodable {
     public let name: String
 }
 
-public struct MetadataUpdatePayload: Encodable {
+public struct FolderMetadataUpdatePayload: Encodable {
     public let itemName: String
 }
 
 
 public struct UpdateFolderPayload: Encodable {
-    public let metadata: MetadataUpdatePayload
+    public let metadata: FolderMetadataUpdatePayload
+}
+
+public struct FileMetadataUpdatePayload: Encodable {
+    public let itemName: String
+}
+
+
+public struct UpdateFilePayload: Encodable {
+    public let bucketId: String
+    public let metadata: FileMetadataUpdatePayload
+    public let relativePath: String = NSUUID().uuidString
+}
+
+public struct UpdateFileResponse: Decodable {
+    public let plain_name: String
 }
 
 
