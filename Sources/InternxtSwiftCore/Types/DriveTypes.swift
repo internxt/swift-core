@@ -167,7 +167,7 @@ public struct CreateFileResponse: Decodable {
     public let deletedAt: String?
 }
 
-public struct DriveUser: Decodable {
+public struct DriveUser: Codable {
     public let email: String
     public let avatar: String?
     public let bridgeUser: String
