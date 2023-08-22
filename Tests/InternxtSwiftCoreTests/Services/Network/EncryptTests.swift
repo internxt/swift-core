@@ -51,5 +51,4 @@ final class EncryptTests: XCTestCase {
         
         XCTAssertEqual(result.base64EncodedString(), expectedBase64)
     }
-
 }
