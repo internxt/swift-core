@@ -57,7 +57,6 @@ public struct DriveAPI {
         return try await apiClient.fetch(type: CreateFileResponse.self, endpoint, debugResponse: debug)
     }
     
-    
     /// Given a folderId, updates the folder name, if the folder name conflicts with
     /// the remove folder name, an ApiClientError with 409 statusCode is throw
     
@@ -66,11 +65,26 @@ public struct DriveAPI {
             path: "\(self.baseUrl)/storage/folder/\(folderId)/meta",
             method: .POST,
             body: UpdateFolderPayload(
-                    metadata: MetadataUpdatePayload(itemName: folderName)
+                    metadata: FolderMetadataUpdatePayload(itemName: folderName)
                     ).toJson()
         )
         
         return try await apiClient.fetch(type: UpdateFolderResponse.self, endpoint, debugResponse: debug)
+    }
+    
+    /// Given a fileId, updates the file name
+    
+    public func updateFile(fileId: String, bucketId: String, newFilename: String, debug: Bool = false) async throws -> UpdateFileResponse {
+        let endpoint = Endpoint(
+            path: "\(self.baseUrl)/storage/file/\(fileId)/meta",
+            method: .POST,
+            body: UpdateFilePayload(
+                bucketId: bucketId,
+                metadata: FileMetadataUpdatePayload(itemName: newFilename)
+            ).toJson()
+        )
+        
+        return try await apiClient.fetch(type: UpdateFileResponse.self, endpoint, debugResponse: debug)
     }
     
     /// Retrieves the folder metadata by the folder id
