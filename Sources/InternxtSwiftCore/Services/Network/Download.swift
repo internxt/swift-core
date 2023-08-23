@@ -43,18 +43,16 @@ extension Download: URLSessionTaskDelegate {
 public class Download: NSObject {
     private let networkAPI: NetworkAPI
     private lazy var urlSession = URLSession(
-        configuration: .ephemeral,
+        configuration: .default,
         delegate: self,
         delegateQueue: .main
-       )
+    )
     
     private var progressHandlersByTaskID = [Int : ProgressHandler]()
     init(networkAPI: NetworkAPI, urlSession: URLSession? = nil) {
         self.networkAPI = networkAPI
         super.init()
-        if urlSession != nil {
-            self.urlSession = urlSession!
-        }
+        
     }
     
     func start(bucketId: String, fileId: String, destination: URL,  progressHandler: ProgressHandler? = nil, debug: Bool = false) async throws -> DownloadResult {
