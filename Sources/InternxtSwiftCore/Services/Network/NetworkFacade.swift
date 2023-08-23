@@ -90,6 +90,8 @@ public struct NetworkFacade {
           //  throw NetworkFacadeError.HashMissmatch
         //}
         
+        print("Data")
+        print(try String(contentsOf: encryptedFileDownloadResult.url, encoding: .utf8 ))
         guard let encryptedInputStream = InputStream(url: encryptedFileDownloadResult.url) else {
             throw NetworkFacadeError.FailedToOpenDecryptInputStream
         }
