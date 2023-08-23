@@ -59,9 +59,19 @@ public struct NetworkFacade {
         let hexIv = fullHexString.prefix(upTo: fullHexString.index(fullHexString.startIndex, offsetBy: 32))
         let iv = cryptoUtils.hexStringToBytes(String(hexIv))
         
+        func downloadProgressHandler(downloadProgress: Double) {
+            let downloadMaxProgress = 0.9;
+            // We need to wait for the decryption, so download reachs downloadMaxProgress, and not 100%
+            progressHandler(downloadProgress * downloadMaxProgress)
+            
+        }
         let fileKey = try encrypt.generateFileKey(mnemonic: mnemonic, bucketId: bucketId, index: index)
         
-        let downloadResult = try await download.start(bucketId:bucketId, fileId: fileId, progressHandler: progressHandler)
+        let downloadResult = try await download.start(
+            bucketId:bucketId,
+            fileId: fileId,
+            progressHandler: downloadProgressHandler
+        )
         
         guard let hashInputStream = InputStream(url: downloadResult.url) else {
             throw NetworkFacadeError.FailedToOpenDecryptInputStream
@@ -92,6 +102,9 @@ public struct NetworkFacade {
         }
         
         let decryptResult = try await decrypt.start(input: encryptedInputStream, output: plainOutputStream, config: DecryptConfig(key: fileKey, iv: iv))
+        
+        // Reach 100%
+        progressHandler(1)
         
         if decryptResult == .Success {
             return destinationURL
