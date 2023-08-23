@@ -49,7 +49,7 @@ public struct NetworkFacade {
         return try await upload.start(index: index, bucketId: bucketId, mnemonic: mnemonic, encryptedFileURL: encryptedOutput, progressHandler: progressHandler)
     }
     
-    public func downloadFile(bucketId: String, fileId: String) async throws -> URL {
-        return try await download.start(bucketId:bucketId, fileId: fileId)
+    public func downloadFile(bucketId: String, fileId: String, progressHandler: @escaping ProgressHandler) async throws -> URL {
+        return try await download.start(bucketId:bucketId, fileId: fileId, progressHandler: progressHandler)
     }
 }
