@@ -68,6 +68,8 @@ public class Download: NSObject {
         
         let url = try await downloadEncryptedFile(downloadUrl: shard.url, progressHandler: progressHandler)
        
+        print("DOWNLOADED FILE:")
+        print(url.fileSize)
         if url.fileSize == 0 {
             print("EMPTY FILE")
         }
@@ -82,7 +84,6 @@ public class Download: NSObject {
                 cachePolicy: .reloadIgnoringLocalCacheData
             )
             
-            print(downloadUrl)
             request.httpMethod = "GET"
             
             let task = urlSession.downloadTask(
@@ -107,6 +108,8 @@ public class Download: NSObject {
                 }
             )
             
+            print("Progress")
+            print(progressHandler)
             if progressHandler != nil {
                 progressHandlersByTaskID[task.taskIdentifier] = progressHandler
             }
