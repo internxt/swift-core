@@ -219,3 +219,27 @@ public struct RefreshUserResponse: Decodable {
     public let token: String
     public let user: DriveUser
 }
+
+
+public struct MoveFilePayload: Encodable {
+    public let bucketId: String
+    public let destination: Int
+    public let fileId: String
+    public let relativePath:String = NSUUID().uuidString
+}
+
+
+public struct MoveFileResponse: Decodable {
+    public let moved: Bool
+}
+
+
+public struct MoveFolderPayload: Encodable {
+    public let folderId: Int
+    public let destination: Int
+}
+
+
+public struct MoveFolderResponse: Decodable {
+    public let moved: Bool
+}
