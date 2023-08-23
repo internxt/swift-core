@@ -70,4 +70,5 @@ enum NetworkFacadeError: Swift.Error, Equatable {
     case EncryptedFileNotSameSizeAsOriginal
     case DecryptionFailed
     case HashMissmatch
+    case FileIsEmpty
 }

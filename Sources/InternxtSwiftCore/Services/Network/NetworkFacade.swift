@@ -69,10 +69,19 @@ public struct NetworkFacade {
         
         let encryptedContentHash = encrypt.getFileContentHash(stream: hashInputStream)
         
-        if encryptedContentHash.toHexString() != downloadResult.expectedContentHash {
+        let hashMatch = encryptedContentHash.toHexString() == downloadResult.expectedContentHash
+        if hashMatch == false {
             throw NetworkFacadeError.HashMissmatch
         }
         
+        print("Hash matching \(hashMatch == true ? "YES" : "NO")")
+        
+        print("Actual: \(encryptedContentHash.toHexString())")
+        print("Expected: \(downloadResult.expectedContentHash)")
+        
+        if downloadResult.url.fileSize == 0 {
+            throw NetworkFacadeError.FileIsEmpty
+        }
         
         guard let encryptedInputStream = InputStream(url: downloadResult.url) else {
             throw NetworkFacadeError.FailedToOpenDecryptInputStream

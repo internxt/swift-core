@@ -65,7 +65,6 @@ public class Download: NSObject {
         
         let shard = info.shards.first!
         
-        let expectedHash = shard.hash
         let url = try await downloadEncryptedFile(downloadUrl: shard.url, progressHandler: progressHandler)
        
         return DownloadResult(url: url, expectedContentHash: shard.hash)
