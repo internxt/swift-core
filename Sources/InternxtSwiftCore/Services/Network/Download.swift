@@ -25,18 +25,18 @@ struct DownloadResult {
 
 @available(macOS 10.15, *)
 extension Download: URLSessionTaskDelegate {
-    public func urlSession(
-            _ session: URLSession,
-            task: URLSessionTask,
-            didSendBodyData bytesSent: Int64,
-            totalBytesSent: Int64,
-            totalBytesExpectedToSend: Int64
-    ) {
-            let progress = Double(totalBytesSent) / Double(totalBytesExpectedToSend)
-            let handler = progressHandlersByTaskID[task.taskIdentifier]
+    
+    func urlSession(_ session: URLSession,
+        downloadTask: URLSessionDownloadTask,
+        didWriteData bytesWritten: Int64,
+        totalBytesWritten: Int64,
+        totalBytesExpectedToWrite: Int64
+    ){
+            let progress = Double(totalBytesWritten) / Double(totalBytesExpectedToWrite)
+            let handler = progressHandlersByTaskID[downloadTask.taskIdentifier]
             print("Progress URLSESSION \(progress)")
             handler?(progress)
-        }
+    }
 }
 
 @available(macOS 10.15, *)
@@ -66,10 +66,11 @@ public class Download: NSObject {
         
         let url = try await downloadEncryptedFile(downloadUrl: shard.url, progressHandler: progressHandler)
        
-        print("DOWNLOADED FILE:")
-        print(url.fileSize)
+       
         
         try FileManager.default.copyItem(at: url, to: destination)
+        print("Copyed file size: \(url.fileSize)")
+        
         if destination.fileSize == 0 {
             print("EMPTY FILE")
         }
