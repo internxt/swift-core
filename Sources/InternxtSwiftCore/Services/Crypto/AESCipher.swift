@@ -134,6 +134,7 @@ class AESCipher {
             }
             if(encryptedBytes > 0) {
                 let bytesOut = output.write(outputBuffer, maxLength: encryptedBytes)
+                print(input.streamError)
                 print(status.rawValue)
                 print("Out bytes")
                 print(bytesOut)
