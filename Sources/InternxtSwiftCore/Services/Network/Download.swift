@@ -34,6 +34,7 @@ extension Download: URLSessionTaskDelegate {
     ) {
             let progress = Double(totalBytesSent) / Double(totalBytesExpectedToSend)
             let handler = progressHandlersByTaskID[task.taskIdentifier]
+            print("Progress URLSESSION \(progress)")
             handler?(progress)
         }
 }
@@ -42,9 +43,9 @@ extension Download: URLSessionTaskDelegate {
 public class Download: NSObject {
     private let networkAPI: NetworkAPI
     private lazy var urlSession = URLSession(
-           configuration: .default,
-           delegate: self,
-           delegateQueue: .main
+        configuration: .ephemeral,
+        delegate: self,
+        delegateQueue: .main
        )
     
     private var progressHandlersByTaskID = [Int : ProgressHandler]()
