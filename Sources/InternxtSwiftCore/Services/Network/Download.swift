@@ -77,25 +77,16 @@ public class Download: NSObject {
         return try await withCheckedThrowingContinuation { (continuation) in
            
             
-            let task = urlSession.dataTask(
+            let task = urlSession.downloadTask(
                 with: URL(string: downloadUrl)!,
-                completionHandler: { data, res, error in
+                completionHandler: { localURL, res, error in
                     guard let error = error else {
                         let response = res as? HTTPURLResponse
                         if response?.statusCode != 200 {
                             return continuation.resume(with: .failure(DownloadError.DownloadNotSuccessful))
                         } else {
-                            if let data = data {
-                                do {
-                                    print(response?.statusCode)
-                                    
-                                    print(String(data: data, encoding: .utf8))
-                                    try data.write(to: destinationUrl)
-                                    return continuation.resume(with: .success(destinationUrl))
-                                } catch {
-                                    return continuation.resume(with: .failure(DownloadError.DownloadNotSuccessful))
-                                }
-                                
+                            if let localURL = localURL {
+                                return continuation.resume(with: .success(destinationUrl))
                                 
                             } else {
                                 return continuation.resume(with: .failure(DownloadError.MissingDownloadURL))
