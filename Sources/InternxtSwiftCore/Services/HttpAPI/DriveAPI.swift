@@ -90,7 +90,7 @@ public struct DriveAPI {
     /// Retrieves the folder metadata by the folder id
     public func getFolderMetaById(id: String, debug: Bool = false) async throws -> GetFolderMetaByIdResponse {
         let endpoint = Endpoint(
-            path: "\(self.baseUrl)/storage/folders/\(id)/metadata",
+            path: "\(self.baseUrl)/folders/\(id)/metadata",
             method: .GET
         )
         
