@@ -65,5 +65,8 @@ public class FinishUploadError: Error {
 enum NetworkFacadeError: Swift.Error, Equatable {
     case EncryptionFailed
     case FailedToOpenEncryptOutputStream
+    case FailedToOpenDecryptOutputStream
+    case FailedToOpenDecryptInputStream
     case EncryptedFileNotSameSizeAsOriginal
+    case DecryptionFailed
 }

@@ -11,6 +11,7 @@ import Foundation
 
 public struct NetworkFacade {
     private let encrypt: Encrypt = Encrypt()
+    private let decrypt: Decrypt = Decrypt()
     private let cryptoUtils: CryptoUtils = CryptoUtils()
     private let mnemonic: String
     private let upload: Upload
@@ -49,7 +50,34 @@ public struct NetworkFacade {
         return try await upload.start(index: index, bucketId: bucketId, mnemonic: mnemonic, encryptedFileURL: encryptedOutput, progressHandler: progressHandler)
     }
     
-    public func downloadFile(bucketId: String, fileId: String, progressHandler: @escaping ProgressHandler) async throws -> URL {
-        return try await download.start(bucketId:bucketId, fileId: fileId, progressHandler: progressHandler)
+    public func downloadFile(bucketId: String, fileId: String, destinationURL: URL, progressHandler: @escaping ProgressHandler) async throws -> URL {
+        guard let index = cryptoUtils.getRandomBytes(32) else {
+            throw UploadError.InvalidIndex
+        }
+        
+        let fullHexString = cryptoUtils.bytesToHexString(index)
+        let hexIv = fullHexString.prefix(upTo: fullHexString.index(fullHexString.startIndex, offsetBy: 32))
+        let iv = cryptoUtils.hexStringToBytes(String(hexIv))
+        
+        let fileKey = try encrypt.generateFileKey(mnemonic: mnemonic, bucketId: bucketId, index: index)
+        
+        let downloadedEncryptedURL = try await download.start(bucketId:bucketId, fileId: fileId, progressHandler: progressHandler)
+        
+        guard let encryptedInputStream = InputStream(url: downloadedEncryptedURL) else {
+            throw NetworkFacadeError.FailedToOpenDecryptInputStream
+        }
+        
+        guard let plainOutputStream = OutputStream(url: destinationURL, append: true) else {
+            throw NetworkFacadeError.FailedToOpenDecryptOutputStream
+        }
+        
+        let decryptResult = try await decrypt.start(input: encryptedInputStream, output: plainOutputStream, config: DecryptConfig(key: fileKey, iv: iv))
+        
+        if decryptResult == .Success {
+            return destinationURL
+        } else {
+            throw NetworkFacadeError.DecryptionFailed
+        }
+        
     }
 }
