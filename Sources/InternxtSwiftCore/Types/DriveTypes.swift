@@ -31,6 +31,7 @@ public struct GetFolderFilesResult: Decodable {
     // ISO string
     public let removedAt: String?
     public let status: String
+    public let uuid: String
 }
 
 public struct GetFolderFilesResponse: Decodable {
@@ -132,7 +133,24 @@ public struct GetFolderMetaByIdResponse: Decodable {
 }
 
 public struct GetFileMetaByIdResponse: Decodable {
-   
+    public let id: Int
+    public let fileId: String
+    public let folderId: Int
+    public let name: String
+    public let type: String?
+    public let size: String
+    public let bucket: String
+    public let deleted: Bool
+    public let deletedAt: String?
+    public let userId: Int
+    public let modificationTime: String
+    public let createdAt: String
+    public let updatedAt: String
+    public let uuid: String
+    public let plainName: String?
+    public let removed: Bool?
+    public let removedAt: String?
+    public let status: String
 }
 
 
@@ -180,6 +198,7 @@ public struct CreateFileResponse: Decodable {
     public let updatedAt: String
     public let createdAt: String
     public let deletedAt: String?
+    public let uuid: String
 }
 
 public struct DriveUser: Codable {

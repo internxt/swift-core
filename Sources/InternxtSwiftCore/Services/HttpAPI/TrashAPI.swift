@@ -21,10 +21,11 @@ public struct TrashAPI {
         let endpoint = Endpoint(path: "\(self.baseUrl)/storage/trash/add",method: .POST, body: itemsToTrash.toJson())
         
         do {
-            try await apiClient.fetch(type: AddItemsToTrashResponse.self, endpoint, debugResponse: debug)
+            _ = try await apiClient.fetch(type: AddItemsToTrashResponse.self, endpoint, debugResponse: debug)
             
             return true
         } catch {
+            
             guard let apiClientError = error as? APIClientError else {
                 throw error
             }

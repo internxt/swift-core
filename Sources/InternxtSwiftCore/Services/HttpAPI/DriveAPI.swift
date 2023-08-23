@@ -98,9 +98,9 @@ public struct DriveAPI {
     }
     
     /// Retrieves the file metadata by the file id
-    public func getFileMetaById(id: String, debug: Bool = false)  async throws -> GetFileMetaByIdResponse {
+    public func getFileMetaByUuid(uuid: String, debug: Bool = false)  async throws -> GetFileMetaByIdResponse {
         let endpoint = Endpoint(
-            path: "\(self.baseUrl)/storage/files/\(id)/metadata",
+            path: "\(self.baseUrl)/storage/files/\(uuid)/metadata",
             method: .GET
         )
         
