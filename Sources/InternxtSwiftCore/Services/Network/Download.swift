@@ -60,6 +60,8 @@ public class Download: NSObject {
         
         let url = try await downloadEncryptedFile(downloadUrl: shard.url, destinationUrl: destination, progressHandler: progressHandler)
         
+        print("Size")
+        print(destination.fileSize)
         if destination.fileSize == 0 {
             print("EMPTY FILE")
         }
