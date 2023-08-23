@@ -133,7 +133,6 @@ public class Upload: NSObject  {
             )
             
             if progressHandler != nil {
-                print("Adding progress handler")
                 progressHandlersByTaskID[task.taskIdentifier] = progressHandler
             }
             

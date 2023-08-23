@@ -14,10 +14,12 @@ public struct NetworkFacade {
     private let cryptoUtils: CryptoUtils = CryptoUtils()
     private let mnemonic: String
     private let upload: Upload
+    private let download: Download
     
     public init(mnemonic: String, networkAPI: NetworkAPI, urlSession: URLSession? = nil){
         self.mnemonic = mnemonic
         self.upload = Upload(networkAPI: networkAPI, urlSession: urlSession)
+        self.download = Download(networkAPI: networkAPI, urlSession: urlSession)
     }
     
     public func uploadFile(input: InputStream, encryptedOutput: URL, fileSize: Int, bucketId: String, progressHandler: @escaping ProgressHandler) async throws -> FinishUploadResponse {
@@ -45,5 +47,9 @@ public struct NetworkFacade {
         }
         
         return try await upload.start(index: index, bucketId: bucketId, mnemonic: mnemonic, encryptedFileURL: encryptedOutput, progressHandler: progressHandler)
+    }
+    
+    public func downloadFile(bucketId: String, fileId: String) async throws -> URL {
+        return try await download.start(bucketId:bucketId, fileId: fileId)
     }
 }
