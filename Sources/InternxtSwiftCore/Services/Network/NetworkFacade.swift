@@ -61,9 +61,20 @@ public struct NetworkFacade {
         
         let fileKey = try encrypt.generateFileKey(mnemonic: mnemonic, bucketId: bucketId, index: index)
         
-        let downloadedEncryptedURL = try await download.start(bucketId:bucketId, fileId: fileId, progressHandler: progressHandler)
+        let downloadResult = try await download.start(bucketId:bucketId, fileId: fileId, progressHandler: progressHandler)
         
-        guard let encryptedInputStream = InputStream(url: downloadedEncryptedURL) else {
+        guard let hashInputStream = InputStream(url: downloadResult.url) else {
+            throw NetworkFacadeError.FailedToOpenDecryptInputStream
+        }
+        
+        let encryptedContentHash = encrypt.getFileContentHash(stream: hashInputStream)
+        
+        if encryptedContentHash.toHexString() != downloadResult.expectedContentHash {
+            throw NetworkFacadeError.HashMissmatch
+        }
+        
+        
+        guard let encryptedInputStream = InputStream(url: downloadResult.url) else {
             throw NetworkFacadeError.FailedToOpenDecryptInputStream
         }
         

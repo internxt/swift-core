@@ -50,7 +50,7 @@ final class AESCipherTests: XCTestCase {
             key: self.utils.hexStringToBytes(hexKey),
             iv:  self.utils.hexStringToBytes(hexIv),
             callback: {(error, status) in
-                XCTAssertEqual(status, Status.success)
+                XCTAssertEqual(status, DecryptResultStatus.Success)
             }
         )
     }

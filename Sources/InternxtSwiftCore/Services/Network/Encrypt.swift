@@ -74,6 +74,8 @@ public struct Encrypt {
             sha256Hash.append(contentsOf: bytes)
         }
         
+        stream.close()
+        
         return hmac.ripemd160(message: Data(sha256Hash))
     }
     

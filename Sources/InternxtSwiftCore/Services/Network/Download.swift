@@ -14,6 +14,15 @@ enum DownloadError: Error {
     case MultipartDownloadNotSupported
 }
 
+struct DownloadResult {
+    public var url: URL
+    public var expectedContentHash: String
+    init(url: URL, expectedContentHash: String) {
+        self.url = url
+        self.expectedContentHash = expectedContentHash
+    }
+}
+
 @available(macOS 10.15, *)
 extension Download: URLSessionTaskDelegate {
     public func urlSession(
@@ -47,7 +56,7 @@ public class Download: NSObject {
         }
     }
     
-    func start(bucketId: String, fileId: String, progressHandler: ProgressHandler? = nil, debug: Bool = false) async throws -> URL {
+    func start(bucketId: String, fileId: String, progressHandler: ProgressHandler? = nil, debug: Bool = false) async throws -> DownloadResult {
         let info = try await networkAPI.getFileInfo(bucketId: bucketId, fileId: fileId)
         
         if info.shards.count > 1 {
@@ -56,7 +65,10 @@ public class Download: NSObject {
         
         let shard = info.shards.first!
         
-        return try await downloadEncryptedFile(downloadUrl: shard.url, progressHandler: progressHandler)
+        let expectedHash = shard.hash
+        let url = try await downloadEncryptedFile(downloadUrl: shard.url, progressHandler: progressHandler)
+       
+        return DownloadResult(url: url, expectedContentHash: shard.hash)
         
     }
     
