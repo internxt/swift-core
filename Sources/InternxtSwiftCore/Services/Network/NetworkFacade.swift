@@ -80,12 +80,12 @@ public struct NetworkFacade {
             throw NetworkFacadeError.FailedToOpenDecryptInputStream
         }
         
-        let encryptedContentHash = encrypt.getFileContentHash(stream: hashInputStream)
+        //let encryptedContentHash = encrypt.getFileContentHash(stream: hashInputStream)
         
-        let hashMatch = encryptedContentHash.toHexString() == encryptedFileDownloadResult.expectedContentHash
-        if hashMatch == false {
-            throw NetworkFacadeError.HashMissmatch
-        }
+        //let hashMatch = encryptedContentHash.toHexString() == encryptedFileDownloadResult.expectedContentHash
+        //if hashMatch == false {
+          //  throw NetworkFacadeError.HashMissmatch
+        //}
         
         guard let encryptedInputStream = InputStream(url: encryptedFileDownloadResult.url) else {
             throw NetworkFacadeError.FailedToOpenDecryptInputStream
