@@ -89,10 +89,6 @@ public struct NetworkFacade {
         print("Actual: \(encryptedContentHash.toHexString())")
         print("Expected: \(downloadResult.expectedContentHash)")
         
-        if downloadResult.url.fileSize == 0 {
-            throw NetworkFacadeError.FileIsEmpty
-        }
-        
         guard let encryptedInputStream = InputStream(url: downloadResult.url) else {
             throw NetworkFacadeError.FailedToOpenDecryptInputStream
         }
@@ -101,7 +97,11 @@ public struct NetworkFacade {
             throw NetworkFacadeError.FailedToOpenDecryptOutputStream
         }
         
-        let decryptResult = try await decrypt.start(input: encryptedInputStream, output: plainOutputStream, config: DecryptConfig(key: fileKey, iv: iv))
+        let decryptResult = try await decrypt.start(
+            input: encryptedInputStream,
+            output: plainOutputStream,
+            config: DecryptConfig(key: fileKey, iv: iv)
+        )
         
         // Reach 100%
         progressHandler(1)
