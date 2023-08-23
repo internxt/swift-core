@@ -24,19 +24,12 @@ struct DownloadResult {
 }
 
 @available(macOS 10.15, *)
-extension Download: URLSessionTaskDelegate {
+extension Download: URLSessionDataDelegate {
     
-    func urlSession(_ session: URLSession,
-        downloadTask: URLSessionDownloadTask,
-        didWriteData bytesWritten: Int64,
-        totalBytesWritten: Int64,
-        totalBytesExpectedToWrite: Int64
-    ){
-            let progress = Double(totalBytesWritten) / Double(totalBytesExpectedToWrite)
-            let handler = progressHandlersByTaskID[downloadTask.taskIdentifier]
-            print("Progress URLSESSION \(progress)")
-            handler?(progress)
-    }
+    
+    
+    
+    
 }
 
 @available(macOS 10.15, *)
@@ -64,12 +57,7 @@ public class Download: NSObject {
         
         let shard = info.shards.first!
         
-        let url = try await downloadEncryptedFile(downloadUrl: shard.url, progressHandler: progressHandler)
-       
-       
-        
-        try FileManager.default.copyItem(at: url, to: destination)
-        print("Copyed file size: \(url.fileSize)")
+        let url = try await downloadEncryptedFile(downloadUrl: shard.url, destinationUrl: destination, progressHandler: progressHandler)
         
         if destination.fileSize == 0 {
             print("EMPTY FILE")
@@ -78,25 +66,34 @@ public class Download: NSObject {
         
     }
     
-    private func downloadEncryptedFile(downloadUrl: String, progressHandler: ProgressHandler? = nil) async throws -> URL  {
+    
+    func urlSession(_ session: URLSession, downloadTask: URLSessionDownloadTask, didWriteData bytesWritten: Int64, totalBytesWritten: Int64, totalBytesExpectedToWrite: Int64) {
+        print("WRITING bytes")
+    }
+    
+    
+    
+    private func downloadEncryptedFile(downloadUrl: String, destinationUrl:URL, progressHandler: ProgressHandler? = nil) async throws -> URL  {
         return try await withCheckedThrowingContinuation { (continuation) in
-            var request = URLRequest(
-                url: URL(string: downloadUrl)!,
-                cachePolicy: .reloadIgnoringLocalCacheData
-            )
+           
             
-            request.httpMethod = "GET"
-            
-            let task = urlSession.downloadTask(
-                with: request,
-                completionHandler: { localURL, res, error in
+            let task = urlSession.dataTask(
+                with: URL(string: downloadUrl)!,
+                completionHandler: { data, res, error in
                     guard let error = error else {
                         let response = res as? HTTPURLResponse
                         if response?.statusCode != 200 {
                             return continuation.resume(with: .failure(DownloadError.DownloadNotSuccessful))
                         } else {
-                            if let url = localURL {
-                                return continuation.resume(with: .success(url))
+                            if let data = data {
+                                do {
+                                    try data.write(to: destinationUrl)
+                                    return continuation.resume(with: .success(destinationUrl))
+                                } catch {
+                                    return continuation.resume(with: .failure(DownloadError.DownloadNotSuccessful))
+                                }
+                                
+                                
                             } else {
                                 return continuation.resume(with: .failure(DownloadError.MissingDownloadURL))
                             }
