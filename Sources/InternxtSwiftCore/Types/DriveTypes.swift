@@ -41,7 +41,7 @@ public struct GetFolderFilesResponse: Decodable {
 public struct GetFolderFoldersResult: Decodable {
     public let type: String
     public let id: Int
-    public let parentId: Int
+    public let parentId: Int?
     public let name: String
     public let userId: Int
     public let encryptVersion: String?

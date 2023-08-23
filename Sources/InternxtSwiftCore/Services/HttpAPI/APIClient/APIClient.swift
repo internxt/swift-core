@@ -78,14 +78,14 @@ struct APIClient {
         
        
         
-        if self.authorizationHeaderValue != nil {
-            urlRequest.setValue(self.authorizationHeaderValue, forHTTPHeaderField:"Authorization")
+        if let authorizationHeaderValue = self.authorizationHeaderValue {
+            urlRequest.setValue(authorizationHeaderValue, forHTTPHeaderField:"Authorization")
         }
         
-        if endpoint.body != nil {
-            print("Endpoint body \(String(data: endpoint.body!, encoding: .utf8))")
-            urlRequest.httpBody = endpoint.body!
+        if let body = endpoint.body {
+            urlRequest.httpBody = body
         }
+        
             
         urlRequest.setValue("application/json", forHTTPHeaderField: "Content-Type")
         
