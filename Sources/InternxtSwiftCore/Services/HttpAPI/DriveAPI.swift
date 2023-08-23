@@ -107,6 +107,33 @@ public struct DriveAPI {
         return try await apiClient.fetch(type: GetFileMetaByIdResponse.self, endpoint, debugResponse: debug)
     }
     
+    public func moveFile(fileId: String, bucketId: String, destinationFolder: Int, debug: Bool = false) async throws -> MoveFileResponse {
+        let endpoint = Endpoint(
+            path: "\(self.baseUrl)/storage/move/file",
+            method: .POST,
+            body: MoveFilePayload(
+                bucketId: bucketId,
+                destination: destinationFolder,
+                fileId: fileId
+            ).toJson()
+        )
+    
+        return try await apiClient.fetch(type: MoveFileResponse.self, endpoint, debugResponse: debug)
+    }
+    
+    public func moveFolder(folderId: Int, destinationFolder: Int, debug: Bool = false) async throws -> MoveFolderResponse {
+        let endpoint = Endpoint(
+            path: "\(self.baseUrl)/storage/move/folder",
+            method: .POST,
+            body: MoveFolderPayload(
+                folderId: folderId,
+                destination: destinationFolder
+            ).toJson()
+        )
+    
+        return try await apiClient.fetch(type: MoveFolderResponse.self, endpoint, debugResponse: debug)
+    }
+    
     public func refreshUser(debug: Bool = false) async throws -> RefreshUserResponse  {
         let endpoint = Endpoint(
             path: "\(self.baseUrl)/user/refresh",
