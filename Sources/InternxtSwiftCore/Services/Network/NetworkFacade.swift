@@ -75,8 +75,7 @@ public struct NetworkFacade {
         )
         
         
-        print("Download result")
-        print(encryptedFileDownloadResult)
+        
         
         
         guard let hashInputStream = InputStream(url: encryptedFileDownloadResult.url) else {

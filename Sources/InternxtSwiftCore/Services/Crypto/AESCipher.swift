@@ -134,13 +134,6 @@ class AESCipher {
             }
             if(encryptedBytes > 0) {
                 let bytesOut = output.write(outputBuffer, maxLength: encryptedBytes)
-                print(input.streamError)
-                print(output.streamError)
-                print(status.rawValue)
-                print("Out bytes")
-                print(bytesOut)
-                print("Encrypted bytes")
-                print(encryptedBytes)
                 let bytesMatch = bytesOut == Int(encryptedBytes)
                 if bytesMatch == false {
                     return callback(CryptoError.bytesNotMatching, nil)
