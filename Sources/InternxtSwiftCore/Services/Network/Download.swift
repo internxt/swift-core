@@ -87,6 +87,8 @@ public class Download: NSObject {
                         } else {
                             if let data = data {
                                 do {
+                                    print(res?.url)
+                                    print(String(data: data, encoding: .utf8))
                                     try data.write(to: destinationUrl)
                                     return continuation.resume(with: .success(destinationUrl))
                                 } catch {
