@@ -84,11 +84,6 @@ public struct NetworkFacade {
             throw NetworkFacadeError.HashMissmatch
         }
         
-        print("Hash matching \(hashMatch == true ? "YES" : "NO")")
-        
-        print("Actual: \(encryptedContentHash.toHexString())")
-        print("Expected: \(downloadResult.expectedContentHash)")
-        
         guard let encryptedInputStream = InputStream(url: downloadResult.url) else {
             throw NetworkFacadeError.FailedToOpenDecryptInputStream
         }
