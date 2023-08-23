@@ -68,6 +68,9 @@ public class Download: NSObject {
         
         let url = try await downloadEncryptedFile(downloadUrl: shard.url, progressHandler: progressHandler)
        
+        if url.fileSize == 0 {
+            print("EMPTY FILE")
+        }
         return DownloadResult(url: url, expectedContentHash: shard.hash)
         
     }
@@ -79,6 +82,7 @@ public class Download: NSObject {
                 cachePolicy: .reloadIgnoringLocalCacheData
             )
             
+            print(downloadUrl)
             request.httpMethod = "GET"
             
             let task = urlSession.downloadTask(

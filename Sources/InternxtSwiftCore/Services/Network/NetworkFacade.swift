@@ -73,6 +73,8 @@ public struct NetworkFacade {
             progressHandler: downloadProgressHandler
         )
         
+        
+        
         guard let hashInputStream = InputStream(url: downloadResult.url) else {
             throw NetworkFacadeError.FailedToOpenDecryptInputStream
         }
