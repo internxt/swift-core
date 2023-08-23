@@ -24,12 +24,13 @@ struct DownloadResult {
 }
 
 @available(macOS 10.15, *)
-extension Download: URLSessionDataDelegate {
-    
-    
-    
-    
-    
+extension Download: URLSessionDownloadDelegate {
+    public func urlSession(_ session: URLSession, downloadTask: URLSessionDownloadTask, didFinishDownloadingTo location: URL) {
+        print("DONE DOWNLOAD")
+    }
+    public func urlSession(_ session: URLSession, downloadTask: URLSessionDownloadTask, didWriteData bytesWritten: Int64, totalBytesWritten: Int64, totalBytesExpectedToWrite: Int64) {
+        print("WRITING bytes")
+    }
 }
 
 @available(macOS 10.15, *)
@@ -67,9 +68,7 @@ public class Download: NSObject {
     }
     
     
-    func urlSession(_ session: URLSession, downloadTask: URLSessionDownloadTask, didWriteData bytesWritten: Int64, totalBytesWritten: Int64, totalBytesExpectedToWrite: Int64) {
-        print("WRITING bytes")
-    }
+    
     
     
     
@@ -86,7 +85,13 @@ public class Download: NSObject {
                             return continuation.resume(with: .failure(DownloadError.DownloadNotSuccessful))
                         } else {
                             if let localURL = localURL {
-                                return continuation.resume(with: .success(destinationUrl))
+                                do {
+                                    try FileManager.default.copyItem(at: localURL, to: destinationUrl)
+                                    return continuation.resume(with: .success(destinationUrl))
+                                } catch {
+                                    return continuation.resume(with: .failure(DownloadError.MissingDownloadURL))
+                                }
+                                
                                 
                             } else {
                                 return continuation.resume(with: .failure(DownloadError.MissingDownloadURL))
