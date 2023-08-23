@@ -50,7 +50,7 @@ public struct NetworkFacade {
         return try await upload.start(index: index, bucketId: bucketId, mnemonic: mnemonic, encryptedFileURL: encryptedOutput, progressHandler: progressHandler)
     }
     
-    public func downloadFile(bucketId: String, fileId: String, destinationURL: URL, progressHandler: @escaping ProgressHandler) async throws -> URL {
+    public func downloadFile(bucketId: String, fileId: String, encryptedFileDestination: URL, destinationURL: URL, progressHandler: @escaping ProgressHandler) async throws -> URL {
         guard let index = cryptoUtils.getRandomBytes(32) else {
             throw UploadError.InvalidIndex
         }
@@ -67,26 +67,27 @@ public struct NetworkFacade {
         }
         let fileKey = try encrypt.generateFileKey(mnemonic: mnemonic, bucketId: bucketId, index: index)
         
-        let downloadResult = try await download.start(
+        let encryptedFileDownloadResult = try await download.start(
             bucketId:bucketId,
             fileId: fileId,
+            destination: encryptedFileDestination,
             progressHandler: downloadProgressHandler
         )
         
         
         
-        guard let hashInputStream = InputStream(url: downloadResult.url) else {
+        guard let hashInputStream = InputStream(url: encryptedFileDownloadResult.url) else {
             throw NetworkFacadeError.FailedToOpenDecryptInputStream
         }
         
         let encryptedContentHash = encrypt.getFileContentHash(stream: hashInputStream)
         
-        let hashMatch = encryptedContentHash.toHexString() == downloadResult.expectedContentHash
+        let hashMatch = encryptedContentHash.toHexString() == encryptedFileDownloadResult.expectedContentHash
         if hashMatch == false {
             throw NetworkFacadeError.HashMissmatch
         }
         
-        guard let encryptedInputStream = InputStream(url: downloadResult.url) else {
+        guard let encryptedInputStream = InputStream(url: encryptedFileDownloadResult.url) else {
             throw NetworkFacadeError.FailedToOpenDecryptInputStream
         }
         

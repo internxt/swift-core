@@ -57,7 +57,7 @@ public class Download: NSObject {
         }
     }
     
-    func start(bucketId: String, fileId: String, progressHandler: ProgressHandler? = nil, debug: Bool = false) async throws -> DownloadResult {
+    func start(bucketId: String, fileId: String, destination: URL,  progressHandler: ProgressHandler? = nil, debug: Bool = false) async throws -> DownloadResult {
         let info = try await networkAPI.getFileInfo(bucketId: bucketId, fileId: fileId)
         
         if info.shards.count > 1 {
@@ -70,10 +70,12 @@ public class Download: NSObject {
        
         print("DOWNLOADED FILE:")
         print(url.fileSize)
-        if url.fileSize == 0 {
+        
+        try FileManager.default.copyItem(at: url, to: destination)
+        if destination.fileSize == 0 {
             print("EMPTY FILE")
         }
-        return DownloadResult(url: url, expectedContentHash: shard.hash)
+        return DownloadResult(url: destination, expectedContentHash: shard.hash)
         
     }
     
