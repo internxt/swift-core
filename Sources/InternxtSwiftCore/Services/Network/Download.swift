@@ -33,7 +33,7 @@ extension Download: URLSessionDownloadDelegate {
         if let infoUnwrapped = info {
             do {
                 try FileManager.default.copyItem(at: location, to: destinationURL!)
-                completionHandler(DownloadResult(url: location, expectedContentHash: infoUnwrapped.shards.first!.hash, index: infoUnwrapped.index))
+                completionHandler(DownloadResult(url: destinationURL!, expectedContentHash: infoUnwrapped.shards.first!.hash, index: infoUnwrapped.index))
             } catch {
                 completionHandler(nil)
             }
