@@ -58,14 +58,13 @@ public class Download: NSObject {
         
         let shard = info.shards.first!
         
-        let tmpDestination = FileManager.default.temporaryDirectory.appendingPathComponent("encrypted_\(NSUUID().uuidString)")
-        let url = try await downloadEncryptedFile(downloadUrl: shard.url, destinationUrl: tmpDestination, progressHandler: progressHandler)
+        let url = try await downloadEncryptedFile(downloadUrl: shard.url, destinationUrl: destination, progressHandler: progressHandler)
         
         
-        if tmpDestination.fileSize == 0 {
+        if url.fileSize == 0 {
             print("EMPTY FILE")
         }
-        return DownloadResult(url: tmpDestination, expectedContentHash: shard.hash)
+        return DownloadResult(url: url, expectedContentHash: shard.hash)
         
     }
     

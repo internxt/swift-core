@@ -67,22 +67,20 @@ public struct NetworkFacade {
         }
         let fileKey = try encrypt.generateFileKey(mnemonic: mnemonic, bucketId: bucketId, index: index)
         
+        let tmpEncryptedDestination = FileManager.default.temporaryDirectory.appendingPathComponent("encrypted_\(NSUUID().uuidString)")
         let encryptedFileDownloadResult = try await download.start(
             bucketId:bucketId,
             fileId: fileId,
-            destination: encryptedFileDestination,
+            destination: tmpEncryptedDestination,
             progressHandler: downloadProgressHandler
         )
-        
-        
-        
-        
         
         guard let hashInputStream = InputStream(url: encryptedFileDownloadResult.url) else {
             throw NetworkFacadeError.FailedToOpenDecryptInputStream
         }
         
         let encryptedContentHash = encrypt.getFileContentHash(stream: hashInputStream)
+        
         
         let hashMatch = encryptedContentHash.toHexString() == encryptedFileDownloadResult.expectedContentHash
         if hashMatch == false {
@@ -94,9 +92,12 @@ public struct NetworkFacade {
             throw NetworkFacadeError.FailedToOpenDecryptInputStream
         }
         
-        guard let plainOutputStream = OutputStream(url: destinationURL, append: false) else {
+        let tmpDecryptedDestination = FileManager.default.temporaryDirectory.appendingPathComponent("decrypted_\(NSUUID().uuidString)")
+        
+        guard let plainOutputStream = OutputStream(url: tmpDecryptedDestination, append: false) else {
             throw NetworkFacadeError.FailedToOpenDecryptOutputStream
         }
+        
         
         let decryptResult = try await decrypt.start(
             input: encryptedInputStream,
@@ -108,7 +109,10 @@ public struct NetworkFacade {
         progressHandler(1)
         
         if decryptResult == .Success {
+    
+            try FileManager.default.copyItem(at: tmpDecryptedDestination, to: destinationURL)
             return destinationURL
+            
         } else {
             throw NetworkFacadeError.DecryptionFailed
         }
