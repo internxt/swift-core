@@ -28,7 +28,15 @@ struct DownloadResult {
 @available(macOS 10.15, *)
 extension Download: URLSessionDataDelegate {
     
-    
+    func urlSession(_ session: URLSession, downloadTask: URLSessionDownloadTask, didFinishDownloadingTo location: URL) {
+            // Handle completed download
+        }
+
+        func urlSession(_ session: URLSession, downloadTask: URLSessionDownloadTask, didWriteData bytesWritten: Int64, totalBytesWritten: Int64, totalBytesExpectedToWrite: Int64) {
+            // Calculate and handle download progress
+            let progress = Float(totalBytesWritten) / Float(totalBytesExpectedToWrite)
+            print("Download Progress: \(progress)")
+        }
 }
 
 @available(macOS 10.15, *)
@@ -41,13 +49,17 @@ public class Download: NSObject {
     )
     private var outputStream: OutputStream?
     private var progressHandlersByTaskID = [Int : ProgressHandler]()
+    private var completionHandler: (URL?) -> Void
     init(networkAPI: NetworkAPI, urlSession: URLSession? = nil) {
         self.networkAPI = networkAPI
+        self.completionHandler = {url in
+            print("Completed")
+        }
         super.init()
         
     }
     
-    func start(bucketId: String, fileId: String, destination: URL,  progressHandler: ProgressHandler? = nil, debug: Bool = false) async throws -> DownloadResult {
+    func start(bucketId: String, fileId: String, destination: URL,  progressHandler: ProgressHandler? = nil, debug: Bool = false) async throws -> Void {
         let info = try await networkAPI.getFileInfo(bucketId: bucketId, fileId: fileId)
         
         self.outputStream = OutputStream(url: destination, append: true)
@@ -57,60 +69,26 @@ public class Download: NSObject {
         
         let shard = info.shards.first!
         
-        let url = try await downloadEncryptedFile(downloadUrl: shard.url, destinationUrl: destination, progressHandler: progressHandler)
+        downloadEncryptedFile(downloadUrl: shard.url, destinationUrl: destination, progressHandler: progressHandler)
         
         
-        if url.fileSize == 0 {
-            throw NetworkFacadeError.FileIsEmpty
-        }
-        return DownloadResult(url: url, expectedContentHash: shard.hash, index: info.index)
+        //if url.fileSize == 0 {
+          //  throw NetworkFacadeError.FileIsEmpty
+        //}
+        //return DownloadResult(url: url, expectedContentHash: shard.hash, index: info.index)
         
     }
     
     
     
-    private func downloadEncryptedFile(downloadUrl: String, destinationUrl:URL, progressHandler: ProgressHandler? = nil) async throws -> URL  {
-        return try await withCheckedThrowingContinuation { (continuation) in
-           
-            let task = urlSession.dataTask(
-                with: URL(string: downloadUrl)!,
-                completionHandler: { data, res, error in
-                    guard let error = error else {
-                        let response = res as? HTTPURLResponse
-                        if response?.statusCode != 200 {
-                            return continuation.resume(with: .failure(DownloadError.DownloadNotSuccessful))
-                        } else {
-                            if let dataUnwrapped = data {
-                                do {
-                                    try dataUnwrapped.write(to: destinationUrl)
-                                    return continuation.resume(with: .success(destinationUrl))
-                                } catch {
-                                    return continuation.resume(with: .failure(DownloadError.MissingDownloadURL))
-                                }
-                                
-                            } else {
-                                return continuation.resume(with: .failure(DownloadError.MissingDownloadURL))
-                            }
-                            
-                        }
-                        
-                    }
-                    
-                    continuation.resume(throwing: error)
-                }
-            )
-            
-           
-            if progressHandler != nil {
-                progressHandlersByTaskID[task.taskIdentifier] = progressHandler
-            }
-            
-            
-            task.resume()
-            _ = task.progress.observe(\.fractionCompleted) { progress, _ in
-                  print("progress: ", progress.fractionCompleted)
-            }
+    private func downloadEncryptedFile(downloadUrl: String, destinationUrl:URL, progressHandler: ProgressHandler? = nil) -> Void {
+        let task = urlSession.downloadTask(with: URL(string: downloadUrl)!)
+        
+    
+        if progressHandler != nil {
+            progressHandlersByTaskID[task.taskIdentifier] = progressHandler
         }
+        task.resume()
     }
 }
 
