@@ -68,7 +68,9 @@ public class Download: NSObject {
     
     
     private func downloadEncryptedFile(downloadUrl: String, destinationURL:URL, progressHandler: ProgressHandler? = nil) async throws -> URL {
-        let task = urlSession.downloadTask(with: URL(string: downloadUrl)!)
+        let task = urlSession.downloadTask(with: URL(string: downloadUrl)!, completionHandler: {_,_,_ in
+            print("COMPLETED")
+        })
         
         observation = task.progress.observe(\.fractionCompleted) { progress, _ in
              print("progress: ", progress.fractionCompleted)
@@ -77,6 +79,7 @@ public class Download: NSObject {
             progressHandlersByTaskID[task.taskIdentifier] = progressHandler
         }
         task.resume()
+        
         
         return destinationURL
     }
