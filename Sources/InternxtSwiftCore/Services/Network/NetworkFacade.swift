@@ -66,13 +66,18 @@ public struct NetworkFacade {
                 continuation.resume(returning: downloadResult!.url)
             }
             Task {
-                try await download.start(
-                    bucketId:bucketId,
-                    fileId: fileId,
-                    destination: encryptedFileDestination,
-                    progressHandler: downloadProgressHandler,
-                    completionHandler: onDownloadCompleted
-                )
+                do {
+                    try await download.start(
+                        bucketId:bucketId,
+                        fileId: fileId,
+                        destination: encryptedFileDestination,
+                        progressHandler: downloadProgressHandler,
+                        completionHandler: onDownloadCompleted
+                    )
+                } catch {
+                    continuation.resume(throwing: error)
+                }
+                
             }
             
         }

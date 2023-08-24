@@ -85,6 +85,7 @@ public class Download: NSObject {
     
     
     private func downloadEncryptedFile(downloadUrl: String, destinationUrl:URL, progressHandler: ProgressHandler? = nil) -> Void {
+        print("Start download")
         let task = urlSession.downloadTask(with: URL(string: downloadUrl)!)
         
     
@@ -92,6 +93,7 @@ public class Download: NSObject {
             progressHandlersByTaskID[task.taskIdentifier] = progressHandler
         }
         task.resume()
+        print("Resume download")
     }
 }
 
