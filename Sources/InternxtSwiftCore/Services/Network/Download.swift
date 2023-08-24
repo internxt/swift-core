@@ -50,6 +50,11 @@ extension Download: URLSessionDownloadDelegate {
         handler?(progress)
     }
     
+    public func urlSession(_ session: URLSession, task: URLSessionTask, didCompleteWithError error: Error?) {
+        print(error)
+        completionHandler(nil)
+    }
+    
 }
 
 @available(macOS 10.15, *)
