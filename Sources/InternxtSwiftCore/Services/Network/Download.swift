@@ -25,89 +25,60 @@ struct DownloadResult {
     }
 }
 
-@available(macOS 10.15, *)
-extension Download: URLSessionDownloadDelegate {
-    public func urlSession(_ session: URLSession, downloadTask: URLSessionDownloadTask, didFinishDownloadingTo location: URL) {
-        
-        
-        if let infoUnwrapped = info {
-            do {
-                try FileManager.default.copyItem(at: location, to: destinationURL!)
-                completionHandler(DownloadResult(url: destinationURL!, expectedContentHash: infoUnwrapped.shards.first!.hash, index: infoUnwrapped.index))
-            } catch {
-                completionHandler(nil)
-            }
-            
-        } else {
-            completionHandler(nil)
-        }
-        
-    }
 
-    public func urlSession(_ session: URLSession, downloadTask: URLSessionDownloadTask, didWriteData bytesWritten: Int64, totalBytesWritten: Int64, totalBytesExpectedToWrite: Int64) {
-        let progress = Double(totalBytesWritten) / Double(totalBytesExpectedToWrite)
-        let handler = progressHandlersByTaskID[downloadTask.taskIdentifier]
-        handler?(progress)
-    }
-    
-    public func urlSession(_ session: URLSession, task: URLSessionTask, didCompleteWithError error: Error?) {
-        print(error)
-        completionHandler(nil)
-    }
-    
-}
 
 @available(macOS 10.15, *)
 public class Download: NSObject {
     private let networkAPI: NetworkAPI
-    private lazy var urlSession = URLSession(
-        configuration: .default,
-        delegate: self,
-        delegateQueue: .main
-    )
-    private var outputStream: OutputStream?
+    
+    private var observation: NSKeyValueObservation?
+
     private var progressHandlersByTaskID = [Int : ProgressHandler]()
-    private var completionHandler: (DownloadResult?) -> Void
-    private var info: GetFileInfoResponse?
-    private var destinationURL: URL?
-    init(networkAPI: NetworkAPI, urlSession: URLSession? = nil) {
+    private var urlSession: URLSession
+    init(networkAPI: NetworkAPI, urlSession: URLSession?) {
         self.networkAPI = networkAPI
-        self.completionHandler = {downloadResult in
-            print("Completed")
+        if let urlSession = urlSession {
+            self.urlSession = urlSession
+        } else {
+            self.urlSession = URLSession.shared
         }
-        super.init()
         
+        super.init()
+    }
+    
+    deinit {
+        observation?.invalidate()
     }
     
     
-    
-    func start(bucketId: String, fileId: String, destination: URL,  progressHandler: ProgressHandler? = nil, completionHandler: @escaping (DownloadResult?) -> Void,  debug: Bool = false) async throws ->  Void {
-        self.completionHandler = completionHandler
-        self.destinationURL = destination
+    func start(bucketId: String, fileId: String, destination: URL,  progressHandler: ProgressHandler? = nil,  debug: Bool = false) async throws ->  DownloadResult {
         let info = try await networkAPI.getFileInfo(bucketId: bucketId, fileId: fileId)
         
-        self.outputStream = OutputStream(url: destination, append: true)
         if info.shards.count > 1 {
             throw DownloadError.MultipartDownloadNotSupported
         }
         
-        self.info = info
         let shard = info.shards.first!
         
-        downloadEncryptedFile(downloadUrl: shard.url, destinationUrl: destination, progressHandler: progressHandler)
+        let url = try await downloadEncryptedFile(downloadUrl: shard.url, destinationURL: destination, progressHandler: progressHandler)
         
+        return DownloadResult(url: url, expectedContentHash: shard.hash, index: info.index)
     }
     
     
     
-    private func downloadEncryptedFile(downloadUrl: String, destinationUrl:URL, progressHandler: ProgressHandler? = nil) -> Void {
+    private func downloadEncryptedFile(downloadUrl: String, destinationURL:URL, progressHandler: ProgressHandler? = nil) async throws -> URL {
         let task = urlSession.downloadTask(with: URL(string: downloadUrl)!)
         
-    
+        observation = task.progress.observe(\.fractionCompleted) { progress, _ in
+             print("progress: ", progress.fractionCompleted)
+        }
         if progressHandler != nil {
             progressHandlersByTaskID[task.taskIdentifier] = progressHandler
         }
         task.resume()
+        
+        return destinationURL
     }
 }
 

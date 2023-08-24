@@ -52,47 +52,30 @@ public struct NetworkFacade {
     
     public func downloadFile(bucketId: String, fileId: String, encryptedFileDestination: URL, destinationURL: URL, progressHandler: @escaping ProgressHandler) async throws -> URL {
         
-        
-        return try await withCheckedThrowingContinuation{(continuation: CheckedContinuation<URL, Error>) -> Void in
-            @Sendable func downloadProgressHandler(downloadProgress: Double) {
-                let downloadMaxProgress = 0.9;
-                // We need to wait for the decryption, so download reachs downloadMaxProgress, and not 100%
-                progressHandler(downloadProgress * downloadMaxProgress)
-                
-            }
-           
-            @Sendable func onDownloadCompleted(downloadResult: DownloadResult?) {
-                Task {
-                    do {
-                        
-                        if let downloadResultUnwrapped = downloadResult {
-                            let decryptedFileURL = try await decryptFile(bucketId: bucketId, destinationURL: destinationURL, progressHandler: progressHandler, encryptedFileDownloadResult: downloadResultUnwrapped)
-                            continuation.resume(returning: decryptedFileURL)
-                        } else {
-                            continuation.resume(throwing: DownloadError.MissingDownloadURL)
-                        }
-                        
-                    } catch {
-                        continuation.resume(throwing: error)
-                    }
-                }
-            }
-            Task {
-                do {
-                    try await download.start(
-                        bucketId:bucketId,
-                        fileId: fileId,
-                        destination: encryptedFileDestination,
-                        progressHandler: downloadProgressHandler,
-                        completionHandler: onDownloadCompleted
-                    )
-                } catch {
-                    continuation.resume(throwing: error)
-                }
-                
-            }
+        func downloadProgressHandler(downloadProgress: Double) {
+            let downloadMaxProgress = 0.9;
+            // We need to wait for the decryption, so download reachs downloadMaxProgress, and not 100%
+            progressHandler(downloadProgress * downloadMaxProgress)
             
         }
+        
+        let encryptedFileDownloadResult = try await download.start(
+            bucketId:bucketId,
+            fileId: fileId,
+            destination: encryptedFileDestination,
+            progressHandler: downloadProgressHandler
+        )
+        
+        
+        let decryptedFileURL = try await decryptFile(
+            bucketId: bucketId,
+            destinationURL: destinationURL,
+            progressHandler: progressHandler,
+            encryptedFileDownloadResult: encryptedFileDownloadResult
+        )
+        
+        
+        return decryptedFileURL
     }
     
     func decryptFile(bucketId: String, destinationURL: URL, progressHandler: ProgressHandler, encryptedFileDownloadResult: DownloadResult) async throws -> URL {
