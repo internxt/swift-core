@@ -35,7 +35,10 @@ extension Download: URLSessionDataDelegate {
             totalBytesSent: Int64,
             totalBytesExpectedToSend: Int64
     ) {
+            print("PROGRESS")
+            
             let progress = Double(totalBytesSent) / Double(totalBytesExpectedToSend)
+        print(progress)
             let handler = progressHandlersByTaskID[task.taskIdentifier]
             handler?(progress)
     }
@@ -77,12 +80,7 @@ public class Download: NSObject {
         
     }
     
-    public func urlSession(_ session: URLSession, dataTask: URLSessionDataTask, didReceive data: Data) {
-        _ = data.withUnsafeBytes({ (rawBufferPointer: UnsafeRawBufferPointer) -> Int in
-            let bufferPointer = rawBufferPointer.bindMemory(to: UInt8.self)
-            return outputStream!.write(bufferPointer.baseAddress!, maxLength: data.count)
-        })
-    }
+    
     
     private func downloadEncryptedFile(downloadUrl: String, destinationUrl:URL, progressHandler: ProgressHandler? = nil) async throws -> URL  {
         return try await withCheckedThrowingContinuation { (continuation) in
@@ -95,10 +93,13 @@ public class Download: NSObject {
                         if response?.statusCode != 200 {
                             return continuation.resume(with: .failure(DownloadError.DownloadNotSuccessful))
                         } else {
-                            if let data = data {
-                                self.outputStream?.close()
-                                return continuation.resume(with: .success(destinationUrl))
-                                
+                            if let dataUnwrapped = data {
+                                do {
+                                    try dataUnwrapped.write(to: destinationUrl)
+                                    return continuation.resume(with: .success(destinationUrl))
+                                } catch {
+                                    return continuation.resume(with: .failure(DownloadError.MissingDownloadURL))
+                                }
                                 
                             } else {
                                 return continuation.resume(with: .failure(DownloadError.MissingDownloadURL))
