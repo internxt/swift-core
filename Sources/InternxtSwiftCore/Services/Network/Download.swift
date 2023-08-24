@@ -59,7 +59,7 @@ public class Download: NSObject {
         
     }
     
-    func start(bucketId: String, fileId: String, destination: URL,  progressHandler: ProgressHandler? = nil, debug: Bool = false) async throws -> Void {
+    func start(bucketId: String, fileId: String, destination: URL,  progressHandler: ProgressHandler? = nil, debug: Bool = false) async throws -> DownloadResult {
         let info = try await networkAPI.getFileInfo(bucketId: bucketId, fileId: fileId)
         
         self.outputStream = OutputStream(url: destination, append: true)
@@ -75,7 +75,7 @@ public class Download: NSObject {
         //if url.fileSize == 0 {
           //  throw NetworkFacadeError.FileIsEmpty
         //}
-        //return DownloadResult(url: url, expectedContentHash: shard.hash, index: info.index)
+        return DownloadResult(url: URL(fileURLWithPath: ""), expectedContentHash: shard.hash, index: info.index)
         
     }
     
