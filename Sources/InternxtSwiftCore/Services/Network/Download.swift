@@ -31,7 +31,13 @@ extension Download: URLSessionDownloadDelegate {
         
         
         if let infoUnwrapped = info {
-            completionHandler(DownloadResult(url: location, expectedContentHash: infoUnwrapped.shards.first!.hash, index: infoUnwrapped.index))
+            do {
+                try FileManager.default.copyItem(at: location, to: destinationURL!)
+                completionHandler(DownloadResult(url: location, expectedContentHash: infoUnwrapped.shards.first!.hash, index: infoUnwrapped.index))
+            } catch {
+                completionHandler(nil)
+            }
+            
         } else {
             completionHandler(nil)
         }
@@ -58,6 +64,7 @@ public class Download: NSObject {
     private var progressHandlersByTaskID = [Int : ProgressHandler]()
     private var completionHandler: (DownloadResult?) -> Void
     private var info: GetFileInfoResponse?
+    private var destinationURL: URL?
     init(networkAPI: NetworkAPI, urlSession: URLSession? = nil) {
         self.networkAPI = networkAPI
         self.completionHandler = {downloadResult in
@@ -71,6 +78,7 @@ public class Download: NSObject {
     
     func start(bucketId: String, fileId: String, destination: URL,  progressHandler: ProgressHandler? = nil, completionHandler: @escaping (DownloadResult?) -> Void,  debug: Bool = false) async throws ->  Void {
         self.completionHandler = completionHandler
+        self.destinationURL = destination
         let info = try await networkAPI.getFileInfo(bucketId: bucketId, fileId: fileId)
         
         self.outputStream = OutputStream(url: destination, append: true)
@@ -88,7 +96,6 @@ public class Download: NSObject {
     
     
     private func downloadEncryptedFile(downloadUrl: String, destinationUrl:URL, progressHandler: ProgressHandler? = nil) -> Void {
-        print("Start download")
         let task = urlSession.downloadTask(with: URL(string: downloadUrl)!)
         
     
@@ -96,7 +103,6 @@ public class Download: NSObject {
             progressHandlersByTaskID[task.taskIdentifier] = progressHandler
         }
         task.resume()
-        print("Resume download")
     }
 }
 
