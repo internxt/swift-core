@@ -76,8 +76,6 @@ public struct NetworkFacade {
                         continuation.resume(throwing: error)
                     }
                 }
-                
-                continuation.resume(returning: downloadResult!.url)
             }
             Task {
                 do {
