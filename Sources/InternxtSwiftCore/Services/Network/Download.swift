@@ -28,20 +28,7 @@ struct DownloadResult {
 @available(macOS 10.15, *)
 extension Download: URLSessionDataDelegate {
     
-    public func urlSession(
-            _ session: URLSession,
-            task: URLSessionTask,
-            didSendBodyData bytesSent: Int64,
-            totalBytesSent: Int64,
-            totalBytesExpectedToSend: Int64
-    ) {
-            print("PROGRESS")
-            
-            let progress = Double(totalBytesSent) / Double(totalBytesExpectedToSend)
-        print(progress)
-            let handler = progressHandlersByTaskID[task.taskIdentifier]
-            handler?(progress)
-    }
+    
 }
 
 @available(macOS 10.15, *)
@@ -120,7 +107,9 @@ public class Download: NSObject {
             
             
             task.resume()
-            outputStream?.open()
+            _ = task.progress.observe(\.fractionCompleted) { progress, _ in
+                  print("progress: ", progress.fractionCompleted)
+            }
         }
     }
 }
