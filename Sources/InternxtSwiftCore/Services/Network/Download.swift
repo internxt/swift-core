@@ -66,7 +66,7 @@ public class Download: NSObject {
         if url.fileSize == 0 {
             print("EMPTY FILE")
         }
-        return DownloadResult(url: url, expectedContentHash: shard.hash, index: shard.index)
+        return DownloadResult(url: url, expectedContentHash: shard.hash, index: info.index)
         
     }
     
