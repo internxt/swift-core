@@ -17,9 +17,11 @@ enum DownloadError: Error {
 struct DownloadResult {
     public var url: URL
     public var expectedContentHash: String
-    init(url: URL, expectedContentHash: String) {
+    public var index: String
+    init(url: URL, expectedContentHash: String, index: String) {
         self.url = url
         self.expectedContentHash = expectedContentHash
+        self.index = index
     }
 }
 
@@ -64,7 +66,7 @@ public class Download: NSObject {
         if url.fileSize == 0 {
             print("EMPTY FILE")
         }
-        return DownloadResult(url: url, expectedContentHash: shard.hash)
+        return DownloadResult(url: url, expectedContentHash: shard.hash, index: shard.index)
         
     }
     

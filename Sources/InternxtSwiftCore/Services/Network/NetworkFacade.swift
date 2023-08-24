@@ -51,13 +51,6 @@ public struct NetworkFacade {
     }
     
     public func downloadFile(bucketId: String, fileId: String, encryptedFileDestination: URL, destinationURL: URL, progressHandler: @escaping ProgressHandler) async throws -> URL {
-        guard let index = cryptoUtils.getRandomBytes(32) else {
-            throw UploadError.InvalidIndex
-        }
-        
-        let fullHexString = cryptoUtils.bytesToHexString(index)
-        let hexIv = fullHexString.prefix(upTo: fullHexString.index(fullHexString.startIndex, offsetBy: 32))
-        let iv = cryptoUtils.hexStringToBytes(String(hexIv))
         
         func downloadProgressHandler(downloadProgress: Double) {
             let downloadMaxProgress = 0.9;
@@ -65,7 +58,7 @@ public struct NetworkFacade {
             progressHandler(downloadProgress * downloadMaxProgress)
             
         }
-        let fileKey = try encrypt.generateFileKey(mnemonic: mnemonic, bucketId: bucketId, index: index)
+       
         
         let tmpEncryptedDestination = FileManager.default.temporaryDirectory.appendingPathComponent("encrypted_\(NSUUID().uuidString)")
         let encryptedFileDownloadResult = try await download.start(
@@ -74,6 +67,11 @@ public struct NetworkFacade {
             destination: tmpEncryptedDestination,
             progressHandler: downloadProgressHandler
         )
+        
+        let fullHexString = encryptedFileDownloadResult.index
+        let hexIv = fullHexString.prefix(upTo: fullHexString.index(fullHexString.startIndex, offsetBy: 32))
+        let iv = cryptoUtils.hexStringToBytes(String(hexIv))
+        let fileKey = try encrypt.generateFileKey(mnemonic: mnemonic, bucketId: bucketId, index: cryptoUtils.hexStringToBytes(encryptedFileDownloadResult.index))
         
         guard let hashInputStream = InputStream(url: encryptedFileDownloadResult.url) else {
             throw NetworkFacadeError.FailedToOpenDecryptInputStream
@@ -105,7 +103,7 @@ public struct NetworkFacade {
             config: DecryptConfig(key: fileKey, iv: iv)
         )
         
-        print(try String(contentsOf: tmpDecryptedDestination, encoding: .utf8))
+        print()
         // Reach 100%
         progressHandler(1)
         
