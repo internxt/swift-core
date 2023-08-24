@@ -29,17 +29,19 @@ struct DownloadResult {
 extension Download: URLSessionDownloadDelegate {
     public func urlSession(_ session: URLSession, downloadTask: URLSessionDownloadTask, didFinishDownloadingTo location: URL) {
         
-        print("Download done")
+        
         if let infoUnwrapped = info {
             completionHandler(DownloadResult(url: location, expectedContentHash: infoUnwrapped.shards.first!.hash, index: infoUnwrapped.index))
+        } else {
+            completionHandler(nil)
         }
         
     }
 
     public func urlSession(_ session: URLSession, downloadTask: URLSessionDownloadTask, didWriteData bytesWritten: Int64, totalBytesWritten: Int64, totalBytesExpectedToWrite: Int64) {
-        // Calculate and handle download progress
-        let progress = Float(totalBytesWritten) / Float(totalBytesExpectedToWrite)
-        print("Download Progress: \(progress)")
+        let progress = Double(totalBytesWritten) / Double(totalBytesExpectedToWrite)
+        let handler = progressHandlersByTaskID[downloadTask.taskIdentifier]
+        handler?(progress)
     }
     
 }

@@ -62,7 +62,21 @@ public struct NetworkFacade {
             }
            
             @Sendable func onDownloadCompleted(downloadResult: DownloadResult?) {
-                print("Download done", downloadResult)
+                Task {
+                    do {
+                        
+                        if let downloadResultUnwrapped = downloadResult {
+                            let decryptedFileURL = try await decryptFile(bucketId: bucketId, destinationURL: destinationURL, progressHandler: progressHandler, encryptedFileDownloadResult: downloadResultUnwrapped)
+                            continuation.resume(returning: decryptedFileURL)
+                        } else {
+                            continuation.resume(throwing: DownloadError.MissingDownloadURL)
+                        }
+                        
+                    } catch {
+                        continuation.resume(throwing: error)
+                    }
+                }
+                
                 continuation.resume(returning: downloadResult!.url)
             }
             Task {
