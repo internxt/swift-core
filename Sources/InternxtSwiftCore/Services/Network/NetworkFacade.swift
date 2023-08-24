@@ -52,20 +52,33 @@ public struct NetworkFacade {
     
     public func downloadFile(bucketId: String, fileId: String, encryptedFileDestination: URL, destinationURL: URL, progressHandler: @escaping ProgressHandler) async throws -> URL {
         
-        func downloadProgressHandler(downloadProgress: Double) {
-            let downloadMaxProgress = 0.9;
-            // We need to wait for the decryption, so download reachs downloadMaxProgress, and not 100%
-            progressHandler(downloadProgress * downloadMaxProgress)
+        
+        return try await withCheckedThrowingContinuation{(continuation: CheckedContinuation<URL, Error>) -> Void in
+            @Sendable func downloadProgressHandler(downloadProgress: Double) {
+                let downloadMaxProgress = 0.9;
+                // We need to wait for the decryption, so download reachs downloadMaxProgress, and not 100%
+                progressHandler(downloadProgress * downloadMaxProgress)
+                
+            }
+           
+            @Sendable func onDownloadCompleted(downloadResult: DownloadResult?) {
+                print("Download done", downloadResult)
+                continuation.resume(returning: downloadResult!.url)
+            }
+            Task {
+                try await download.start(
+                    bucketId:bucketId,
+                    fileId: fileId,
+                    destination: encryptedFileDestination,
+                    progressHandler: downloadProgressHandler,
+                    completionHandler: onDownloadCompleted
+                )
+            }
             
         }
-       
-        let encryptedFileDownloadResult = try await download.start(
-            bucketId:bucketId,
-            fileId: fileId,
-            destination: encryptedFileDestination,
-            progressHandler: downloadProgressHandler
-        )
-        
+    }
+    
+    func decryptFile(bucketId: String, destinationURL: URL, progressHandler: ProgressHandler, encryptedFileDownloadResult: DownloadResult) async throws -> URL {
         let fullHexString = encryptedFileDownloadResult.index
         let hexIv = fullHexString.prefix(upTo: fullHexString.index(fullHexString.startIndex, offsetBy: 32))
         let iv = cryptoUtils.hexStringToBytes(String(hexIv))
@@ -107,12 +120,10 @@ public struct NetworkFacade {
         
         if decryptResult == .Success {
     
-            
             return destinationURL
             
         } else {
             throw NetworkFacadeError.DecryptionFailed
         }
-        
     }
 }

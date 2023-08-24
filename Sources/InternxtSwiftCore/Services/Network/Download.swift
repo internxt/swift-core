@@ -28,15 +28,7 @@ struct DownloadResult {
 @available(macOS 10.15, *)
 extension Download: URLSessionDataDelegate {
     
-    func urlSession(_ session: URLSession, downloadTask: URLSessionDownloadTask, didFinishDownloadingTo location: URL) {
-            // Handle completed download
-        }
-
-        func urlSession(_ session: URLSession, downloadTask: URLSessionDownloadTask, didWriteData bytesWritten: Int64, totalBytesWritten: Int64, totalBytesExpectedToWrite: Int64) {
-            // Calculate and handle download progress
-            let progress = Float(totalBytesWritten) / Float(totalBytesExpectedToWrite)
-            print("Download Progress: \(progress)")
-        }
+    
 }
 
 @available(macOS 10.15, *)
@@ -49,17 +41,33 @@ public class Download: NSObject {
     )
     private var outputStream: OutputStream?
     private var progressHandlersByTaskID = [Int : ProgressHandler]()
-    private var completionHandler: (URL?) -> Void
+    private var completionHandler: (DownloadResult?) -> Void
+    private var info: GetFileInfoResponse?
     init(networkAPI: NetworkAPI, urlSession: URLSession? = nil) {
         self.networkAPI = networkAPI
-        self.completionHandler = {url in
+        self.completionHandler = {downloadResult in
             print("Completed")
         }
         super.init()
         
     }
     
-    func start(bucketId: String, fileId: String, destination: URL,  progressHandler: ProgressHandler? = nil, debug: Bool = false) async throws -> DownloadResult {
+    func urlSession(_ session: URLSession, downloadTask: URLSessionDownloadTask, didFinishDownloadingTo location: URL) {
+        
+        if let infoUnwrapped = info {
+            completionHandler(DownloadResult(url: location, expectedContentHash: infoUnwrapped.shards.first!.hash, index: infoUnwrapped.index))
+        }
+        
+    }
+
+    func urlSession(_ session: URLSession, downloadTask: URLSessionDownloadTask, didWriteData bytesWritten: Int64, totalBytesWritten: Int64, totalBytesExpectedToWrite: Int64) {
+        // Calculate and handle download progress
+        let progress = Float(totalBytesWritten) / Float(totalBytesExpectedToWrite)
+        print("Download Progress: \(progress)")
+    }
+    
+    func start(bucketId: String, fileId: String, destination: URL,  progressHandler: ProgressHandler? = nil, completionHandler: @escaping (DownloadResult?) -> Void,  debug: Bool = false) async throws ->  Void {
+        self.completionHandler = completionHandler
         let info = try await networkAPI.getFileInfo(bucketId: bucketId, fileId: fileId)
         
         self.outputStream = OutputStream(url: destination, append: true)
@@ -67,15 +75,10 @@ public class Download: NSObject {
             throw DownloadError.MultipartDownloadNotSupported
         }
         
+        self.info = info
         let shard = info.shards.first!
         
         downloadEncryptedFile(downloadUrl: shard.url, destinationUrl: destination, progressHandler: progressHandler)
-        
-        
-        //if url.fileSize == 0 {
-          //  throw NetworkFacadeError.FileIsEmpty
-        //}
-        return DownloadResult(url: URL(fileURLWithPath: ""), expectedContentHash: shard.hash, index: info.index)
         
     }
     
