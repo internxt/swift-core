@@ -26,8 +26,21 @@ struct DownloadResult {
 }
 
 @available(macOS 10.15, *)
-extension Download: URLSessionDataDelegate {
-    
+extension Download: URLSessionDownloadDelegate {
+    public func urlSession(_ session: URLSession, downloadTask: URLSessionDownloadTask, didFinishDownloadingTo location: URL) {
+        
+        print("Download done")
+        if let infoUnwrapped = info {
+            completionHandler(DownloadResult(url: location, expectedContentHash: infoUnwrapped.shards.first!.hash, index: infoUnwrapped.index))
+        }
+        
+    }
+
+    public func urlSession(_ session: URLSession, downloadTask: URLSessionDownloadTask, didWriteData bytesWritten: Int64, totalBytesWritten: Int64, totalBytesExpectedToWrite: Int64) {
+        // Calculate and handle download progress
+        let progress = Float(totalBytesWritten) / Float(totalBytesExpectedToWrite)
+        print("Download Progress: \(progress)")
+    }
     
 }
 
@@ -52,19 +65,7 @@ public class Download: NSObject {
         
     }
     
-    func urlSession(_ session: URLSession, downloadTask: URLSessionDownloadTask, didFinishDownloadingTo location: URL) {
-        
-        if let infoUnwrapped = info {
-            completionHandler(DownloadResult(url: location, expectedContentHash: infoUnwrapped.shards.first!.hash, index: infoUnwrapped.index))
-        }
-        
-    }
-
-    func urlSession(_ session: URLSession, downloadTask: URLSessionDownloadTask, didWriteData bytesWritten: Int64, totalBytesWritten: Int64, totalBytesExpectedToWrite: Int64) {
-        // Calculate and handle download progress
-        let progress = Float(totalBytesWritten) / Float(totalBytesExpectedToWrite)
-        print("Download Progress: \(progress)")
-    }
+    
     
     func start(bucketId: String, fileId: String, destination: URL,  progressHandler: ProgressHandler? = nil, completionHandler: @escaping (DownloadResult?) -> Void,  debug: Bool = false) async throws ->  Void {
         self.completionHandler = completionHandler
