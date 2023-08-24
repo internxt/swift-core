@@ -66,7 +66,7 @@ public struct FinishUploadResponse: Decodable {
 }
 
 public struct GetFileInfoShard: Decodable {
-    public let index: Int
+    public let index: String
     public let hash: String
     public let url: String
 }
