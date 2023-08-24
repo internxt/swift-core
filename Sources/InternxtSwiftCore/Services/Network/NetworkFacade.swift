@@ -105,6 +105,7 @@ public struct NetworkFacade {
             config: DecryptConfig(key: fileKey, iv: iv)
         )
         
+        print(try String(contentsOf: tmpDecryptedDestination, encoding: .utf8))
         // Reach 100%
         progressHandler(1)
         
