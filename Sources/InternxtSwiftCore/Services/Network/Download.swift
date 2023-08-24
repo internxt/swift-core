@@ -12,6 +12,7 @@ enum DownloadError: Error {
     case DownloadNotSuccessful
     case MissingDownloadURL
     case MultipartDownloadNotSupported
+    case FailedToCopyDownloadedURL
 }
 
 struct DownloadResult {
@@ -68,20 +69,33 @@ public class Download: NSObject {
     
     
     private func downloadEncryptedFile(downloadUrl: String, destinationURL:URL, progressHandler: ProgressHandler? = nil) async throws -> URL {
-        let task = urlSession.downloadTask(with: URL(string: downloadUrl)!, completionHandler: {_,_,_ in
-            print("COMPLETED")
-        })
         
-        observation = task.progress.observe(\.fractionCompleted) { progress, _ in
-             print("progress: ", progress.fractionCompleted)
+        return try await withCheckedThrowingContinuation{continuation in
+            let task = urlSession.downloadTask(with: URL(string: downloadUrl)!, completionHandler: {localURL,_,_ in
+                if let localURL = localURL {
+                    do {
+                        try FileManager.default.copyItem(at: localURL, to: destinationURL)
+                        
+                        continuation.resume(returning: destinationURL)
+                    } catch {
+                        continuation.resume(throwing: DownloadError.FailedToCopyDownloadedURL)
+                    }
+                    
+                } else {
+                    continuation.resume(throwing: DownloadError.MissingDownloadURL)
+                }
+            })
+            
+            observation = task.progress.observe(\.fractionCompleted) { progress, _ in
+                if let progressHandlerUnwrapped = progressHandler {
+                    progressHandlerUnwrapped(progress.fractionCompleted)
+                }
+                print("progress: ", progress.fractionCompleted)
+            }
+            
+            task.resume()
         }
-        if progressHandler != nil {
-            progressHandlersByTaskID[task.taskIdentifier] = progressHandler
-        }
-        task.resume()
         
-        
-        return destinationURL
     }
 }
 
