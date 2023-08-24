@@ -23,7 +23,7 @@ extension Upload: URLSessionTaskDelegate {
             let progress = Double(totalBytesSent) / Double(totalBytesExpectedToSend)
             let handler = progressHandlersByTaskID[task.taskIdentifier]
             handler?(progress)
-        }
+    }
 }
 
 

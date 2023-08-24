@@ -26,12 +26,18 @@ struct DownloadResult {
 }
 
 @available(macOS 10.15, *)
-extension Download: URLSessionDownloadDelegate {
-    public func urlSession(_ session: URLSession, downloadTask: URLSessionDownloadTask, didFinishDownloadingTo location: URL) {
-        print("DONE DOWNLOAD")
-    }
-    public func urlSession(_ session: URLSession, downloadTask: URLSessionDownloadTask, didWriteData bytesWritten: Int64, totalBytesWritten: Int64, totalBytesExpectedToWrite: Int64) {
-        print("WRITING bytes")
+extension Download: URLSessionDataDelegate {
+    
+    public func urlSession(
+            _ session: URLSession,
+            task: URLSessionTask,
+            didSendBodyData bytesSent: Int64,
+            totalBytesSent: Int64,
+            totalBytesExpectedToSend: Int64
+    ) {
+            let progress = Double(totalBytesSent) / Double(totalBytesExpectedToSend)
+            let handler = progressHandlersByTaskID[task.taskIdentifier]
+            handler?(progress)
     }
 }
 
@@ -43,7 +49,7 @@ public class Download: NSObject {
         delegate: self,
         delegateQueue: .main
     )
-    
+    private var outputStream: OutputStream?
     private var progressHandlersByTaskID = [Int : ProgressHandler]()
     init(networkAPI: NetworkAPI, urlSession: URLSession? = nil) {
         self.networkAPI = networkAPI
@@ -54,6 +60,7 @@ public class Download: NSObject {
     func start(bucketId: String, fileId: String, destination: URL,  progressHandler: ProgressHandler? = nil, debug: Bool = false) async throws -> DownloadResult {
         let info = try await networkAPI.getFileInfo(bucketId: bucketId, fileId: fileId)
         
+        self.outputStream = OutputStream(url: destination, append: true)
         if info.shards.count > 1 {
             throw DownloadError.MultipartDownloadNotSupported
         }
@@ -70,26 +77,49 @@ public class Download: NSObject {
         
     }
     
-    
-    
-    
-    
+    public func urlSession(_ session: URLSession, dataTask: URLSessionDataTask, didReceive data: Data) {
+        _ = data.withUnsafeBytes({ (rawBufferPointer: UnsafeRawBufferPointer) -> Int in
+            let bufferPointer = rawBufferPointer.bindMemory(to: UInt8.self)
+            return outputStream!.write(bufferPointer.baseAddress!, maxLength: data.count)
+        })
+    }
     
     private func downloadEncryptedFile(downloadUrl: String, destinationUrl:URL, progressHandler: ProgressHandler? = nil) async throws -> URL  {
         return try await withCheckedThrowingContinuation { (continuation) in
            
-            let task = urlSession.downloadTask(
-                with: URL(string: downloadUrl)!
+            let task = urlSession.dataTask(
+                with: URL(string: downloadUrl)!,
+                completionHandler: { data, res, error in
+                    guard let error = error else {
+                        let response = res as? HTTPURLResponse
+                        if response?.statusCode != 200 {
+                            return continuation.resume(with: .failure(DownloadError.DownloadNotSuccessful))
+                        } else {
+                            if let data = data {
+                                self.outputStream?.close()
+                                return continuation.resume(with: .success(destinationUrl))
+                                
+                                
+                            } else {
+                                return continuation.resume(with: .failure(DownloadError.MissingDownloadURL))
+                            }
+                            
+                        }
+                        
+                    }
+                    
+                    continuation.resume(throwing: error)
+                }
             )
             
-            print("Progress")
-            print(progressHandler)
+           
             if progressHandler != nil {
                 progressHandlersByTaskID[task.taskIdentifier] = progressHandler
             }
             
             
             task.resume()
+            outputStream?.open()
         }
     }
 }
