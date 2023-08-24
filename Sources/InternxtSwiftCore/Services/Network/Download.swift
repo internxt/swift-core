@@ -64,7 +64,7 @@ public class Download: NSObject {
         
         
         if url.fileSize == 0 {
-            print("EMPTY FILE")
+            throw NetworkFacadeError.FileIsEmpty
         }
         return DownloadResult(url: url, expectedContentHash: shard.hash, index: info.index)
         
@@ -78,34 +78,8 @@ public class Download: NSObject {
     private func downloadEncryptedFile(downloadUrl: String, destinationUrl:URL, progressHandler: ProgressHandler? = nil) async throws -> URL  {
         return try await withCheckedThrowingContinuation { (continuation) in
            
-            
             let task = urlSession.downloadTask(
-                with: URL(string: downloadUrl)!,
-                completionHandler: { localURL, res, error in
-                    guard let error = error else {
-                        let response = res as? HTTPURLResponse
-                        if response?.statusCode != 200 {
-                            return continuation.resume(with: .failure(DownloadError.DownloadNotSuccessful))
-                        } else {
-                            if let localURL = localURL {
-                                do {
-                                    try FileManager.default.copyItem(at: localURL, to: destinationUrl)
-                                    return continuation.resume(with: .success(destinationUrl))
-                                } catch {
-                                    return continuation.resume(with: .failure(DownloadError.MissingDownloadURL))
-                                }
-                                
-                                
-                            } else {
-                                return continuation.resume(with: .failure(DownloadError.MissingDownloadURL))
-                            }
-                            
-                        }
-                        
-                    }
-                    
-                    continuation.resume(throwing: error)
-                }
+                with: URL(string: downloadUrl)!
             )
             
             print("Progress")

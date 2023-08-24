@@ -59,12 +59,10 @@ public struct NetworkFacade {
             
         }
        
-        
-        let tmpEncryptedDestination = FileManager.default.temporaryDirectory.appendingPathComponent("encrypted_\(NSUUID().uuidString)")
         let encryptedFileDownloadResult = try await download.start(
             bucketId:bucketId,
             fileId: fileId,
-            destination: tmpEncryptedDestination,
+            destination: encryptedFileDestination,
             progressHandler: downloadProgressHandler
         )
         
@@ -90,9 +88,9 @@ public struct NetworkFacade {
             throw NetworkFacadeError.FailedToOpenDecryptInputStream
         }
         
-        let tmpDecryptedDestination = FileManager.default.temporaryDirectory.appendingPathComponent("decrypted_\(NSUUID().uuidString)")
+       
         
-        guard let plainOutputStream = OutputStream(url: tmpDecryptedDestination, append: false) else {
+        guard let plainOutputStream = OutputStream(url: destinationURL, append: false) else {
             throw NetworkFacadeError.FailedToOpenDecryptOutputStream
         }
         
@@ -103,13 +101,13 @@ public struct NetworkFacade {
             config: DecryptConfig(key: fileKey, iv: iv)
         )
         
-        print()
+        
         // Reach 100%
         progressHandler(1)
         
         if decryptResult == .Success {
     
-            try FileManager.default.copyItem(at: tmpDecryptedDestination, to: destinationURL)
+            
             return destinationURL
             
         } else {
