@@ -90,7 +90,6 @@ public class Download: NSObject {
                 if let progressHandlerUnwrapped = progressHandler {
                     progressHandlerUnwrapped(progress.fractionCompleted)
                 }
-                print("progress: ", progress.fractionCompleted)
             }
             
             task.resume()
