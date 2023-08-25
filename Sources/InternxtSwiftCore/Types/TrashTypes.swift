@@ -7,27 +7,32 @@
 
 import Foundation
 
+
 public enum ItemToTrashType: String {
     case File = "file"
     case Folder = "folder"
 }
 
-public struct ItemToTrash: Encodable {
-    public let id: Int
+public struct FileToTrash: Encodable {
+    public let id: String
     public let type: String
     
-    public init(id: Int, type: ItemToTrashType) {
+    public init(id: String) {
         self.id = id
-        self.type = type.rawValue
+        self.type = ItemToTrashType.File.rawValue
     }
 }
 
-public struct AddItemsToTrashPayload: Encodable {
-    private let items: Array<ItemToTrash>
+
+public struct FolderToTrash: Encodable {
+    public let id: Int
+    public let type: String
     
-    public init(items: Array<ItemToTrash>) {
-        self.items = items
+    public init(id: Int) {
+        self.id = id
+        self.type = ItemToTrashType.Folder.rawValue
     }
 }
+
 
 public struct AddItemsToTrashResponse: Decodable {}

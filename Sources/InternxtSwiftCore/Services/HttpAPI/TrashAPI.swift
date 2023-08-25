@@ -17,7 +17,27 @@ public struct TrashAPI {
         self.apiClient = APIClient(urlSession: URLSession.shared, authorizationHeaderValue: "Bearer \(authToken)")
     }
     
-    public func trashItems(itemsToTrash: AddItemsToTrashPayload, debug: Bool = false) async throws -> Bool {
+    
+    public func trashFiles(itemsToTrash: Array<FileToTrash>, debug: Bool = false) async throws -> Bool {
+        let endpoint = Endpoint(path: "\(self.baseUrl)/storage/trash/add",method: .POST, body: itemsToTrash.toJson())
+        
+        do {
+            _ = try await apiClient.fetch(type: AddItemsToTrashResponse.self, endpoint, debugResponse: debug)
+            
+            return true
+        } catch {
+            
+            guard let apiClientError = error as? APIClientError else {
+                throw error
+            }
+            // Trash endpoint doesn't return a body, instead we know if the request was successful by the statusCode,
+            // the APIClient will throw an empty body error in this case with a 200 status code
+            return apiClientError.statusCode == 200
+        }
+    }
+    
+    
+    public func trashFolders(itemsToTrash: Array<FolderToTrash>, debug: Bool = false) async throws -> Bool {
         let endpoint = Endpoint(path: "\(self.baseUrl)/storage/trash/add",method: .POST, body: itemsToTrash.toJson())
         
         do {
