@@ -13,6 +13,12 @@ public enum ItemToTrashType: String {
     case Folder = "folder"
 }
 
+public struct AddFilesToTrashPayload: Encodable {
+    public let items: Array<FileToTrash>
+    public init(items: Array<FileToTrash>) {
+        self.items = items
+    }
+}
 public struct FileToTrash: Encodable {
     public let id: String
     public let type: String
@@ -24,6 +30,12 @@ public struct FileToTrash: Encodable {
 }
 
 
+public struct AddFoldersToTrashPayload: Encodable {
+    public let items: Array<FolderToTrash>
+    public init(items: Array<FolderToTrash>) {
+        self.items = items
+    }
+}
 public struct FolderToTrash: Encodable {
     public let id: Int
     public let type: String
