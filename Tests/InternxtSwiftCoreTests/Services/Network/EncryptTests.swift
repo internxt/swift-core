@@ -51,5 +51,27 @@ final class EncryptTests: XCTestCase {
         
         XCTAssertEqual(result.base64EncodedString(), expectedBase64)
     }
+    
+    
+    func testEncryptStringCorrectly2() throws {
+        let ivHex = "22429e1c6b59ef06751f9b2c9d2aaee1"
+        let saltHex = "45394ec93a9dda6abeb34a6cc6cbcd614a51bdc42e9ed603ee087698bb9c13aae62fa974a6b8a16b2c12150de56f584c068c28b6dd00ee996fb64991101c6195"
+        let expectedBase64 = "RTlOyTqd2mq+s0psxsvNYUpRvcQuntYD7gh2mLucE6rmL6l0prihaywSFQ3lb1hMBowott0A7plvtkmREBxhlSJCnhxrWe8GdR+bLJ0qruEpN9n67xeuMUB/myfxTPIY7z++/U0yxlR2+1RiFC9dwFVc"
+        
+        let result = try sut.encrypt(string: "textTEXTtext123123", password: "passwordPASS123!lokqfqwf", salt: cryptoUtils.hexStringToBytes(saltHex), iv: Data(cryptoUtils.hexStringToBytes(ivHex)), rounds: 2000)
+        
+        XCTAssertEqual(result.base64EncodedString(), expectedBase64)
+    }
+    
+    
+    func testEncryptStringCorrectly3() throws {
+        let ivHex = "d5e2083f9a5394d1d2414bd520dd25e3"
+        let saltHex = "c2c60d255c5258ee4d83ae15d532191e5545ff1a5ae02cd8d348f60e59f980e908dbdcdfc4b93f57b4f0c6d35dfabce8c01637691082ddaf87b55ba90662b796"
+        let expectedBase64 = "wsYNJVxSWO5Ng64V1TIZHlVF/xpa4CzY00j2Dln5gOkI29zfxLk/V7TwxtNd+rzowBY3aRCC3a+HtVupBmK3ltXiCD+aU5TR0kFL1SDdJeOYpOVh6wFWrxz8TEgaIWgHBmHQP9kq7xt4vUgoWcu/AkKkbgvy"
+        
+        let result = try sut.encrypt(string: "TEXTtext0000000123444", password: "saltSALT00000", salt: cryptoUtils.hexStringToBytes(saltHex), iv: Data(cryptoUtils.hexStringToBytes(ivHex)), rounds: 5054)
+        
+        XCTAssertEqual(result.base64EncodedString(), expectedBase64)
+    }
 
 }

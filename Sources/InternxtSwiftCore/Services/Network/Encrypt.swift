@@ -78,10 +78,10 @@ public struct Encrypt {
     }
     
     
-    public func encrypt(string: String, password: String, salt: [UInt8], iv: Data) throws -> Data{
+    public func encrypt(string: String, password: String, salt: [UInt8], iv: Data, rounds: Int = 2145) throws -> Data{
 
         
-        let key = keyDerivation.pbkdf2(password: password, salt: salt, rounds: 2145, derivedKeyLength: 32)
+        let key = keyDerivation.pbkdf2(password: password, salt: salt, rounds: rounds, derivedKeyLength: 32)
         let sealedMessage = try AES.GCM.seal(Data(string.utf8), using: SymmetricKey(data: key), nonce: AES.GCM.Nonce(data: iv))
             
         var mergedData = Data()
