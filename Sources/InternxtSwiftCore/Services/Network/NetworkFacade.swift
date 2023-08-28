@@ -26,9 +26,7 @@ public struct NetworkFacade {
             throw UploadError.InvalidIndex
         }
         
-        let fullHexString = cryptoUtils.bytesToHexString(index)
-        let hexIv = fullHexString.prefix(upTo: fullHexString.index(fullHexString.startIndex, offsetBy: 32))
-        let iv = cryptoUtils.hexStringToBytes(String(hexIv))
+        let iv = Array(index.prefix(16))
         
         let fileKey = try encrypt.generateFileKey(mnemonic: mnemonic, bucketId: bucketId, index: index)
         
