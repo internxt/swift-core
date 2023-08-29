@@ -73,7 +73,7 @@ public struct DriveAPI {
     }
     
     /// Given a fileId, updates the file name
-    
+
     public func updateFile(fileId: String, bucketId: String, newFilename: String, debug: Bool = false) async throws -> UpdateFileResponse {
         let endpoint = Endpoint(
             path: "\(self.baseUrl)/storage/file/\(fileId)/meta",
@@ -87,7 +87,6 @@ public struct DriveAPI {
         return try await apiClient.fetch(type: UpdateFileResponse.self, endpoint, debugResponse: debug)
     }
     
-    /// Retrieves the folder metadata by the folder id
     public func getFolderMetaById(id: String, debug: Bool = false) async throws -> GetFolderMetaByIdResponse {
         let endpoint = Endpoint(
             path: "\(self.baseUrl)/folders/\(id)/metadata",
@@ -97,7 +96,6 @@ public struct DriveAPI {
         return try await apiClient.fetch(type: GetFolderMetaByIdResponse.self, endpoint, debugResponse: debug)
     }
     
-    /// Retrieves the file metadata by the file id
     public func getFileMetaByUuid(uuid: String, debug: Bool = false)  async throws -> GetFileMetaByIdResponse {
         let endpoint = Endpoint(
             path: "\(self.baseUrl)/files/\(uuid)/meta",
