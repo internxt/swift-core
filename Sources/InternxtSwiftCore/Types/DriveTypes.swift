@@ -119,3 +119,50 @@ public struct GetFolderMetaByIdResponse: Decodable {
 public struct GetFileMetaByIdResponse: Decodable {
    
 }
+
+
+public struct CreateFileData: Encodable {
+    public let fileId: String
+    public let type: String?
+    public let bucket: String
+    public let size: Int
+    public let folder_id: Int
+    public let name: String?
+    public let plain_name: String
+    public let encrypt_version: String
+    
+    public init(fileId: String, type: String?, bucket: String, size: Int, folderId: Int, name: String?, plainName: String, encryptVersion: String = "03-aes") {
+        self.fileId = fileId
+        self.type = type
+        self.bucket = bucket
+        self.size = size
+        self.folder_id = folderId
+        self.name = name
+        self.plain_name = plainName
+        self.encrypt_version = encryptVersion
+    }
+}
+
+public struct CreateFilePayload: Encodable {
+    public let file: CreateFileData
+}
+
+public struct CreateFileResponse: Decodable {
+    public let created_at: String
+    public let deleted: Bool
+    public let status: String
+    public let id: Int
+    public let name: String
+    public let plain_name: String?
+    public let type: String?
+    public let size: String?
+    public let folderId: Int
+    public let fileId: String
+    public let bucket: String
+    public let encrypt_version: String
+    public let userId: Int
+    public let modificationTime: String
+    public let updatedAt: String
+    public let createdAt: String
+    public let deletedAt: String?
+}

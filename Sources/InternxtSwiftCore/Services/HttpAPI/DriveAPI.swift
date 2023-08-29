@@ -14,7 +14,7 @@ public struct DriveAPI {
     
     public init(baseUrl: String, authToken: String) {
         self.baseUrl = baseUrl
-        self.apiClient = APIClient(urlSession: URLSession.shared, token: authToken)
+        self.apiClient = APIClient(urlSession: URLSession.shared, authorizationHeaderValue: "Bearer \(authToken)")
     }
     
     /// Get paginated files inside the given folder
@@ -39,10 +39,22 @@ public struct DriveAPI {
     public func createFolder(parentFolderId: Int, folderName: String, debug: Bool = false) async throws -> CreateFolderResponse {
         let endpoint = Endpoint(
             path: "\(self.baseUrl)/storage/folder",
+            method: .POST,
             body: CreateFolderPayload(parentFolderId: parentFolderId, folderName: folderName).toJson()
         )
         
         return try await apiClient.fetch(type: CreateFolderResponse.self, endpoint, debugResponse: debug)
+    }
+    
+    /// Creates a file inside the given parentFolderId with the given name
+    public func createFile(createFile: CreateFileData, debug: Bool = false) async throws -> CreateFileResponse {
+        let endpoint = Endpoint(
+            path: "\(self.baseUrl)/storage/file",
+            method: .POST,
+            body: CreateFilePayload(file: createFile).toJson()
+        )
+        
+        return try await apiClient.fetch(type: CreateFileResponse.self, endpoint, debugResponse: debug)
     }
     
     
@@ -52,6 +64,7 @@ public struct DriveAPI {
     public func updateFolder(folderId: String, folderName: String, debug: Bool = false) async throws -> UpdateFolderResponse {
         let endpoint = Endpoint(
             path: "\(self.baseUrl)/storage/folder/\(folderId)/meta",
+            method: .POST,
             body: UpdateFolderPayload(
                     metadata: MetadataUpdatePayload(itemName: folderName)
                     ).toJson()
@@ -70,7 +83,7 @@ public struct DriveAPI {
         return try await apiClient.fetch(type: GetFolderMetaByIdResponse.self, endpoint, debugResponse: debug)
     }
     
-    /// Retrieves the filer metadata by the file id
+    /// Retrieves the file metadata by the file id
     public func getFileMetaById(id: String, debug: Bool = false)  async throws -> GetFileMetaByIdResponse {
         let endpoint = Endpoint(
             path: "\(self.baseUrl)/storage/files/\(id)/metadata",

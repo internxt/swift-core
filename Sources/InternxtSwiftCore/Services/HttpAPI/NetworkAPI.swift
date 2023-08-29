@@ -13,9 +13,10 @@ public struct NetworkAPI {
     private let baseUrl: String
     private let apiClient: APIClient
 
-    public init(baseUrl: String, authToken: String) {
+    public init(baseUrl: String, basicAuthToken: String, urlSession: URLSession = URLSession.shared) {
         self.baseUrl = baseUrl
-        self.apiClient = APIClient(urlSession: URLSession.shared, token: authToken)
+        
+        self.apiClient = APIClient(urlSession: urlSession, authorizationHeaderValue: "Basic \(basicAuthToken)")
     }
     
     public func startUpload(bucketId: String,  uploadSize: Int,parts: Int = 1, debug: Bool = false) async throws -> StartUploadResponse {

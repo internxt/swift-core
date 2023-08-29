@@ -62,7 +62,10 @@ class AESCipher {
                 // Make sure status is Ok
                 if(encryptedBytes > 0) {
                     let bytesOut = output.write(outputBuffer, maxLength: encryptedBytes)
-                    assert(bytesOut == Int(encryptedBytes))
+                    let bytesMatch = bytesOut == Int(encryptedBytes)
+                    if bytesMatch == false {
+                        return callback(CryptoError.bytesNotMatching, nil)
+                    }
                 }
                 
             }
@@ -139,5 +142,8 @@ class AESCipher {
         // All ok, notify via callback
         callback(nil,status)
     }
+    
+    
+   
 }
 

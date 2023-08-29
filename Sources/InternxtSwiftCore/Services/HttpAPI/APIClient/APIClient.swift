@@ -10,13 +10,15 @@ import Combine
 
 public struct APIClientError: Error {
     public var statusCode: Int
+    public var responseBody: Data
     private var message: String
     public var localizedDescription: String {
         return self.message
     }
-    public init(statusCode: Int, message: String) {
+    public init(statusCode: Int, message: String, responseBody: Data = Data()) {
         self.statusCode = statusCode
         self.message = message
+        self.responseBody = responseBody
     }
 }
 
@@ -25,12 +27,12 @@ public struct APIClientError: Error {
 @available(macOS 10.15, *)
 struct APIClient {
     private let urlSession: URLSession
-    private let token: String
+    private let authorizationHeaderValue: String?
         
     init(urlSession: URLSession = URLSession.shared,
-             token: String = "") {
+             authorizationHeaderValue: String? = nil) {
         self.urlSession = urlSession
-        self.token = token
+        self.authorizationHeaderValue = authorizationHeaderValue
     }
     
   
@@ -39,7 +41,7 @@ struct APIClient {
         
         return try await withCheckedThrowingContinuation { continuation in
             
-            let task = URLSession(configuration: .default).dataTask(with: request) { (data, response, error) in
+            let task = urlSession.dataTask(with: request) { (data, response, error) in
                 if let error = error {
                     continuation.resume(with: .failure(APIError.failedRequest(error.localizedDescription)))
                     return
@@ -58,9 +60,7 @@ struct APIClient {
                     let json = try JSONDecoder().decode(T.self, from: data!)
                     continuation.resume(with:.success(json))
                 } catch {
-                    print("Unable to Decode Response \(error)")
-                    continuation.resume(with:.failure(APIClientError(statusCode: httpResponse.statusCode, message: error.localizedDescription)))
-                    
+                    continuation.resume(with:.failure(APIClientError(statusCode: httpResponse.statusCode, message: error.localizedDescription, responseBody: data ?? Data())))
                 }
             }
             task.resume()
@@ -76,16 +76,17 @@ struct APIClient {
         var urlRequest = URLRequest(url: url )
         urlRequest.httpMethod = endpoint.method.rawValue.lowercased()
         
-        if(self.token.isEmpty == false) {
-            urlRequest.setValue("Bearer \(self.token)", forHTTPHeaderField:"Authorization")
+       
+        
+        if self.authorizationHeaderValue != nil {
+            urlRequest.setValue(self.authorizationHeaderValue, forHTTPHeaderField:"Authorization")
         }
+        
         if endpoint.body != nil {
             print("Endpoint body \(String(data: endpoint.body!, encoding: .utf8))")
             urlRequest.httpBody = endpoint.body!
         }
             
-        
-        
         urlRequest.setValue("application/json", forHTTPHeaderField: "Content-Type")
         
         return urlRequest

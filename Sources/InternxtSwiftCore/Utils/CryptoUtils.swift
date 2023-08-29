@@ -12,6 +12,11 @@ import IDZSwiftCommonCrypto
 public struct CryptoUtils {
     private let keyDerivation = KeyDerivation()
     private let hmac = HMAC()
+    
+    public init() {
+        
+    }
+    
     public func hexStringToBytes(_ hexString: String) -> [UInt8] {
         return arrayFrom(hexString: hexString)
     }
@@ -39,7 +44,7 @@ public struct CryptoUtils {
         let isValidHex = bucketId.isValidHex
     
         if(!isValidHex) {
-            throw ExtensionError.InvalidHex("BucketId must be a valid hex")
+            throw ExtensionError.InvalidHex
         }
         let seed = self.mnemonicToSeed(mnemonic: mnemonic, password: "")
         return getDeterministicKey(key: seed, data: self.hexStringToBytes(bucketId));

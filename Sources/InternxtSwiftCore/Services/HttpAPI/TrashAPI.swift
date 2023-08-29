@@ -14,11 +14,11 @@ public struct TrashAPI {
     
     public init(baseUrl: String, authToken: String) {
         self.baseUrl = baseUrl
-        self.apiClient = APIClient(urlSession: URLSession.shared, token: authToken)
+        self.apiClient = APIClient(urlSession: URLSession.shared, authorizationHeaderValue: "Bearer \(authToken)")
     }
     
     public func trashItems(itemsToTrash: AddItemsToTrashPayload, debug: Bool = false) async throws -> Bool {
-        let endpoint = Endpoint(path: "\(self.baseUrl)/storage/trash/add", body: itemsToTrash.toJson())
+        let endpoint = Endpoint(path: "\(self.baseUrl)/storage/trash/add",method: .POST, body: itemsToTrash.toJson())
         
         do {
             try await apiClient.fetch(type: AddItemsToTrashResponse.self, endpoint, debugResponse: debug)
