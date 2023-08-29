@@ -13,9 +13,10 @@ enum DownloadError: Error {
     case MissingDownloadURL
     case MultipartDownloadNotSupported
     case FailedToCopyDownloadedURL
+    case InvalidBucketId
 }
 
-struct DownloadResult {
+public struct DownloadResult {
     public var url: URL
     public var expectedContentHash: String
     public var index: String
@@ -53,6 +54,9 @@ public class Download: NSObject {
     
     
     func start(bucketId: String, fileId: String, destination: URL,  progressHandler: ProgressHandler? = nil,  debug: Bool = false) async throws ->  DownloadResult {
+        if bucketId.isValidHex == false {
+            throw DownloadError.InvalidBucketId
+        }
         let info = try await networkAPI.getFileInfo(bucketId: bucketId, fileId: fileId)
         
         if info.shards.count > 1 {
@@ -69,10 +73,10 @@ public class Download: NSObject {
     
     
     private func downloadEncryptedFile(downloadUrl: String, destinationURL:URL, progressHandler: ProgressHandler? = nil) async throws -> URL {
-        
         return try await withCheckedThrowingContinuation{continuation in
             let task = urlSession.downloadTask(with: URL(string: downloadUrl)!, completionHandler: {localURL,_,_ in
                 if let localURL = localURL {
+                    
                     do {
                         try FileManager.default.copyItem(at: localURL, to: destinationURL)
                         

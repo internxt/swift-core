@@ -78,7 +78,12 @@ public struct NetworkFacade {
         return decryptedFileURL
     }
     
-    func decryptFile(bucketId: String, destinationURL: URL, progressHandler: ProgressHandler, encryptedFileDownloadResult: DownloadResult) async throws -> URL {
+    public func decryptFile(bucketId: String, destinationURL: URL, progressHandler: ProgressHandler, encryptedFileDownloadResult: DownloadResult) async throws -> URL {
+        
+        if encryptedFileDownloadResult.url.fileSize == 0 {
+            throw NetworkFacadeError.FileIsEmpty
+        }
+        
         let fullHexString = encryptedFileDownloadResult.index
         let hexIv = fullHexString.prefix(upTo: fullHexString.index(fullHexString.startIndex, offsetBy: 32))
         let iv = cryptoUtils.hexStringToBytes(String(hexIv))
@@ -118,6 +123,7 @@ public struct NetworkFacade {
         // Reach 100%
         progressHandler(1)
         
+        print("Decrypt", decryptResult)
         if decryptResult == .Success {
     
             return destinationURL

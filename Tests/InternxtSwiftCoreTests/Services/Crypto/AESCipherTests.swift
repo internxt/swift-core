@@ -13,10 +13,15 @@ final class AESCipherTests: XCTestCase {
     let sut = AESCipher()
     let utils = CryptoUtils()
     
+    func getTemporaryURL() -> URL {
+        URL(fileURLWithPath: NSTemporaryDirectory() + "/test_\(UUID())")
+    }
+    
+    
     func testEncrypt() throws {
-        let destination = NSTemporaryDirectory() + "/encrypt"
+        let destination = getTemporaryURL()
         let inputStream = InputStream.init(data: "test".data(using: .utf8)!)
-        let outputStream = OutputStream(url: URL(fileURLWithPath: destination), append: true)
+        let outputStream = OutputStream(url: destination, append: true)
         
         
         let hexKey = "4ba9058b2efc8c7c9c869b6573b725aa8bf67aecb26d3ebd678e624565570e9c"
@@ -29,6 +34,9 @@ final class AESCipherTests: XCTestCase {
             iv:  self.utils.hexStringToBytes(hexIv),
             callback: {(error, status) in
                 XCTAssertEqual(status, EncryptResultStatus.Success)
+                let result = try! Data(contentsOf: destination).toHexString()
+                
+                XCTAssertEqual(result, "5d14c5cf")
             }
         )
     }
@@ -36,9 +44,9 @@ final class AESCipherTests: XCTestCase {
     func testDecrypt() throws {
         let encryptedBytes: [UInt8] = [97, 24, 150, 210, 51, 34, 168, 164, 0, 19, 163, 219, 9, 44, 97, 24, 150, 210, 51, 34, 168, 164, 0, 19, 163, 219, 9, 44, 97, 24, 150, 210, 51, 34, 168, 164, 0, 19, 163, 219, 9, 44, 97, 24, 150, 210, 51, 34, 168, 164, 0, 19, 163, 219, 9, 44, 97, 24, 150, 210, 51, 34, 168, 164, 0, 19, 163, 219, 9, 44, 97, 24, 150, 210, 51, 34, 168, 164, 0, 19, 163, 219, 9, 44, 97, 24, 150, 210, 51, 34, 168, 164, 0, 19, 163, 219, 9, 44, 97, 24, 150, 210, 51, 34, 168, 164, 0, 19, 163, 219, 9, 44, 97, 24, 150, 210, 51, 34, 168, 164, 0, 19, 163, 219, 9, 44, 97, 24, 150, 210, 51, 34, 168, 164, 0, 19, 163, 219, 9, 44, 97, 24, 150, 210, 51, 34, 168, 164, 0, 19, 163, 219, 9, 44, 97, 24, 150, 210, 51, 34, 168, 164, 0, 19, 163, 219, 9, 44, 97, 24, 150, 210, 51, 34, 168, 164, 0, 19, 163, 219, 9, 44, 97, 24, 150, 210, 51, 34, 168, 164, 0, 19, 163, 219, 9, 44, 93, 20, 197, 207, 93, 20, 197, 207, 93, 20, 197, 207]
         
-        let destination = NSTemporaryDirectory() + "/plain"
+        let destination = getTemporaryURL()
         let inputStream = InputStream(data: Data(bytes: encryptedBytes, count: encryptedBytes.count))
-        let outputStream = OutputStream(url: URL(fileURLWithPath: destination), append: true)
+        let outputStream = OutputStream(url: destination, append: true)
         
         
         let hexKey = "4ba9058b2efc8c7c9c869b6573b725aa8bf67aecb26d3ebd678e624565570e9c"
@@ -56,9 +64,9 @@ final class AESCipherTests: XCTestCase {
     }
     
     func testBadIV() throws {
-        let destination = NSTemporaryDirectory() + "/encrypt"
+        let destination = getTemporaryURL()
         let inputStream = InputStream.init(data: "teststring".data(using: .utf8)!)
-        let outputStream = OutputStream(url: URL(fileURLWithPath: destination), append: true)
+        let outputStream = OutputStream(url: destination, append: true)
         
         
         let hexKey = "4ba9058b2efc8c7c9c869b6573b725aa8bf67aecb26d3ebd678e624565570e9c"

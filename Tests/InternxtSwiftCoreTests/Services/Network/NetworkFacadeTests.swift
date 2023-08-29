@@ -42,7 +42,7 @@ final class NetworkFacadeTests: XCTestCase {
         let destination = getTemporaryDestination()
         let inputStream = InputStream.init(data: "test".data(using: .utf8)!)
         do {
-            try await sut.uploadFile(input: inputStream, encryptedOutput: destination, fileSize: 100, bucketId: "bucket123", progressHandler: {_ in})
+            _ = try await sut.uploadFile(input: inputStream, encryptedOutput: destination, fileSize: 100, bucketId: "bucket123", progressHandler: {_ in})
         } catch {
             
             XCTAssertEqual(error as? ExtensionError,  ExtensionError.InvalidHex)
@@ -55,7 +55,7 @@ final class NetworkFacadeTests: XCTestCase {
         let inputStream = InputStream.init(data: "test".data(using: .utf8)!)
        
         do {
-            try await sut.uploadFile(input: inputStream, encryptedOutput: destination, fileSize: 100, bucketId: "93535c0bfff5de6d59c8eec72b46b605", progressHandler: {_ in})
+            _ = try await sut.uploadFile(input: inputStream, encryptedOutput: destination, fileSize: 100, bucketId: "93535c0bfff5de6d59c8eec72b46b605", progressHandler: {_ in})
         } catch {
             XCTAssertTrue(error is NetworkFacadeError)
             XCTAssertEqual(error as? NetworkFacadeError,  NetworkFacadeError.EncryptedFileNotSameSizeAsOriginal)
@@ -74,7 +74,7 @@ final class NetworkFacadeTests: XCTestCase {
         let inputStream = InputStream.init(data: "test".data(using: .utf8)!)
        
         do {
-            try await sut.uploadFile(input: inputStream, encryptedOutput: destination, fileSize: 4, bucketId: "93535c0bfff5de6d59c8eec72b46b605", progressHandler: {_ in})
+            _ = try await sut.uploadFile(input: inputStream, encryptedOutput: destination, fileSize: 4, bucketId: "93535c0bfff5de6d59c8eec72b46b605", progressHandler: {_ in})
         } catch {
             XCTAssertTrue(error is StartUploadError)
             let uploadError: StartUploadError = (error as? StartUploadError)!
@@ -145,7 +145,7 @@ final class NetworkFacadeTests: XCTestCase {
         let inputStream = InputStream.init(data: "test".data(using: .utf8)!)
        
         do {
-            try await sut.uploadFile(input: inputStream, encryptedOutput: destination, fileSize: 4, bucketId: "93535c0bfff5de6d59c8eec72b46b605", progressHandler: {_ in})
+            _ = try await sut.uploadFile(input: inputStream, encryptedOutput: destination, fileSize: 4, bucketId: "93535c0bfff5de6d59c8eec72b46b605", progressHandler: {_ in})
         } catch {
             XCTAssertTrue(error is UploadError)
             XCTAssertEqual(error as? UploadError, UploadError.UploadedSizeNotMatching)
@@ -215,5 +215,36 @@ final class NetworkFacadeTests: XCTestCase {
         let uploadedResult = try await sut.uploadFile(input: inputStream, encryptedOutput: destination, fileSize: 4, bucketId: "93535c0bfff5de6d59c8eec72b46b605", progressHandler: {_ in})
         
         XCTAssertEqual(uploadedResult.id, "uploadedFileId")
+    }
+    
+    func testShouldFailIfHashIsNotMatching() async throws {
+        let destination = getTemporaryDestination()
+        let contentURL = getTemporaryDestination()
+        // Write into the file
+        try "filedata".data(using: .utf8)?.write(to: contentURL)
+        
+        let downloadResult = DownloadResult(url: contentURL, expectedContentHash: "4ae6fcc4dd6ebcdb9076f2396d64da48", index: "2ec6d83f8987fe2bd04d0260208521d49d4c79187d71989a16ca79d41b90b8f1")
+        
+        do {
+            _ = try await sut.decryptFile(bucketId: "93535c0bfff5de6d59c8eec72b46b605", destinationURL: destination, progressHandler: {_ in }, encryptedFileDownloadResult: downloadResult)
+        } catch {
+            
+            XCTAssertEqual(error as? NetworkFacadeError, NetworkFacadeError.HashMissmatch)
+        }
+    }
+    
+    func testShouldFailIfFileIsEmpty() async throws {
+        let destination = getTemporaryDestination()
+        let contentURL = getTemporaryDestination()
+       
+        
+        let downloadResult = DownloadResult(url: contentURL, expectedContentHash: "4ae6fcc4dd6ebcdb9076f2396d64da48", index: "2ec6d83f8987fe2bd04d0260208521d49d4c79187d71989a16ca79d41b90b8f1")
+        
+        do {
+            _ = try await sut.decryptFile(bucketId: "93535c0bfff5de6d59c8eec72b46b605", destinationURL: destination, progressHandler: {_ in }, encryptedFileDownloadResult: downloadResult)
+        } catch {
+            
+            XCTAssertEqual(error as? NetworkFacadeError, NetworkFacadeError.FileIsEmpty)
+        }
     }
 }
