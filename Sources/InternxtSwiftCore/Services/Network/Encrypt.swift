@@ -27,14 +27,13 @@ public struct Encrypt {
         
         return try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<EncryptResultStatus, Error>) -> Void in
             AESCipher().encryptFromStream(input: input, output: output, key: config.key, iv: config.iv, callback: {(error, status) in
-                if(error != nil) {
-                    
-                    continuation.resume(throwing: error!)
+                if let error = error {
+                    continuation.resume(throwing: error)
                     return
                 }
                 
-                if(status != nil) {
-                    continuation.resume(returning: status!)
+                if let status = status {
+                    continuation.resume(returning: status)
                 }
                 
             })
