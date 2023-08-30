@@ -57,7 +57,6 @@ public struct DriveAPI {
         return try await apiClient.fetch(type: CreateFileResponse.self, endpoint, debugResponse: debug)
     }
     
-    
     /// Given a folderId, updates the folder name, if the folder name conflicts with
     /// the remove folder name, an ApiClientError with 409 statusCode is throw
     
@@ -66,30 +65,79 @@ public struct DriveAPI {
             path: "\(self.baseUrl)/storage/folder/\(folderId)/meta",
             method: .POST,
             body: UpdateFolderPayload(
-                    metadata: MetadataUpdatePayload(itemName: folderName)
+                    metadata: FolderMetadataUpdatePayload(itemName: folderName)
                     ).toJson()
         )
         
         return try await apiClient.fetch(type: UpdateFolderResponse.self, endpoint, debugResponse: debug)
     }
     
-    /// Retrieves the folder metadata by the folder id
+    /// Given a fileId, updates the file name
+
+    public func updateFile(fileId: String, bucketId: String, newFilename: String, debug: Bool = false) async throws -> UpdateFileResponse {
+        let endpoint = Endpoint(
+            path: "\(self.baseUrl)/storage/file/\(fileId)/meta",
+            method: .POST,
+            body: UpdateFilePayload(
+                bucketId: bucketId,
+                metadata: FileMetadataUpdatePayload(itemName: newFilename)
+            ).toJson()
+        )
+        
+        return try await apiClient.fetch(type: UpdateFileResponse.self, endpoint, debugResponse: debug)
+    }
+    
     public func getFolderMetaById(id: String, debug: Bool = false) async throws -> GetFolderMetaByIdResponse {
         let endpoint = Endpoint(
-            path: "\(self.baseUrl)/storage/folders/\(id)/metadata",
+            path: "\(self.baseUrl)/folders/\(id)/metadata",
             method: .GET
         )
         
         return try await apiClient.fetch(type: GetFolderMetaByIdResponse.self, endpoint, debugResponse: debug)
     }
     
-    /// Retrieves the file metadata by the file id
-    public func getFileMetaById(id: String, debug: Bool = false)  async throws -> GetFileMetaByIdResponse {
+    public func getFileMetaByUuid(uuid: String, debug: Bool = false)  async throws -> GetFileMetaByIdResponse {
         let endpoint = Endpoint(
-            path: "\(self.baseUrl)/storage/files/\(id)/metadata",
+            path: "\(self.baseUrl)/files/\(uuid)/meta",
             method: .GET
         )
         
         return try await apiClient.fetch(type: GetFileMetaByIdResponse.self, endpoint, debugResponse: debug)
+    }
+    
+    public func moveFile(fileId: String, bucketId: String, destinationFolder: Int, debug: Bool = false) async throws -> MoveFileResponse {
+        let endpoint = Endpoint(
+            path: "\(self.baseUrl)/storage/move/file",
+            method: .POST,
+            body: MoveFilePayload(
+                bucketId: bucketId,
+                destination: destinationFolder,
+                fileId: fileId
+            ).toJson()
+        )
+    
+        return try await apiClient.fetch(type: MoveFileResponse.self, endpoint, debugResponse: debug)
+    }
+    
+    public func moveFolder(folderId: Int, destinationFolder: Int, debug: Bool = false) async throws -> MoveFolderResponse {
+        let endpoint = Endpoint(
+            path: "\(self.baseUrl)/storage/move/folder",
+            method: .POST,
+            body: MoveFolderPayload(
+                folderId: folderId,
+                destination: destinationFolder
+            ).toJson()
+        )
+    
+        return try await apiClient.fetch(type: MoveFolderResponse.self, endpoint, debugResponse: debug)
+    }
+    
+    public func refreshUser(debug: Bool = false) async throws -> RefreshUserResponse  {
+        let endpoint = Endpoint(
+            path: "\(self.baseUrl)/user/refresh",
+            method: .GET
+        )
+        
+        return try await apiClient.fetch(type: RefreshUserResponse.self, endpoint, debugResponse: debug)
     }
 }

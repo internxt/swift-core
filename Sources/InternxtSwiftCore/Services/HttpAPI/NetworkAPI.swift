@@ -44,10 +44,11 @@ public struct NetworkAPI {
     }
     
     
-    public func getFileInfo(bucketId: String, fileId: String) {
+    public func getFileInfo(bucketId: String, fileId: String, debug: Bool = false) async throws -> GetFileInfoResponse {
         let endpoint = Endpoint(
-            path: "\(self.baseUrl)/v2/buckets/\(bucketId)/files/\(fileId)/info"
+            path: "\(self.baseUrl)/buckets/\(bucketId)/files/\(fileId)/info",
+            method: .GET
         )
-    
+        return try await apiClient.fetch(type: GetFileInfoResponse.self, endpoint, debugResponse: debug)
     }
 }

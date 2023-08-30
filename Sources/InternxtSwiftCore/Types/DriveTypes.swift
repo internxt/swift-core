@@ -31,6 +31,7 @@ public struct GetFolderFilesResult: Decodable {
     // ISO string
     public let removedAt: String?
     public let status: String
+    public let uuid: String
 }
 
 public struct GetFolderFilesResponse: Decodable {
@@ -38,9 +39,9 @@ public struct GetFolderFilesResponse: Decodable {
 }
 
 public struct GetFolderFoldersResult: Decodable {
-    public let type: String
+    public let type: String?
     public let id: Int
-    public let parentId: Int
+    public let parentId: Int?
     public let name: String
     public let userId: Int
     public let encryptVersion: String?
@@ -88,13 +89,28 @@ public struct UpdateFolderResponse: Decodable {
     public let name: String
 }
 
-public struct MetadataUpdatePayload: Encodable {
+public struct FolderMetadataUpdatePayload: Encodable {
     public let itemName: String
 }
 
 
 public struct UpdateFolderPayload: Encodable {
-    public let metadata: MetadataUpdatePayload
+    public let metadata: FolderMetadataUpdatePayload
+}
+
+public struct FileMetadataUpdatePayload: Encodable {
+    public let itemName: String
+}
+
+
+public struct UpdateFilePayload: Encodable {
+    public let bucketId: String
+    public let metadata: FileMetadataUpdatePayload
+    public let relativePath: String = NSUUID().uuidString
+}
+
+public struct UpdateFileResponse: Decodable {
+    public let plain_name: String
 }
 
 
@@ -117,7 +133,24 @@ public struct GetFolderMetaByIdResponse: Decodable {
 }
 
 public struct GetFileMetaByIdResponse: Decodable {
-   
+    public let id: Int
+    public let fileId: String
+    public let folderId: Int
+    public let name: String
+    public let type: String?
+    public let size: String
+    public let bucket: String
+    public let deleted: Bool
+    public let deletedAt: String?
+    public let userId: Int
+    public let modificationTime: String
+    public let createdAt: String
+    public let updatedAt: String
+    public let uuid: String
+    public let plainName: String?
+    public let removed: Bool?
+    public let removedAt: String?
+    public let status: String
 }
 
 
@@ -165,4 +198,48 @@ public struct CreateFileResponse: Decodable {
     public let updatedAt: String
     public let createdAt: String
     public let deletedAt: String?
+    public let uuid: String
+}
+
+public struct DriveUser: Codable {
+    public let email: String
+    public let avatar: String?
+    public let bridgeUser: String
+    public let bucket: String
+    public let createdAt: String
+    public let name: String
+    public let lastname: String
+    public let root_folder_id: Int
+    public let userId: String
+    public let username: String
+    public let uuid: String
+}
+
+public struct RefreshUserResponse: Decodable {
+    public let token: String
+    public let user: DriveUser
+}
+
+
+public struct MoveFilePayload: Encodable {
+    public let bucketId: String
+    public let destination: Int
+    public let fileId: String
+    public let relativePath:String = NSUUID().uuidString
+}
+
+
+public struct MoveFileResponse: Decodable {
+    public let moved: Bool
+}
+
+
+public struct MoveFolderPayload: Encodable {
+    public let folderId: Int
+    public let destination: Int
+}
+
+
+public struct MoveFolderResponse: Decodable {
+    public let moved: Bool
 }

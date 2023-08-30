@@ -23,7 +23,7 @@ extension Upload: URLSessionTaskDelegate {
             let progress = Double(totalBytesSent) / Double(totalBytesExpectedToSend)
             let handler = progressHandlersByTaskID[task.taskIdentifier]
             handler?(progress)
-        }
+    }
 }
 
 
@@ -133,7 +133,6 @@ public class Upload: NSObject  {
             )
             
             if progressHandler != nil {
-                print("Adding progress handler")
                 progressHandlersByTaskID[task.taskIdentifier] = progressHandler
             }
             

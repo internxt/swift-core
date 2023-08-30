@@ -14,6 +14,13 @@ enum EncryptResultStatus {
     case Failed
 }
 
+
+enum DecryptResultStatus {
+    case Success
+    case Failed
+}
+
+
 @available(macOS 10.15, *)
 class AESCipher {
     var utils = CryptoUtils()
@@ -91,7 +98,7 @@ class AESCipher {
     // Decrypts an input stream to an output stream given a key and an IV
     // using AES256 CTR mode with No padding
     
-    public func decryptFromStream(input: InputStream, output:OutputStream, key: [UInt8], iv: [UInt8], callback: (_:CryptoError?, _: Status?) -> Void ) -> Void {
+    public func decryptFromStream(input: InputStream, output:OutputStream, key: [UInt8], iv: [UInt8], callback: (_:CryptoError?, _: DecryptResultStatus?) -> Void ) -> Void {
    
         if !self.isValidIv(iv: iv) {
             return callback(CryptoError.badIv, nil)
@@ -127,7 +134,10 @@ class AESCipher {
             }
             if(encryptedBytes > 0) {
                 let bytesOut = output.write(outputBuffer, maxLength: encryptedBytes)
-                assert(bytesOut == Int(encryptedBytes))
+                let bytesMatch = bytesOut == Int(encryptedBytes)
+                if bytesMatch == false {
+                    return callback(CryptoError.bytesNotMatching, nil)
+                }
             }
             
         }
@@ -140,7 +150,11 @@ class AESCipher {
         output.close()
         
         // All ok, notify via callback
-        callback(nil,status)
+        if(status.rawValue == Status.success.rawValue) {
+            callback(nil,DecryptResultStatus.Success)
+        } else {
+            callback(nil, DecryptResultStatus.Failed)
+        }
     }
     
     
