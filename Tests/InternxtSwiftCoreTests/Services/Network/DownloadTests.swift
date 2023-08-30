@@ -64,12 +64,12 @@ final class DownloadTests: XCTestCase {
                     {
                         "index": 0,
                         "hash": "f754a1013f2fa5fe26ecbd9f159e81a616a89648",
-                        "url": "https://s3.gra.io.cloud.ovh.net/files/d6d26a2b-c013-491e-a4c3-6f09dfbd7cbd?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=d0999b3fc01c4946a4b9f1dc49b22e9d%2F20230829%2Fgra%2Fs3%2Faws4_request&X-Amz-Date=20230829T172955Z&X-Amz-Expires=3600&X-Amz-Signature=6bad8c8b067b4d3704967c7b353dc3f29b1b67660ee91d74ef3e2451fad0a7fd&X-Amz-SignedHeaders=host"
+                        "url": "https://s3.gra.io.cloud.ovh.net/files/fileId123456789"
                     },
                     {
                         "index": 1,
                         "hash": "f754a1013f2fa5fe26ecbd9f159e81a616a89788",
-                        "url": "https://s3.gra.io.cloud.ovh.net/files/d6d26a2b-c013-491e-a4c3-6f09dfbd7cbd?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=d0999b3fc01c4946a4b9f1dc49b22e9d%2F20230829%2Fgra%2Fs3%2Faws4_request&X-Amz-Date=20230829T172955Z&X-Amz-Expires=3600&X-Amz-Signature=6bad8c8b067b4d3704967c7b353dc3f29b1b67660ee91d74ef3e2451fad0a7fd&X-Amz-SignedHeaders=host"
+                        "url": "https://s3.gra.io.cloud.ovh.net/files/fileId123456"
                     }
                 ]
             }
