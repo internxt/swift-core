@@ -251,7 +251,6 @@ public struct GetLimitResponse: Decodable {
 
 
 public struct GetDriveUsageResponse: Decodable {
-    public let total: Int
     public let drive: Int
     public let backups: Int
 }
