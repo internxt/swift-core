@@ -9,5 +9,5 @@ import Foundation
 
 
 public struct GetPhotosUsageResponse: Decodable {
-    public let usage: Int
+    public let usage: Int64
 }

@@ -246,11 +246,11 @@ public struct MoveFolderResponse: Decodable {
 
 
 public struct GetLimitResponse: Decodable {
-    public let maxSpaceBytes: Int
+    public let maxSpaceBytes: Int64
 }
 
 
 public struct GetDriveUsageResponse: Decodable {
-    public let drive: Int
-    public let backups: Int
+    public let drive: Int64
+    public let backups: Int64
 }
