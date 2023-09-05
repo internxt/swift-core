@@ -140,4 +140,22 @@ public struct DriveAPI {
         
         return try await apiClient.fetch(type: RefreshUserResponse.self, endpoint, debugResponse: debug)
     }
+    
+    public func getLimit(debug: Bool = false) async throws -> GetLimitResponse {
+        let endpoint = Endpoint(
+            path: "\(self.baseUrl)/limit",
+            method: .GET
+        )
+        
+        return try await apiClient.fetch(type: GetLimitResponse.self, endpoint, debugResponse: debug)
+    }
+    
+    public func getUsage(debug: Bool = false) async throws -> GetDriveUsageResponse {
+        let endpoint = Endpoint(
+            path: "\(self.baseUrl)/usage",
+            method: .GET
+        )
+        
+        return try await apiClient.fetch(type: GetDriveUsageResponse.self, endpoint, debugResponse: debug)
+    }
 }

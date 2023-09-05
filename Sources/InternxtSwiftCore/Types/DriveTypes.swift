@@ -243,3 +243,15 @@ public struct MoveFolderPayload: Encodable {
 public struct MoveFolderResponse: Decodable {
     public let moved: Bool
 }
+
+
+public struct GetLimitResponse: Decodable {
+    public let maxSpaceBytes: Int
+}
+
+
+public struct GetDriveUsageResponse: Decodable {
+    public let total: Int
+    public let drive: Int
+    public let backups: Int
+}
