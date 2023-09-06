@@ -167,7 +167,10 @@ public struct DriveAPI {
         debug: Bool = false
     ) async throws -> GetUpdatedFilesResponse {
         let dateFormatter = DateFormatter()
-        dateFormatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSSZ"
+        let enUSPosixLocale = Locale(identifier: "en_US_POSIX")
+        dateFormatter.locale = enUSPosixLocale
+        dateFormatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ssZZZZZ"
+        dateFormatter.calendar = Calendar(identifier: .gregorian)
         
         let formattedUpdatedAt =  dateFormatter.string(from: updatedAt)
         let endpoint = Endpoint(
