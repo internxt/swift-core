@@ -266,6 +266,7 @@ public struct UpdatedFile: Decodable {
     public let plainName: String?
     public let updatedAt: String
     public let createdAt: String
+    public let type: String?
 }
 
 
