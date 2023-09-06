@@ -254,3 +254,18 @@ public struct GetDriveUsageResponse: Decodable {
     public let drive: Int64
     public let backups: Int64
 }
+
+
+public struct UpdatedFile: Decodable {
+    public let id: Int;
+    public let uuid: String;
+    public let folderId: Int;
+    public let status: String;
+    public let size: Int;
+    public let name: String;
+    public let plainName: String?
+    public let updatedAt: String
+    public let createdAt: String
+}
+
+public typealias GetUpdatedFilesResponse = [UpdatedFile]
