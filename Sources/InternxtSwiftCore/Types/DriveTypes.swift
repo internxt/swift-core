@@ -261,11 +261,12 @@ public struct UpdatedFile: Decodable {
     public let uuid: String;
     public let folderId: Int;
     public let status: String;
-    public let size: Int;
+    public let size: String;
     public let name: String;
     public let plainName: String?
     public let updatedAt: String
     public let createdAt: String
 }
+
 
 public typealias GetUpdatedFilesResponse = [UpdatedFile]
