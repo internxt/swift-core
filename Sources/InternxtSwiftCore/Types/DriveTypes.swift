@@ -17,7 +17,7 @@ public struct GetFolderFilesResult: Decodable {
     public let bucket: String
     public let folderId: Int
     public let encryptVersion: String?
-    public let deleted: Bool
+    public let deleted: Bool?
     // ISO string
     public let deletedAt: String?
     public let userId: Int
@@ -27,7 +27,7 @@ public struct GetFolderFilesResult: Decodable {
     // ISO string
     public let updatedAt: String
     public let plainName: String?
-    public let removed: Bool
+    public let removed: Bool?
     // ISO string
     public let removedAt: String?
     public let status: String
@@ -45,7 +45,7 @@ public struct GetFolderFoldersResult: Decodable {
     public let name: String
     public let userId: Int
     public let encryptVersion: String?
-    public let deleted: Bool
+    public let deleted: Bool?
     // ISO string
     public let deletedAt: String?
     // ISO string
@@ -53,7 +53,7 @@ public struct GetFolderFoldersResult: Decodable {
     // ISO string
     public let updatedAt: String
     public let plainName: String?
-    public let removed: Bool
+    public let removed: Bool?
     // ISO string
     public let removedAt: String?
 }
@@ -121,7 +121,7 @@ public struct GetFolderMetaByIdResponse: Decodable {
     public let bucket: String?
     public let userId: Int
     public let encryptVersion: String?
-    public let deleted: Bool
+    public let deleted: Bool?
     // ISO Date
     public let createdAt: String
     public let updatedAt: String
@@ -129,7 +129,7 @@ public struct GetFolderMetaByIdResponse: Decodable {
     public let removedAt: String?
     public let uuid: String?
     public let plainName: String?
-    public let removed: Bool
+    public let removed: Bool?
 }
 
 public struct GetFileMetaByIdResponse: Decodable {
@@ -140,7 +140,7 @@ public struct GetFileMetaByIdResponse: Decodable {
     public let type: String?
     public let size: String
     public let bucket: String
-    public let deleted: Bool
+    public let deleted: Bool?
     public let deletedAt: String?
     public let userId: Int
     public let modificationTime: String
@@ -182,7 +182,7 @@ public struct CreateFilePayload: Encodable {
 
 public struct CreateFileResponse: Decodable {
     public let created_at: String
-    public let deleted: Bool
+    public let deleted: Bool?
     public let status: String
     public let id: Int
     public let name: String
