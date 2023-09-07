@@ -196,7 +196,7 @@ public struct DriveAPI {
         
         let formattedUpdatedAt =  dateFormatter.string(from: updatedAt)
         let endpoint = Endpoint(
-            path: "\(self.baseUrl)/files?updatedAt=\(formattedUpdatedAt)&status=\(status)&offset=\(offset)&limit=\(limit)",
+            path: "\(self.baseUrl)/folders?updatedAt=\(formattedUpdatedAt)&status=\(status)&offset=\(offset)&limit=\(limit)",
             method: .GET
         )
         
