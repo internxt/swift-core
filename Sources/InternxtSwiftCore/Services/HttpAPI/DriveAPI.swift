@@ -181,4 +181,27 @@ public struct DriveAPI {
         
         return try await apiClient.fetch(type: GetUpdatedFilesResponse.self, endpoint, debugResponse: debug)
     }
+    
+    public func getUpdatedFolders(
+        updatedAt: Date,
+        status: String = "ALL",
+        limit: Int = 50,
+        offset: Int = 0,
+        debug: Bool = false
+    ) async throws -> GetUpdatedFoldersResponse {
+        
+       
+        let dateFormatter =  ISO8601DateFormatter()
+        dateFormatter.formatOptions = [.withInternetDateTime]
+        
+        let formattedUpdatedAt =  dateFormatter.string(from: updatedAt)
+        let endpoint = Endpoint(
+            path: "\(self.baseUrl)/files?updatedAt=\(formattedUpdatedAt)&status=\(status)&offset=\(offset)&limit=\(limit)",
+            method: .GET
+        )
+        
+    
+        
+        return try await apiClient.fetch(type: GetUpdatedFoldersResponse.self, endpoint, debugResponse: debug)
+    }
 }

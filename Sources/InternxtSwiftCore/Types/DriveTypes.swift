@@ -271,3 +271,16 @@ public struct UpdatedFile: Decodable {
 
 
 public typealias GetUpdatedFilesResponse = [UpdatedFile]
+
+
+public struct UpdatedFolder: Decodable {
+    public let id: Int;
+    public let parentId: Int?;
+    public let status: String;
+    public let name: String;
+    public let plainName: String?
+    public let updatedAt: String
+    public let createdAt: String
+}
+
+public typealias GetUpdatedFoldersResponse = [UpdatedFolder]
