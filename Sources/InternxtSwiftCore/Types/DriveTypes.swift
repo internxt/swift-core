@@ -56,6 +56,7 @@ public struct GetFolderFoldersResult: Decodable {
     public let removed: Bool?
     // ISO string
     public let removedAt: String?
+    public let status: String
 }
 
 public struct GetFolderFoldersResponse: Decodable {
