@@ -57,6 +57,16 @@ public struct DriveAPI {
         return try await apiClient.fetch(type: CreateFileResponse.self, endpoint, debugResponse: debug)
     }
     
+    public func createThumbnail(createThumbnail: CreateThumbnailData, debug: Bool = false) async throws -> CreateThumbnailResponse {
+        let endpoint = Endpoint(
+            path: "\(self.baseUrl)/storage/thumbnail",
+            method: .POST,
+            body: CreateThumbnailPayload(thumbnail: createThumbnail).toJson()
+        )
+        
+        return try await apiClient.fetch(type: CreateThumbnailResponse.self, endpoint, debugResponse: debug)
+    }
+    
     /// Given a folderId, updates the folder name, if the folder name conflicts with
     /// the remove folder name, an ApiClientError with 409 statusCode is throw
     
