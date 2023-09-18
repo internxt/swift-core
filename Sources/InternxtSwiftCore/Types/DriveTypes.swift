@@ -191,7 +191,7 @@ public struct CreateThumbnailData: Encodable {
     public let size: Int64
     public let type: String
     
-    init(bucketFile: String, bucketId: String, fileId: Int, height: Int, width: Int, size: Int64, type: String) {
+    public init(bucketFile: String, bucketId: String, fileId: Int, height: Int, width: Int, size: Int64, type: String) {
         self.bucket_file = bucketFile
         self.bucket_id = bucketId
         self.file_id = fileId
