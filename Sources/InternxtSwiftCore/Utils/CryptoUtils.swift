@@ -60,5 +60,24 @@ public struct CryptoUtils {
             return nil
         }
     }
+    
+    public func validate(mnemonic: String) -> Bool {
+        let normalizedMnemonic = mnemonic.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
+        let mnemonicComponents = normalizedMnemonic.components(separatedBy: " ")
+        guard !mnemonicComponents.isEmpty else {
+          return false
+        }
+
+        if String.englishMnemonics.contains(mnemonicComponents[0]) {
+          for mnemonicComponent in mnemonicComponents {
+            guard String.englishMnemonics.contains(mnemonicComponent) else {
+              return false
+            }
+          }
+          return true
+        } else {
+          return false
+        }
+      }
 }
 
