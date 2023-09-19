@@ -17,7 +17,7 @@ public struct GetFolderFilesResult: Decodable {
     public let bucket: String
     public let folderId: Int
     public let encryptVersion: String?
-    public let deleted: Bool
+    public let deleted: Bool?
     // ISO string
     public let deletedAt: String?
     public let userId: Int
@@ -27,7 +27,7 @@ public struct GetFolderFilesResult: Decodable {
     // ISO string
     public let updatedAt: String
     public let plainName: String?
-    public let removed: Bool
+    public let removed: Bool?
     // ISO string
     public let removedAt: String?
     public let status: String
@@ -45,7 +45,7 @@ public struct GetFolderFoldersResult: Decodable {
     public let name: String
     public let userId: Int
     public let encryptVersion: String?
-    public let deleted: Bool
+    public let deleted: Bool?
     // ISO string
     public let deletedAt: String?
     // ISO string
@@ -53,9 +53,10 @@ public struct GetFolderFoldersResult: Decodable {
     // ISO string
     public let updatedAt: String
     public let plainName: String?
-    public let removed: Bool
+    public let removed: Bool?
     // ISO string
     public let removedAt: String?
+    public let status: String
 }
 
 public struct GetFolderFoldersResponse: Decodable {
@@ -121,7 +122,7 @@ public struct GetFolderMetaByIdResponse: Decodable {
     public let bucket: String?
     public let userId: Int
     public let encryptVersion: String?
-    public let deleted: Bool
+    public let deleted: Bool?
     // ISO Date
     public let createdAt: String
     public let updatedAt: String
@@ -129,7 +130,7 @@ public struct GetFolderMetaByIdResponse: Decodable {
     public let removedAt: String?
     public let uuid: String?
     public let plainName: String?
-    public let removed: Bool
+    public let removed: Bool?
 }
 
 public struct GetFileMetaByIdResponse: Decodable {
@@ -140,7 +141,7 @@ public struct GetFileMetaByIdResponse: Decodable {
     public let type: String?
     public let size: String
     public let bucket: String
-    public let deleted: Bool
+    public let deleted: Bool?
     public let deletedAt: String?
     public let userId: Int
     public let modificationTime: String
@@ -180,9 +181,39 @@ public struct CreateFilePayload: Encodable {
     public let file: CreateFileData
 }
 
+public struct CreateThumbnailData: Encodable {
+    public let bucket_file: String
+    public let bucket_id: String
+    public let encrypt_version = "03-aes"
+    public let file_id: Int
+    public let max_height: Int
+    public let max_width: Int
+    public let size: Int64
+    public let type: String
+    
+    public init(bucketFile: String, bucketId: String, fileId: Int, height: Int, width: Int, size: Int64, type: String) {
+        self.bucket_file = bucketFile
+        self.bucket_id = bucketId
+        self.file_id = fileId
+        self.max_height = height
+        self.max_width = width
+        self.size = size
+        self.type = type
+    }
+}
+
+
+public struct CreateThumbnailPayload: Encodable {
+    public let thumbnail: CreateThumbnailData
+}
+
+public struct CreateThumbnailResponse: Decodable {
+    public let fileId: Int
+}
+
 public struct CreateFileResponse: Decodable {
     public let created_at: String
-    public let deleted: Bool
+    public let deleted: Bool?
     public let status: String
     public let id: Int
     public let name: String
@@ -243,3 +274,44 @@ public struct MoveFolderPayload: Encodable {
 public struct MoveFolderResponse: Decodable {
     public let moved: Bool
 }
+
+
+public struct GetLimitResponse: Decodable {
+    public let maxSpaceBytes: Int64
+}
+
+
+public struct GetDriveUsageResponse: Decodable {
+    public let drive: Int64
+    public let backups: Int64
+}
+
+
+public struct UpdatedFile: Decodable {
+    public let id: Int;
+    public let uuid: String;
+    public let folderId: Int;
+    public let status: String;
+    public let size: String;
+    public let name: String;
+    public let plainName: String?
+    public let updatedAt: String
+    public let createdAt: String
+    public let type: String?
+}
+
+
+public typealias GetUpdatedFilesResponse = [UpdatedFile]
+
+
+public struct UpdatedFolder: Decodable {
+    public let id: Int;
+    public let parentId: Int?;
+    public let status: String;
+    public let name: String;
+    public let plainName: String?
+    public let updatedAt: String
+    public let createdAt: String
+}
+
+public typealias GetUpdatedFoldersResponse = [UpdatedFolder]

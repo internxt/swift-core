@@ -57,6 +57,16 @@ public struct DriveAPI {
         return try await apiClient.fetch(type: CreateFileResponse.self, endpoint, debugResponse: debug)
     }
     
+    public func createThumbnail(createThumbnail: CreateThumbnailData, debug: Bool = false) async throws -> CreateThumbnailResponse {
+        let endpoint = Endpoint(
+            path: "\(self.baseUrl)/storage/thumbnail",
+            method: .POST,
+            body: CreateThumbnailPayload(thumbnail: createThumbnail).toJson()
+        )
+        
+        return try await apiClient.fetch(type: CreateThumbnailResponse.self, endpoint, debugResponse: debug)
+    }
+    
     /// Given a folderId, updates the folder name, if the folder name conflicts with
     /// the remove folder name, an ApiClientError with 409 statusCode is throw
     
@@ -139,5 +149,69 @@ public struct DriveAPI {
         )
         
         return try await apiClient.fetch(type: RefreshUserResponse.self, endpoint, debugResponse: debug)
+    }
+    
+    public func getLimit(debug: Bool = false) async throws -> GetLimitResponse {
+        let endpoint = Endpoint(
+            path: "\(self.baseUrl)/limit",
+            method: .GET
+        )
+        
+        return try await apiClient.fetch(type: GetLimitResponse.self, endpoint, debugResponse: debug)
+    }
+    
+    public func getUsage(debug: Bool = false) async throws -> GetDriveUsageResponse {
+        let endpoint = Endpoint(
+            path: "\(self.baseUrl)/usage",
+            method: .GET
+        )
+        
+        return try await apiClient.fetch(type: GetDriveUsageResponse.self, endpoint, debugResponse: debug)
+    }
+    
+    public func getUpdatedFiles(
+        updatedAt: Date,
+        status: String = "ALL",
+        limit: Int = 50,
+        offset: Int = 0,
+        debug: Bool = false
+    ) async throws -> GetUpdatedFilesResponse {
+        
+       
+        let dateFormatter =  ISO8601DateFormatter()
+        dateFormatter.formatOptions = [.withInternetDateTime]
+        
+        let formattedUpdatedAt =  dateFormatter.string(from: updatedAt)
+        let endpoint = Endpoint(
+            path: "\(self.baseUrl)/files?updatedAt=\(formattedUpdatedAt)&status=\(status)&offset=\(offset)&limit=\(limit)",
+            method: .GET
+        )
+        
+    
+        
+        return try await apiClient.fetch(type: GetUpdatedFilesResponse.self, endpoint, debugResponse: debug)
+    }
+    
+    public func getUpdatedFolders(
+        updatedAt: Date,
+        status: String = "ALL",
+        limit: Int = 50,
+        offset: Int = 0,
+        debug: Bool = false
+    ) async throws -> GetUpdatedFoldersResponse {
+        
+       
+        let dateFormatter =  ISO8601DateFormatter()
+        dateFormatter.formatOptions = [.withInternetDateTime]
+        
+        let formattedUpdatedAt =  dateFormatter.string(from: updatedAt)
+        let endpoint = Endpoint(
+            path: "\(self.baseUrl)/folders?updatedAt=\(formattedUpdatedAt)&status=\(status)&offset=\(offset)&limit=\(limit)",
+            method: .GET
+        )
+        
+    
+        
+        return try await apiClient.fetch(type: GetUpdatedFoldersResponse.self, endpoint, debugResponse: debug)
     }
 }
