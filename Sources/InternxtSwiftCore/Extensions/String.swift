@@ -24,7 +24,7 @@ extension StringProtocol {
 }
 
 extension String {
-    static let englishMnemonics: [String] = [
+    static let englishMnemonics: Set<String> = [
         "abandon",
         "ability",
         "able",
