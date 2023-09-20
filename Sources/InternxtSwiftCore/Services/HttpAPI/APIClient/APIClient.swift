@@ -49,6 +49,10 @@ struct APIClient {
                     continuation.resume(with: .failure(APIError.failedRequest(error.localizedDescription)))
                     return
                 }
+                
+                func finishWithErrorMessage(message: String) {
+                    
+                }
                 let httpResponse = response as! HTTPURLResponse
 
                 do {
@@ -62,11 +66,21 @@ struct APIClient {
                     }
                     let json = try JSONDecoder().decode(T.self, from: data!)
                     continuation.resume(with:.success(json))
+                } catch let DecodingError.dataCorrupted(context) {
+                    let message = context.debugDescription
+                    continuation.resume(with:.failure(APIClientError(statusCode: httpResponse.statusCode, message: message, responseBody: data ?? Data())))
+                } catch let DecodingError.keyNotFound(key, context) {
+                    let message = "Key '\(key)' not found: \(context.debugDescription)"
+                    continuation.resume(with:.failure(APIClientError(statusCode: httpResponse.statusCode, message: message, responseBody: data ?? Data())))
+                } catch let DecodingError.valueNotFound(value, context) {
+                    let message = "Value '\(value)' not found: \(context.debugDescription)"
+                    continuation.resume(with:.failure(APIClientError(statusCode: httpResponse.statusCode, message: message, responseBody: data ?? Data())))
+                } catch let DecodingError.typeMismatch(type, context)  {
+                    let message = "Type '\(type)' mismatch: \(context.debugDescription)"
+                    continuation.resume(with:.failure(APIClientError(statusCode: httpResponse.statusCode, message: message, responseBody: data ?? Data())))
                 } catch {
-                    if debugResponse == true {
-                        print("API CLIENT ERROR", error)
-                    }
-                    continuation.resume(with:.failure(APIClientError(statusCode: httpResponse.statusCode, message: error.localizedDescription, responseBody: data ?? Data())))
+                    let message = error.localizedDescription
+                    continuation.resume(with:.failure(APIClientError(statusCode: httpResponse.statusCode, message: message, responseBody: data ?? Data())))
                 }
             }
             task.resume()
