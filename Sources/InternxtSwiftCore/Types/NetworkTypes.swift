@@ -83,5 +83,5 @@ public struct GetFileInfoResponse: Decodable {
     public let mimetype: String
     public let filename: String
     public let id: String
-    public let shards: Array<GetFileInfoShard>
+    public let shards: Array<GetFileInfoShard>?
 }

@@ -17,7 +17,7 @@ public struct NetworkFacade {
     private let upload: Upload
     private let download: Download
     
-    public init(mnemonic: String, networkAPI: NetworkAPI, urlSession: URLSession? = nil){
+    public init(mnemonic: String, networkAPI: NetworkAPI, urlSession: URLSession? = nil, debug: Bool = false){
         self.mnemonic = mnemonic
         self.upload = Upload(networkAPI: networkAPI, urlSession: urlSession)
         self.download = Download(networkAPI: networkAPI, urlSession: urlSession)

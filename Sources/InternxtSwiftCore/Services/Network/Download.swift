@@ -14,6 +14,7 @@ enum DownloadError: Error {
     case MultipartDownloadNotSupported
     case FailedToCopyDownloadedURL
     case InvalidBucketId
+    case MissingShards
 }
 
 public struct DownloadResult {
@@ -57,13 +58,19 @@ public class Download: NSObject {
         if bucketId.isValidHex == false {
             throw DownloadError.InvalidBucketId
         }
-        let info = try await networkAPI.getFileInfo(bucketId: bucketId, fileId: fileId)
+        let info = try await networkAPI.getFileInfo(bucketId: bucketId, fileId: fileId, debug: debug)
         
-        if info.shards.count > 1 {
+        guard let shards = info.shards else {
+            throw DownloadError.MissingShards
+        }
+        
+        if shards.count > 1 {
             throw DownloadError.MultipartDownloadNotSupported
         }
         
-        let shard = info.shards.first!
+        guard let shard = shards.first else {
+            throw DownloadError.MissingShards
+        }
         
         let url = try await downloadEncryptedFile(downloadUrl: shard.url, destinationURL: destination, progressHandler: progressHandler)
         
