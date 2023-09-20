@@ -60,6 +60,9 @@ struct APIClient {
                     let json = try JSONDecoder().decode(T.self, from: data!)
                     continuation.resume(with:.success(json))
                 } catch {
+                    if debugResponse == true {
+                        print("API CLIENT ERROR", error)
+                    }
                     continuation.resume(with:.failure(APIClientError(statusCode: httpResponse.statusCode, message: error.localizedDescription, responseBody: data ?? Data())))
                 }
             }
