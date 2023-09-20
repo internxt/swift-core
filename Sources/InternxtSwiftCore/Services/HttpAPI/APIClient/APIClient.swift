@@ -43,6 +43,9 @@ struct APIClient {
             
             let task = urlSession.dataTask(with: request) { (data, response, error) in
                 if let error = error {
+                    if debugResponse == true {
+                        print("API CLIENT ERROR", error)
+                    }
                     continuation.resume(with: .failure(APIError.failedRequest(error.localizedDescription)))
                     return
                 }
