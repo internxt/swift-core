@@ -215,18 +215,4 @@ public struct DriveAPI {
         return try await apiClient.fetch(type: GetUpdatedFoldersResponse.self, endpoint, debugResponse: debug)
     }
     
-    public func fileExistsInFolder(
-        name: String,
-        type: String?,
-        folderId: Int,
-        debug: Bool = false
-    ) async throws -> FileExistsResponse {
-        
-        let endpoint = Endpoint(
-            path: "\(self.baseUrl)/storage/file/exists",
-            method: .POST
-        )
-        
-        return try await apiClient.fetch(type: GetUpdatedFoldersResponse.self, endpoint, debugResponse: debug)
-    }
 }
