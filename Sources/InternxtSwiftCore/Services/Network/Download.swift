@@ -85,8 +85,9 @@ public class Download: NSObject {
                 if let localURL = localURL {
                     
                     do {
-                        try FileManager.default.copyItem(at: localURL, to: destinationURL)
                         
+                        try FileManager.default.copyItem(at: localURL, to: destinationURL)
+                        try FileManager.default.removeItem(at: localURL)
                         continuation.resume(returning: destinationURL)
                     } catch {
                         continuation.resume(throwing: DownloadError.FailedToCopyDownloadedURL)
