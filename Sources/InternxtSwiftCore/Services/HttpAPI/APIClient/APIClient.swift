@@ -26,14 +26,12 @@ public struct APIClientError: Error {
 
 @available(macOS 10.15, *)
 struct APIClient {
-    private let urlSession: URLSession
-    private let authorizationHeaderValue: String?
-        
-    init(urlSession: URLSession = URLSession.shared,
-             authorizationHeaderValue: String? = nil) {
-        self.urlSession = urlSession
-        self.authorizationHeaderValue = authorizationHeaderValue
-    }
+    var urlSession: URLSession = URLSession.shared
+    var authorizationHeaderValue: String? = nil
+    var clientName: String? = nil
+    var clientVersion: String? = nil
+
+    
     
   
     func fetch<T: Decodable>(type: T.Type? , _ endpoint: Endpoint, debugResponse: Bool?) async throws -> T  {
@@ -101,7 +99,9 @@ struct APIClient {
         if let authorizationHeaderValue = self.authorizationHeaderValue {
             urlRequest.setValue(authorizationHeaderValue, forHTTPHeaderField:"Authorization")
         }
-        
+
+        urlRequest.setValue(clientName, forHTTPHeaderField: "internxt-client")
+        urlRequest.setValue(clientVersion, forHTTPHeaderField: "internxt-version")
         if let body = endpoint.body {
             urlRequest.httpBody = body
         }

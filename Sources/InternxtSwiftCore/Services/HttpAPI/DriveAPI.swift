@@ -12,9 +12,9 @@ public struct DriveAPI {
     private let baseUrl: String
     private let apiClient: APIClient
     
-    public init(baseUrl: String, authToken: String) {
+    public init(baseUrl: String, authToken: String, clientName: String, clientVersion: String) {
         self.baseUrl = baseUrl
-        self.apiClient = APIClient(urlSession: URLSession.shared, authorizationHeaderValue: "Bearer \(authToken)")
+        self.apiClient = APIClient(urlSession: URLSession.shared, authorizationHeaderValue: "Bearer \(authToken)", clientName: clientName, clientVersion: clientVersion)
     }
     
     /// Get paginated files inside the given folder
