@@ -103,7 +103,6 @@ struct APIClient {
         urlRequest.setValue(clientName, forHTTPHeaderField: "internxt-client")
         urlRequest.setValue(clientVersion, forHTTPHeaderField: "internxt-version")
         
-        print("HEADERS", urlRequest.allHTTPHeaderFields)
         if let body = endpoint.body {
             urlRequest.httpBody = body
         }
