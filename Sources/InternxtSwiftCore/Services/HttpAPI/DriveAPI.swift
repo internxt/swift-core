@@ -82,8 +82,17 @@ public struct DriveAPI {
         return try await apiClient.fetch(type: UpdateFolderResponse.self, endpoint, debugResponse: debug)
     }
     
+    public func replaceFileId(fileUuid: String, newFileId: String, newSize: Int, debug: Bool = false) async throws -> ReplaceFileResponse {
+        let endpoint = Endpoint(
+            path: "\(self.baseUrl)/files/\(fileUuid)",
+            method: .PUT,
+            body: ReplaceFileIdPayload(fileId: newFileId, size: newSize) .toJson()
+        )
+        
+        return try await apiClient.fetch(type: ReplaceFileResponse.self, endpoint, debugResponse: debug)
+    }
+    
     /// Given a fileId, updates the file name
-
     public func updateFile(fileId: String, bucketId: String, newFilename: String, debug: Bool = false) async throws -> UpdateFileResponse {
         let endpoint = Endpoint(
             path: "\(self.baseUrl)/storage/file/\(fileId)/meta",

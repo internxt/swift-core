@@ -315,3 +315,16 @@ public struct UpdatedFolder: Decodable {
 }
 
 public typealias GetUpdatedFoldersResponse = [UpdatedFolder]
+
+
+public struct ReplaceFileIdPayload: Encodable {
+    public let fileId: String
+    public let size: Int
+}
+
+
+public struct ReplaceFileResponse: Decodable {
+    public let uuid: String
+    public let fileId: String
+    public let size: Int
+}

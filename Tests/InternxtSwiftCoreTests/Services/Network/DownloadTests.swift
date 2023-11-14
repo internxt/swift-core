@@ -19,7 +19,9 @@ final class DownloadTests: XCTestCase {
             networkAPI: NetworkAPI(
                 baseUrl: apiURL.absoluteString,
                 basicAuthToken: "BasicAuthToken",
-                urlSession: mockedUrlSession
+                urlSession: mockedUrlSession,
+                clientName: "drive-desktop-testing-mode",
+                clientVersion: "test"
             ),
             urlSession: mockedUrlSession
         )
