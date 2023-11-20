@@ -224,4 +224,13 @@ public struct DriveAPI {
         return try await apiClient.fetch(type: GetUpdatedFoldersResponse.self, endpoint, debugResponse: debug)
     }
     
+    func getFileInFolderByPlainName(folderId: Int, plainName: String, type: String, debug: Bool = false) async throws  -> GetFileInFolderByPlainNameResponse {
+        let endpoint = Endpoint(
+            path: "\(self.baseUrl)/folders/\(folderId)/file?name=\(plainName)&type=\(type)",
+            method: .GET
+        )
+        
+        return try await apiClient.fetch(type: GetFileInFolderByPlainNameResponse.self, endpoint, debugResponse: debug)
+    }
+    
 }
