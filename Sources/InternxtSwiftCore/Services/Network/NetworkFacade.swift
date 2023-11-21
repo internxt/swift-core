@@ -107,9 +107,9 @@ public struct NetworkFacade {
         progressHandler: @escaping ProgressHandler
     ) async throws -> FinishUploadResponse {
         
-        let parts = ceil(Double(fileSize / MULTIPART_CHUNK_SIZE))
+        let parts = 3
         
-        print("File will be broken into \(parts) parts")
+        print("File will be broken into \(Double(fileSize / MULTIPART_CHUNK_SIZE)) parts")
         
         var partIndex = 0
         var uploadedPartsConfigs: [UploadedPartConfig] = []
