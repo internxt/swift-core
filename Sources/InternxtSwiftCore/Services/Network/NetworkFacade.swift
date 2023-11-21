@@ -114,11 +114,12 @@ public struct NetworkFacade {
         var uploadedPartsConfigs: [UploadedPartConfig] = []
         let uploadRefs = try await uploadMultipart.start(bucketId: bucketId, fileSize: fileSize, parts: Int(parts))
         
+        print("REFS", uploadRefs)
         func processEncryptedChunk(encryptedChunk: Data) async throws -> Void {
             let hash = encrypt.getFileContentHash(stream: InputStream(data: encryptedChunk))
             let uploadRef = uploadRefs[partIndex]
             
-            guard let uploadUrl = uploadRef.urls?.first else {
+            guard let uploadUrl = uploadRef.urls?[partIndex] else {
                 throw UploadError.MissingUploadUrl
             }
             
