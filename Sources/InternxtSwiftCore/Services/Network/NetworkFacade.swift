@@ -32,7 +32,8 @@ public struct NetworkFacade {
         encryptedOutput: URL,
         fileSize: Int,
         bucketId: String,
-        progressHandler: @escaping ProgressHandler
+        progressHandler: @escaping ProgressHandler,
+        debug: Bool = false
     ) async throws -> FinishUploadResponse {
         // Generate random index, IV and fileKey
         guard let index = cryptoUtils.getRandomBytes(32) else {
@@ -54,7 +55,8 @@ public struct NetworkFacade {
                 fileKey: fileKey,
                 iv: iv,
                 bucketId: bucketId,
-                progressHandler: progressHandler
+                progressHandler: progressHandler,
+                debug: debug
             )
         }
         
