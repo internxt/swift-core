@@ -112,24 +112,26 @@ public struct NetworkFacade {
         
         var partIndex = 0
         var uploadedPartsConfigs: [UploadedPartConfig] = []
-        let uploadRefs = try await uploadMultipart.start(bucketId: bucketId, fileSize: fileSize, parts: Int(parts))
+        let startUploadResult = try await uploadMultipart.start(bucketId: bucketId, fileSize: fileSize, parts: Int(parts))
+        guard let uploadUrls = startUploadResult.urls else {
+            throw UploadError.MissingUploadUrl
+        }
         
-        print("REFS", uploadRefs)
+        if uploadUrls.count != Int(parts) {
+            throw UploadMultipartError.MorePartsThanUploadUrls
+        }
+        print("REFS", startUploadResult)
         func processEncryptedChunk(encryptedChunk: Data, partIndex: Int) async throws -> Void {
             let hash = encrypt.getFileContentHash(stream: InputStream(data: encryptedChunk))
-            let uploadRef = uploadRefs[partIndex]
             
-            guard let uploadUrl = uploadRef.urls?[partIndex] else {
-                throw UploadError.MissingUploadUrl
-            }
-            
+            let uploadUrl = uploadUrls[partIndex]
             try await uploadMultipart.uploadPart(encryptedChunk: encryptedChunk, uploadUrl: uploadUrl, partIndex: partIndex){progress in
                 
                 print("UPLOAD PROGRESS FOR PART \(partIndex)", progress)
             }
             let uploadedPartConfig = UploadedPartConfig(
                 hash: hash,
-                uuid: uploadRef.uuid
+                uuid: startUploadResult.uuid
             )
             
             uploadedPartsConfigs.append(uploadedPartConfig)

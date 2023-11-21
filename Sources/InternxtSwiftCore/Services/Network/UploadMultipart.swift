@@ -10,6 +10,7 @@ import Foundation
 
 enum UploadMultipartError: Error {
     case CannotOpenInputStream
+    case MorePartsThanUploadUrls
 }
 
 public struct UploadedPartConfig {
@@ -58,11 +59,14 @@ public class UploadMultipart: NSObject {
         }
     }
     
-    func start(bucketId: String, fileSize: Int, parts: Int) async throws -> Array<StartUploadResult> {
+    func start(bucketId: String, fileSize: Int, parts: Int) async throws -> StartUploadResult {
         
         let startUploadResponse = try await networkAPI.startUpload(bucketId: bucketId, uploadSize: fileSize, parts: parts)
         
-        return startUploadResponse.uploads
+        guard let startUploadResult  = startUploadResponse.uploads.first else {
+            throw UploadError.MissingUploadUrl
+        }
+        return startUploadResult
     }
     
     func uploadPart(encryptedChunk: Data, uploadUrl: String, partIndex: Int, progressHandler: @escaping ProgressHandler) async throws -> Void {
