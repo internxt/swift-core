@@ -106,9 +106,10 @@ public struct NetworkFacade {
         bucketId: String,
         progressHandler: @escaping ProgressHandler
     ) async throws -> FinishUploadResponse {
+        
         let parts = ceil(Double(fileSize / MULTIPART_CHUNK_SIZE))
         
-        print("File will be broken into \(Int(parts)) parts")
+        print("File will be broken into \(parts) parts")
         
         var partIndex = 0
         var uploadedPartsConfigs: [UploadedPartConfig] = []
@@ -145,7 +146,7 @@ public struct NetworkFacade {
             key: fileKey,
             iv: iv
         ){encryptedChunk in
-            
+            print("GOT A CHUNK")
             // If something fails here, the error is propagated
             // and the stream reading is stopped
             try await processEncryptedChunk(encryptedChunk: encryptedChunk, partIndex: partIndex)
