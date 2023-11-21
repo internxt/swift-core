@@ -7,8 +7,9 @@
 
 import Foundation
 
-@available(macOS 10.15, *)
+let MULTIPART_MIN_SIZE = 100 * 1024 * 1024;
 
+@available(macOS 10.15, *)
 public struct NetworkFacade {
     private let encrypt: Encrypt = Encrypt()
     private let decrypt: Decrypt = Decrypt()
@@ -23,7 +24,13 @@ public struct NetworkFacade {
         self.download = Download(networkAPI: networkAPI, urlSession: urlSession)
     }
     
-    public func uploadFile(input: InputStream, encryptedOutput: URL, fileSize: Int, bucketId: String, progressHandler: @escaping ProgressHandler) async throws -> FinishUploadResponse {
+    public func uploadFile(
+        input: InputStream,
+        encryptedOutput: URL,
+        fileSize: Int,
+        bucketId: String,
+        progressHandler: @escaping ProgressHandler
+    ) async throws -> FinishUploadResponse {
         // Generate random index, IV and fileKey
         guard let index = cryptoUtils.getRandomBytes(32) else {
             throw UploadError.InvalidIndex
@@ -33,6 +40,34 @@ public struct NetworkFacade {
         
         let fileKey = try encrypt.generateFileKey(mnemonic: mnemonic, bucketId: bucketId, index: index)
         
+        let shouldUseMultipart = fileSize >= MULTIPART_MIN_SIZE
+        
+        if(shouldUseMultipart) {
+            //return try await self.uploadMultipart()
+        }
+        
+        return try await self.uploadSingle(
+            input: input,
+            encryptedOutput: encryptedOutput,
+            fileSize: fileSize,
+            index: index,
+            fileKey: fileKey,
+            iv: iv,
+            bucketId: bucketId,
+            progressHandler: progressHandler
+        )
+    }
+    
+    private func uploadSingle(
+        input: InputStream,
+        encryptedOutput: URL,
+        fileSize: Int,
+        index: [UInt8],
+        fileKey: [UInt8],
+        iv: [UInt8],
+        bucketId: String,
+        progressHandler: @escaping ProgressHandler
+    ) async throws -> FinishUploadResponse {
         guard let encryptedOutputStream = OutputStream(url: encryptedOutput, append: true) else {
             throw NetworkFacadeError.FailedToOpenEncryptOutputStream
         }
@@ -49,6 +84,11 @@ public struct NetworkFacade {
         
         return try await upload.start(index: index, bucketId: bucketId, mnemonic: mnemonic, encryptedFileURL: encryptedOutput, progressHandler: progressHandler)
     }
+    
+    /*private func uploadMultipart() async throws -> FinishUploadResponse {
+        // Break file into chunks
+        
+    }*/
     
     public func downloadFile(bucketId: String, fileId: String, encryptedFileDestination: URL, destinationURL: URL, progressHandler: @escaping ProgressHandler) async throws -> URL {
         
@@ -123,7 +163,6 @@ public struct NetworkFacade {
         // Reach 100%
         progressHandler(1)
         
-        print("Decrypt", decryptResult)
         if decryptResult == .Success {
     
             return destinationURL

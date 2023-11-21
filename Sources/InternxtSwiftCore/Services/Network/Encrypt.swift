@@ -13,6 +13,8 @@ struct EncryptConfig {
     let iv: [UInt8]
 }
 
+
+
 @available(macOS 10.15, *)
 public struct Encrypt {
     
@@ -94,5 +96,42 @@ public struct Encrypt {
         
         
         return mergedData
+    }
+    
+    public func encryptFileIntoChunks(chunkSizeInBytes: Int, totalBytes: Int,  inputStream: InputStream, key: [UInt8], iv: [UInt8], fileChunkReady: @escaping (Data) -> Void) throws -> Void {
+        let cipher = AESCipher.shared.getAES256CTRCipherStream(key: key, iv: iv)
+        // This buffer allows max the chunk size, but doesn't mean it will be always full
+        var inputBuffer = [UInt8](repeating: 0, count: chunkSizeInBytes)
+        var totalBytesRead = 0
+        
+        inputStream.open()
+        defer { inputStream.close() }
+        
+        while inputStream.hasBytesAvailable {
+            let remainingBytes = min(chunkSizeInBytes, totalBytes - totalBytesRead)
+            let bytesRead = inputStream.read(&inputBuffer, maxLength: remainingBytes)
+            
+            if(bytesRead < 0) {
+                throw EncryptError.NoBytes
+            }
+            
+            if bytesRead > 0 {
+                var encryptedBytes = 0
+                
+                var outputBuffer = Array<UInt8>(repeating:0, count:bytesRead)
+                
+                _ = cipher.update(
+                    bufferIn: inputBuffer,
+                    byteCountIn: bytesRead,
+                    bufferOut: &outputBuffer,
+                    byteCapacityOut: outputBuffer.count,
+                    byteCountOut: &encryptedBytes
+                )
+                
+                fileChunkReady(Data(outputBuffer))
+                totalBytesRead += bytesRead
+            }
+            
+        }
     }
 }

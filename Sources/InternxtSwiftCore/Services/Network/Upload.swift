@@ -48,11 +48,18 @@ public class Upload: NSObject  {
             self.urlSession = urlSession!
         }
     }
+    
+    private func needsMultipart() -> Bool {
+        return true
+    }
     func start(index: [UInt8], bucketId: String, mnemonic: String, encryptedFileURL: URL, debug: Bool = false, progressHandler: ProgressHandler? = nil) async throws -> FinishUploadResponse {
         let source = encryptedFileURL
          
         let fileSize = source.fileSize
     
+        if self.needsMultipart() {
+            //return try await UploadMultipart(networkAPI: self.networkAPI).start(index: index, bucketId: bucketId, mnemonic: mnemonic, encryptedFileURL: encryptedFileURL, progressHandler: progressHandler)
+        }
         guard let hashInputStream = InputStream(url: encryptedFileURL) else {
             throw UploadError.CannotGenerateFileHash
         }

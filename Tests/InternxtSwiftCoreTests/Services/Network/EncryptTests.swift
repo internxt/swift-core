@@ -73,5 +73,52 @@ final class EncryptTests: XCTestCase {
         
         XCTAssertEqual(result.base64EncodedString(), expectedBase64)
     }
+    
+    func testEncryptStringUsingChunks() throws {
+        
+        let hexIv = "d5e2083f9a5394d1d2414bd520dd25e3"
+        let hexKey = "fdecbc03e63b2433ab750284f4413ec2220eb3c3cea8a87cdddc421550ca9e0f"
+        
+        let data = "qwefwef3t232322323qwefqwefqwf000099999123!234123__123".data(using: .utf8)!
+                   
+        let expectedHexEncryptedResult = "655f26c07d7a555bdaaa56c60112b892ff1063f6790fb5c7588b4ace569acde445e428e0a068ded0a9ec5e6c613c01d4d029394f11"
+        
+        let chunkSizeInBytes = 10
+        
+        var encryptedChunks: [Data] = []
+        let input = InputStream(data: data)
+        try sut.encryptFileIntoChunks(
+            chunkSizeInBytes: chunkSizeInBytes,
+            totalBytes: data.count,
+            inputStream: input,
+            key: self.cryptoUtils.hexStringToBytes(hexKey),
+            iv: self.cryptoUtils.hexStringToBytes(hexIv)
+        ) {encryptedChunk in
+            encryptedChunks.append(encryptedChunk)
+        }
+        
+        // We should have 5 chunks of 10 bytes each, and 1 chunk of 3 byte = 53 bytes
+        XCTAssertEqual(encryptedChunks[0].count, chunkSizeInBytes)
+        XCTAssertEqual(encryptedChunks[1].count, chunkSizeInBytes)
+        XCTAssertEqual(encryptedChunks[2].count, chunkSizeInBytes)
+        XCTAssertEqual(encryptedChunks[3].count, chunkSizeInBytes)
+        XCTAssertEqual(encryptedChunks[4].count, chunkSizeInBytes)
+        XCTAssertEqual(encryptedChunks[5].count, 3)
+        
+        // Check the result
+        
+        var totalEncryptedData: Data = Data()
+        try encryptedChunks.forEach{chunk in
+            
+            totalEncryptedData.append(chunk)
+        }
+        
+        let totalBytes = data.count
+        
+        XCTAssertEqual(totalEncryptedData.count, totalBytes)
+        XCTAssertEqual(expectedHexEncryptedResult, totalEncryptedData.toHexString())
+        
+        
+    }
 
 }
