@@ -127,6 +127,7 @@ public struct NetworkFacade {
             throw UploadError.MissingUploadUrl
         }
         
+        
         if uploadUrls.count != Int(parts) {
             throw UploadMultipartError.MorePartsThanUploadUrls
         }
@@ -177,6 +178,7 @@ public struct NetworkFacade {
             bucketId: bucketId,
             fileHash: fileHash.toHexString(),
             uploadUuid: startUploadResult.uuid,
+            uploadId: startUploadResult.UploadId!,
             uploadedParts: uploadedPartsConfigs,
             index: Data(index),
             debug: debug

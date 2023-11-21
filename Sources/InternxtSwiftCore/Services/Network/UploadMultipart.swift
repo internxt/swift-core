@@ -79,7 +79,7 @@ public class UploadMultipart: NSObject {
     }
     
     
-    func finishUpload(bucketId: String, fileHash: String, uploadUuid: String, uploadedParts: [UploadedPartConfig], index: Data, debug: Bool = false) async throws -> FinishUploadResponse {
+    func finishUpload(bucketId: String, fileHash: String, uploadUuid: String,uploadId: String, uploadedParts: [UploadedPartConfig], index: Data, debug: Bool = false) async throws -> FinishUploadResponse {
         
         
         var shards: Array<ShardUploadPayload> = Array()
@@ -92,7 +92,8 @@ public class UploadMultipart: NSObject {
                     ETag: uploadedPart.etag,
                     PartNumber: uploadedPart.partNumber
                 )
-            }
+            },
+            uploadId: uploadId
         )
         
         shards.append(shardPayload)
