@@ -45,6 +45,7 @@ enum UploadError: Error {
     case MissingUploadUrl
     case UploadNotSuccessful
     case UploadedSizeNotMatching
+    case MissingEtag
 }
 
 

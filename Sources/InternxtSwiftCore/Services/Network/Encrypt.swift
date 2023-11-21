@@ -81,6 +81,8 @@ public struct Encrypt {
     }
     
     
+    
+    
     public func encrypt(string: String, password: String, salt: [UInt8], iv: Data, rounds: Int = 2145) throws -> Data{
 
         

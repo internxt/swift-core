@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import CryptoKit
 
 let MULTIPART_MIN_SIZE = 100 * 1024 * 1024;
 let MULTIPART_CHUNK_SIZE = 100 * 1024 * 1024;
@@ -99,6 +100,8 @@ public struct NetworkFacade {
         return try await upload.start(index: index, bucketId: bucketId, mnemonic: mnemonic, encryptedFileURL: encryptedOutput, progressHandler: progressHandler)
     }
     
+    
+    
     private func runMultipartUpload(
         input: InputStream,
         fileSize: Int,
@@ -109,6 +112,9 @@ public struct NetworkFacade {
         progressHandler: @escaping ProgressHandler,
         debug: Bool = false
     ) async throws -> FinishUploadResponse {
+        var hasher = SHA256.init()
+        
+        
         
         let parts = 3
         
@@ -128,13 +134,13 @@ public struct NetworkFacade {
             let hash = encrypt.getFileContentHash(stream: InputStream(data: encryptedChunk))
             
             let uploadUrl = uploadUrls[partIndex]
-            try await uploadMultipart.uploadPart(encryptedChunk: encryptedChunk, uploadUrl: uploadUrl, partIndex: partIndex){progress in
+            let etag = try await uploadMultipart.uploadPart(encryptedChunk: encryptedChunk, uploadUrl: uploadUrl, partIndex: partIndex){progress in
                 
                 //print("UPLOAD PROGRESS FOR PART \(partIndex)", progress)
             }
+            
             let uploadedPartConfig = UploadedPartConfig(
-                hash: hash,
-                uuid: startUploadResult.uuid
+                etag: etag, partNumber: partIndex + 1
             )
             
             uploadedPartsConfigs.append(uploadedPartConfig)
@@ -148,6 +154,7 @@ public struct NetworkFacade {
             key: fileKey,
             iv: iv
         ){encryptedChunk in
+            hasher.update(data: encryptedChunk)
             // If something fails here, the error is propagated
             // and the stream reading is stopped
             try await processEncryptedChunk(encryptedChunk: encryptedChunk, partIndex: partIndex)
@@ -155,8 +162,25 @@ public struct NetworkFacade {
             
             partIndex += 1
         }
-            
-        let finishUpload = try await uploadMultipart.finishUpload(bucketId: bucketId, uploadedParts: uploadedPartsConfigs, index: Data(index), debug: debug)
+          
+        let fileSHA256digest = hasher.finalize()
+        
+        var sha256Hash = [UInt8]()
+        fileSHA256digest.withUnsafeBytes {bytes in
+            sha256Hash.append(contentsOf: bytes)
+        }
+        
+        let fileHash = HMAC().ripemd160(message: Data(sha256Hash))
+        
+        
+        let finishUpload = try await uploadMultipart.finishUpload(
+            bucketId: bucketId,
+            fileHash: fileHash.toHexString(),
+            uploadUuid: startUploadResult.uuid,
+            uploadedParts: uploadedPartsConfigs,
+            index: Data(index),
+            debug: debug
+        )
         print("Chunk number \(partIndex) uploaded")
         return finishUpload
     }

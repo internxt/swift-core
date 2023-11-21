@@ -14,8 +14,8 @@ enum UploadMultipartError: Error {
 }
 
 public struct UploadedPartConfig {
-    let hash: Data
-    let uuid: String
+    let etag: String
+    let partNumber: Int
 }
 
 @available(macOS 10.15, *)
@@ -69,27 +69,32 @@ public class UploadMultipart: NSObject {
         return startUploadResult
     }
     
-    func uploadPart(encryptedChunk: Data, uploadUrl: String, partIndex: Int, progressHandler: @escaping ProgressHandler) async throws -> Void {
+    func uploadPart(encryptedChunk: Data, uploadUrl: String, partIndex: Int, progressHandler: @escaping ProgressHandler) async throws -> String {
         
         // Upload the chunk to the given URL
-        let successUpload = try await self.uploadEncryptedChunk(encryptedChunk: encryptedChunk, uploadUrl: uploadUrl, progressHandler: progressHandler)
+        let uploadEtag = try await self.uploadEncryptedChunk(encryptedChunk: encryptedChunk, uploadUrl: uploadUrl, progressHandler: progressHandler)
         
-        if successUpload == false {
-            throw UploadError.UploadNotSuccessful
-        }
-        
+
+        return uploadEtag        
     }
     
     
-    func finishUpload(bucketId: String, uploadedParts: [UploadedPartConfig], index: Data, debug: Bool = false) async throws -> FinishUploadResponse {
+    func finishUpload(bucketId: String, fileHash: String, uploadUuid: String, uploadedParts: [UploadedPartConfig], index: Data, debug: Bool = false) async throws -> FinishUploadResponse {
+        
+        
         var shards: Array<ShardUploadPayload> = Array()
         
-        uploadedParts.forEach{uploadedPart in
-            shards.append(ShardUploadPayload(
-                hash: uploadedPart.hash.toHexString(),
-                uuid: uploadedPart.uuid
-            ))
-        }
+        let shardPayload = ShardUploadPayload(
+            hash: fileHash,
+            uuid: uploadUuid,
+            parts: uploadedParts.map{ uploadedPart in
+                return ShardPartPayload(
+                    ETag: uploadedPart.etag,
+                    PartNumber: uploadedPart.partNumber
+                )
+            }
+        )
+        shards.append(shardPayload)
         
         
         let payload = try FinishUploadPayload(
@@ -97,7 +102,6 @@ public class UploadMultipart: NSObject {
             shards: shards
         )
         
-        print("UPLOADS", payload)
         let finishUploadResult = try await networkAPI.finishUpload(
             bucketId: bucketId,
             payload: payload,
@@ -109,7 +113,7 @@ public class UploadMultipart: NSObject {
     
     
     
-    private func uploadEncryptedChunk(encryptedChunk: Data, uploadUrl: String, progressHandler: ProgressHandler?) async throws -> Bool {
+    private func uploadEncryptedChunk(encryptedChunk: Data, uploadUrl: String, progressHandler: ProgressHandler?) async throws -> String {
         return try await withCheckedThrowingContinuation { (continuation) in
             var request = URLRequest(
                 url: URL(string: uploadUrl)!,
@@ -128,7 +132,10 @@ public class UploadMultipart: NSObject {
                         if response?.statusCode != 200 {
                             return continuation.resume(with: .failure(UploadError.UploadNotSuccessful))
                         } else {
-                            return continuation.resume(with: .success(true))
+                            guard let etagValue = response?.value(forHTTPHeaderField: "Etag") else {
+                                return continuation.resume(with: .failure(UploadError.MissingEtag))
+                            }
+                            return continuation.resume(with: .success(etagValue))
                         }
                         
                     }

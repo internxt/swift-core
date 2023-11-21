@@ -91,7 +91,8 @@ public class Upload: NSObject  {
         var shards: Array<ShardUploadPayload> = Array()
         shards.append(ShardUploadPayload(
             hash: cryptoUtils.bytesToHexString(Array(fileHash)),
-            uuid: uploadResult.uuid
+            uuid: uploadResult.uuid,
+            parts: nil
         ))
         let finishUploadResult = try await networkAPI.finishUpload(bucketId: bucketId, payload: FinishUploadPayload(
                 index:  cryptoUtils.bytesToHexString(index),
