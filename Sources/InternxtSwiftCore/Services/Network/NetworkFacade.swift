@@ -115,7 +115,7 @@ public struct NetworkFacade {
         let uploadRefs = try await uploadMultipart.start(bucketId: bucketId, fileSize: fileSize, parts: Int(parts))
         
         print("REFS", uploadRefs)
-        func processEncryptedChunk(encryptedChunk: Data) async throws -> Void {
+        func processEncryptedChunk(encryptedChunk: Data, partIndex: Int) async throws -> Void {
             let hash = encrypt.getFileContentHash(stream: InputStream(data: encryptedChunk))
             let uploadRef = uploadRefs[partIndex]
             
@@ -146,7 +146,7 @@ public struct NetworkFacade {
             
             // If something fails here, the error is propagated
             // and the stream reading is stopped
-            try await processEncryptedChunk(encryptedChunk: encryptedChunk)
+            try await processEncryptedChunk(encryptedChunk: encryptedChunk, partIndex: partIndex)
             partIndex += 1
             
             print("NEW PART INDEX", partIndex)
