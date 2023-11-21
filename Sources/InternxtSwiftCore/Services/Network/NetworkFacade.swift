@@ -118,7 +118,7 @@ public struct NetworkFacade {
             let hash = encrypt.getFileContentHash(stream: InputStream(data: encryptedChunk))
             let uploadRef = uploadRefs[partIndex]
             
-            guard let uploadUrl = uploadRef.url else {
+            guard let uploadUrl = uploadRef.urls?.first else {
                 throw UploadError.MissingUploadUrl
             }
             
