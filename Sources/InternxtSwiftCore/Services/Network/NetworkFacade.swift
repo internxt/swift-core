@@ -116,9 +116,9 @@ public struct NetworkFacade {
         
         
         
-        let parts = 3
+        let parts = ceil(Double(fileSize / MULTIPART_CHUNK_SIZE))
         
-        print("File will be broken into \(Double(fileSize / MULTIPART_CHUNK_SIZE)) parts")
+        
         
         var partIndex = 0
         var uploadedPartsConfigs: [UploadedPartConfig] = []
@@ -132,7 +132,6 @@ public struct NetworkFacade {
             throw UploadMultipartError.MorePartsThanUploadUrls
         }
         func processEncryptedChunk(encryptedChunk: Data, partIndex: Int, debug: Bool = false) async throws -> Void {
-            let hash = encrypt.getFileContentHash(stream: InputStream(data: encryptedChunk))
             
             let uploadUrl = uploadUrls[partIndex]
             let etag = try await uploadMultipart.uploadPart(encryptedChunk: encryptedChunk, uploadUrl: uploadUrl, partIndex: partIndex){progress in
