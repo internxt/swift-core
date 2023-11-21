@@ -81,7 +81,7 @@ public class UploadMultipart: NSObject {
     }
     
     
-    func finishUpload(bucketId: String, uploadedParts: [UploadedPartConfig], index: Data) async throws -> FinishUploadResponse {
+    func finishUpload(bucketId: String, uploadedParts: [UploadedPartConfig], index: Data, debug: Bool = false) async throws -> FinishUploadResponse {
         var shards: Array<ShardUploadPayload> = Array()
         
         uploadedParts.forEach{uploadedPart in
@@ -91,10 +91,13 @@ public class UploadMultipart: NSObject {
             ))
         }
         
-        let finishUploadResult = try await networkAPI.finishUpload(bucketId: bucketId, payload: FinishUploadPayload(
-            index:  index.toHexString(),
+        let finishUploadResult = try await networkAPI.finishUpload(
+            bucketId: bucketId,
+            payload: FinishUploadPayload(
+                index:  index.toHexString(),
                 shards: shards
-            )
+            ),
+            debug: debug
         )
         
         return finishUploadResult

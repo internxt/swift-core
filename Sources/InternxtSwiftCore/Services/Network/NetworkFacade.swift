@@ -104,7 +104,8 @@ public struct NetworkFacade {
         fileKey: [UInt8],
         iv: [UInt8],
         bucketId: String,
-        progressHandler: @escaping ProgressHandler
+        progressHandler: @escaping ProgressHandler,
+        debug: Bool = false
     ) async throws -> FinishUploadResponse {
         
         let parts = 3
@@ -121,7 +122,7 @@ public struct NetworkFacade {
         if uploadUrls.count != Int(parts) {
             throw UploadMultipartError.MorePartsThanUploadUrls
         }
-        func processEncryptedChunk(encryptedChunk: Data, partIndex: Int) async throws -> Void {
+        func processEncryptedChunk(encryptedChunk: Data, partIndex: Int, debug: Bool = false) async throws -> Void {
             let hash = encrypt.getFileContentHash(stream: InputStream(data: encryptedChunk))
             
             let uploadUrl = uploadUrls[partIndex]
@@ -153,8 +154,8 @@ public struct NetworkFacade {
             partIndex += 1
         }
             
-        let finishUpload = try await uploadMultipart.finishUpload(bucketId: bucketId, uploadedParts: uploadedPartsConfigs, index: Data(index))
-        
+        let finishUpload = try await uploadMultipart.finishUpload(bucketId: bucketId, uploadedParts: uploadedPartsConfigs, index: Data(index), debug: debug)
+        print("Chunk number \(partIndex) uploaded")
         return finishUpload
     }
     
