@@ -121,14 +121,13 @@ public struct NetworkFacade {
         if uploadUrls.count != Int(parts) {
             throw UploadMultipartError.MorePartsThanUploadUrls
         }
-        print("REFS", startUploadResult)
         func processEncryptedChunk(encryptedChunk: Data, partIndex: Int) async throws -> Void {
             let hash = encrypt.getFileContentHash(stream: InputStream(data: encryptedChunk))
             
             let uploadUrl = uploadUrls[partIndex]
             try await uploadMultipart.uploadPart(encryptedChunk: encryptedChunk, uploadUrl: uploadUrl, partIndex: partIndex){progress in
                 
-                print("UPLOAD PROGRESS FOR PART \(partIndex)", progress)
+                //print("UPLOAD PROGRESS FOR PART \(partIndex)", progress)
             }
             let uploadedPartConfig = UploadedPartConfig(
                 hash: hash,
@@ -146,13 +145,12 @@ public struct NetworkFacade {
             key: fileKey,
             iv: iv
         ){encryptedChunk in
-            print("GOT A CHUNK")
             // If something fails here, the error is propagated
             // and the stream reading is stopped
             try await processEncryptedChunk(encryptedChunk: encryptedChunk, partIndex: partIndex)
-            partIndex += 1
+            print("Chunk number \(partIndex) uploaded")
             
-            print("NEW PART INDEX", partIndex)
+            partIndex += 1
         }
             
         let finishUpload = try await uploadMultipart.finishUpload(bucketId: bucketId, uploadedParts: uploadedPartsConfigs, index: Data(index))
