@@ -11,6 +11,12 @@ import Foundation
 enum UploadMultipartError: Error {
     case CannotOpenInputStream
 }
+
+public struct UploadedPartConfig {
+    let hash: Data
+    let uuid: String
+}
+
 @available(macOS 10.15, *)
 extension UploadMultipart: URLSessionTaskDelegate {
     public func urlSession(
@@ -52,33 +58,81 @@ public class UploadMultipart: NSObject {
         }
     }
     
-    func start(encryptedFileURL: URL, key: [UInt8], iv: [UInt8], debug: Bool = false, progressHandler: ProgressHandler? = nil) async throws -> Void {
+    func start(bucketId: String, fileSize: Int, parts: Int) async throws -> Array<StartUploadResult> {
         
-        let fileSize = encryptedFileURL.fileSize
+        let startUploadResponse = try await networkAPI.startUpload(bucketId: bucketId, uploadSize: fileSize, parts: parts)
         
-        let parts = ceil(Double(fileSize) / PART_SIZE)
-        
-        guard let inputStream = InputStream(url: encryptedFileURL) else {
-            throw UploadMultipartError.CannotOpenInputStream
-        }
-        
-        func uploadEncryptedChunk(chunk: Data) -> Void {
-            
-        }
-        
-        
-        /*try self.encryptFileIntoChunks(
-            inputStream: inputStream,
-            key: key,
-            iv: iv,
-            fileChunkReady: uploadEncryptedChunk
-        )
-        
-        let uploadStart = try await networkAPI.startUpload(bucketId: bucketId, uploadSize: Int(fileSize), debug: debug)*/
+        return startUploadResponse.uploads
     }
     
-    func uploadEncryptedChunk() -> Void {
+    func uploadPart(encryptedChunk: Data, uploadUrl: String, partIndex: Int, progressHandler: @escaping ProgressHandler) async throws -> Void {
         
+        // Upload the chunk to the given URL
+        let successUpload = try await self.uploadEncryptedChunk(encryptedChunk: encryptedChunk, uploadUrl: uploadUrl, progressHandler: progressHandler)
+        
+        if successUpload == false {
+            throw UploadError.UploadNotSuccessful
+        }
+        
+    }
+    
+    
+    func finishUpload(bucketId: String, uploadedParts: [UploadedPartConfig], index: Data) async throws -> FinishUploadResponse {
+        var shards: Array<ShardUploadPayload> = Array()
+        
+        uploadedParts.forEach{uploadedPart in
+            shards.append(ShardUploadPayload(
+                hash: uploadedPart.hash.toHexString(),
+                uuid: uploadedPart.uuid
+            ))
+        }
+        
+        let finishUploadResult = try await networkAPI.finishUpload(bucketId: bucketId, payload: FinishUploadPayload(
+            index:  index.toHexString(),
+                shards: shards
+            )
+        )
+        
+        return finishUploadResult
+    }
+    
+    
+    
+    private func uploadEncryptedChunk(encryptedChunk: Data, uploadUrl: String, progressHandler: ProgressHandler?) async throws -> Bool {
+        return try await withCheckedThrowingContinuation { (continuation) in
+            var request = URLRequest(
+                url: URL(string: uploadUrl)!,
+                cachePolicy: .reloadIgnoringLocalCacheData
+            )
+            
+            
+            request.httpMethod = "PUT"
+            
+            let task = urlSession.uploadTask(
+                with: request,
+                from: encryptedChunk,
+                completionHandler: { data, res, error in
+                    guard let error = error else {
+                        let response = res as? HTTPURLResponse
+                        if response?.statusCode != 200 {
+                            return continuation.resume(with: .failure(UploadError.UploadNotSuccessful))
+                        } else {
+                            return continuation.resume(with: .success(true))
+                        }
+                        
+                    }
+                    
+                    continuation.resume(throwing: error)
+                }
+            )
+            
+            if progressHandler != nil {
+                progressHandlersByTaskID[task.taskIdentifier] = progressHandler
+            }
+            
+            
+            task.resume()
+        }
     }
     
     

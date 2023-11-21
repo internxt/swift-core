@@ -98,7 +98,7 @@ public struct Encrypt {
         return mergedData
     }
     
-    public func encryptFileIntoChunks(chunkSizeInBytes: Int, totalBytes: Int,  inputStream: InputStream, key: [UInt8], iv: [UInt8], fileChunkReady: @escaping (Data) -> Void) throws -> Void {
+    public func encryptFileIntoChunks(chunkSizeInBytes: Int, totalBytes: Int,  inputStream: InputStream, key: [UInt8], iv: [UInt8], fileChunkReady: @escaping (Data) async throws -> Void) async throws -> Void {
         let cipher = AESCipher.shared.getAES256CTRCipherStream(key: key, iv: iv)
         // This buffer allows max the chunk size, but doesn't mean it will be always full
         var inputBuffer = [UInt8](repeating: 0, count: chunkSizeInBytes)
@@ -128,7 +128,7 @@ public struct Encrypt {
                     byteCountOut: &encryptedBytes
                 )
                 
-                fileChunkReady(Data(outputBuffer))
+                try await fileChunkReady(Data(outputBuffer))
                 totalBytesRead += bytesRead
             }
             

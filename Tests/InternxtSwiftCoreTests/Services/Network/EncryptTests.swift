@@ -74,7 +74,7 @@ final class EncryptTests: XCTestCase {
         XCTAssertEqual(result.base64EncodedString(), expectedBase64)
     }
     
-    func testEncryptStringUsingChunks() throws {
+    func testEncryptStringUsingChunksWithMargin() async throws {
         
         let hexIv = "d5e2083f9a5394d1d2414bd520dd25e3"
         let hexKey = "fdecbc03e63b2433ab750284f4413ec2220eb3c3cea8a87cdddc421550ca9e0f"
@@ -87,7 +87,7 @@ final class EncryptTests: XCTestCase {
         
         var encryptedChunks: [Data] = []
         let input = InputStream(data: data)
-        try sut.encryptFileIntoChunks(
+        try await sut.encryptFileIntoChunks(
             chunkSizeInBytes: chunkSizeInBytes,
             totalBytes: data.count,
             inputStream: input,
@@ -106,9 +106,8 @@ final class EncryptTests: XCTestCase {
         XCTAssertEqual(encryptedChunks[5].count, 3)
         
         // Check the result
-        
         var totalEncryptedData: Data = Data()
-        try encryptedChunks.forEach{chunk in
+        encryptedChunks.forEach{chunk in
             
             totalEncryptedData.append(chunk)
         }
@@ -117,6 +116,88 @@ final class EncryptTests: XCTestCase {
         
         XCTAssertEqual(totalEncryptedData.count, totalBytes)
         XCTAssertEqual(expectedHexEncryptedResult, totalEncryptedData.toHexString())
+        
+        
+    }
+    
+    
+    func testEncryptStringUsingExactChunks() async throws {
+        
+        let hexIv = "d5e2083f9a5394d1d2414bd520dd25e3"
+        let hexKey = "fdecbc03e63b2433ab750284f4413ec2220eb3c3cea8a87cdddc421550ca9e0f"
+        
+        let data = "PASSWORDpassword123123!!Password123123!!".data(using: .utf8)!
+                   
+        let expectedHexEncryptedResult = "446910f55d50612cdef91687454ff8c5fc1121b02e5ae5916d8c48ca47c58fb044ef22e8ab62cec3"
+        
+        let chunkSizeInBytes = 10
+        
+        var encryptedChunks: [Data] = []
+        let input = InputStream(data: data)
+        try await sut.encryptFileIntoChunks(
+            chunkSizeInBytes: chunkSizeInBytes,
+            totalBytes: data.count,
+            inputStream: input,
+            key: self.cryptoUtils.hexStringToBytes(hexKey),
+            iv: self.cryptoUtils.hexStringToBytes(hexIv)
+        ) {encryptedChunk in
+            encryptedChunks.append(encryptedChunk)
+        }
+        
+        // We should have 4 chunks of 10 bytes each = 40 bytes
+        XCTAssertEqual(encryptedChunks[0].count, chunkSizeInBytes)
+        XCTAssertEqual(encryptedChunks[1].count, chunkSizeInBytes)
+        XCTAssertEqual(encryptedChunks[2].count, chunkSizeInBytes)
+        XCTAssertEqual(encryptedChunks[3].count, chunkSizeInBytes)
+        
+        // Check the result
+        var totalEncryptedData: Data = Data()
+        encryptedChunks.forEach{chunk in
+            
+            totalEncryptedData.append(chunk)
+        }
+        
+        let totalBytes = data.count
+        
+        XCTAssertEqual(totalEncryptedData.count, totalBytes)
+        XCTAssertEqual(expectedHexEncryptedResult, totalEncryptedData.toHexString())
+        
+        
+    }
+    
+    func testEncryptStringShouldFailIfAChunkCallbackThrows() async throws {
+        
+        let hexIv = "d5e2083f9a5394d1d2414bd520dd25e3"
+        let hexKey = "fdecbc03e63b2433ab750284f4413ec2220eb3c3cea8a87cdddc421550ca9e0f"
+        
+        let data = "PASSWORDpassword123123!!Password123123!!".data(using: .utf8)!
+                           
+        let chunkSizeInBytes = 10
+        
+        var encryptedChunks: [Data] = []
+        let input = InputStream(data: data)
+        do {
+            try await sut.encryptFileIntoChunks(
+                chunkSizeInBytes: chunkSizeInBytes,
+                totalBytes: data.count,
+                inputStream: input,
+                key: self.cryptoUtils.hexStringToBytes(hexKey),
+                iv: self.cryptoUtils.hexStringToBytes(hexIv)
+            ) {encryptedChunk in
+                if encryptedChunks.count == 1 {
+                    // Just throw an error to stop the processing
+                    throw EncryptError.NoBytes
+                }
+                
+                encryptedChunks.append(encryptedChunk)
+            }
+        } catch {
+            XCTAssertEqual(encryptedChunks[0].count, chunkSizeInBytes)
+            XCTAssertEqual(encryptedChunks.count, 1)
+        }
+        
+        
+        
         
         
     }

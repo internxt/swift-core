@@ -1,6 +1,6 @@
 //
 //  File.swift
-//  
+//
 //
 //  Created by Robert Garcia on 4/8/23.
 //
@@ -8,6 +8,7 @@
 import Foundation
 
 let MULTIPART_MIN_SIZE = 100 * 1024 * 1024;
+let MULTIPART_CHUNK_SIZE = 100 * 1024 * 1024;
 
 @available(macOS 10.15, *)
 public struct NetworkFacade {
@@ -16,11 +17,13 @@ public struct NetworkFacade {
     private let cryptoUtils: CryptoUtils = CryptoUtils()
     private let mnemonic: String
     private let upload: Upload
+    private let uploadMultipart: UploadMultipart
     private let download: Download
     
     public init(mnemonic: String, networkAPI: NetworkAPI, urlSession: URLSession? = nil, debug: Bool = false){
         self.mnemonic = mnemonic
         self.upload = Upload(networkAPI: networkAPI, urlSession: urlSession)
+        self.uploadMultipart = UploadMultipart(networkAPI: networkAPI, urlSession: urlSession)
         self.download = Download(networkAPI: networkAPI, urlSession: urlSession)
     }
     
@@ -43,10 +46,19 @@ public struct NetworkFacade {
         let shouldUseMultipart = fileSize >= MULTIPART_MIN_SIZE
         
         if(shouldUseMultipart) {
-            //return try await self.uploadMultipart()
+            print("MULTIPART IS NEEDED, GOING FOR IT")
+            return try await self.runMultipartUpload(
+                input: input,
+                fileSize: fileSize,
+                index: index,
+                fileKey: fileKey,
+                iv: iv,
+                bucketId: bucketId,
+                progressHandler: progressHandler
+            )
         }
         
-        return try await self.uploadSingle(
+        return try await self.runSingleFileUpload(
             input: input,
             encryptedOutput: encryptedOutput,
             fileSize: fileSize,
@@ -58,7 +70,7 @@ public struct NetworkFacade {
         )
     }
     
-    private func uploadSingle(
+    private func runSingleFileUpload(
         input: InputStream,
         encryptedOutput: URL,
         fileSize: Int,
@@ -85,10 +97,61 @@ public struct NetworkFacade {
         return try await upload.start(index: index, bucketId: bucketId, mnemonic: mnemonic, encryptedFileURL: encryptedOutput, progressHandler: progressHandler)
     }
     
-    /*private func uploadMultipart() async throws -> FinishUploadResponse {
-        // Break file into chunks
+    private func runMultipartUpload(
+        input: InputStream,
+        fileSize: Int,
+        index: [UInt8],
+        fileKey: [UInt8],
+        iv: [UInt8],
+        bucketId: String,
+        progressHandler: @escaping ProgressHandler
+    ) async throws -> FinishUploadResponse {
+        let parts = ceil(Double(fileSize / MULTIPART_CHUNK_SIZE))
         
-    }*/
+        print("File will be broken into \(Int(parts)) parts")
+        
+        var partIndex = 0
+        var uploadedPartsConfigs: [UploadedPartConfig] = []
+        let uploadRefs = try await uploadMultipart.start(bucketId: bucketId, fileSize: fileSize, parts: Int(parts))
+        
+        func processEncryptedChunk(encryptedChunk: Data) async throws -> Void {
+            let hash = encrypt.getFileContentHash(stream: InputStream(data: encryptedChunk))
+            let uploadRef = uploadRefs[partIndex]
+            
+            guard let uploadUrl = uploadRef.url else {
+                throw UploadError.MissingUploadUrl
+            }
+            
+            try await uploadMultipart.uploadPart(encryptedChunk: encryptedChunk, uploadUrl: uploadUrl, partIndex: partIndex){progress in
+                
+                print("UPLOAD PROGRESS FOR PART \(partIndex)", progress)
+            }
+            let uploadedPartConfig = UploadedPartConfig(
+                hash: hash,
+                uuid: uploadRef.uuid
+            )
+            
+            uploadedPartsConfigs.append(uploadedPartConfig)
+            partIndex += 1
+        }
+        
+        try await encrypt.encryptFileIntoChunks(
+            chunkSizeInBytes: MULTIPART_CHUNK_SIZE,
+            totalBytes: fileSize,
+            inputStream: input,
+            key: fileKey,
+            iv: iv
+        ){encryptedChunk in
+            
+            // If something fails here, the error is propagated
+            // and the stream reading is stopped
+            try await processEncryptedChunk(encryptedChunk: encryptedChunk)
+        }
+            
+        let finishUpload = try await uploadMultipart.finishUpload(bucketId: bucketId, uploadedParts: uploadedPartsConfigs, index: Data(index))
+        
+        return finishUpload
+    }
     
     public func downloadFile(bucketId: String, fileId: String, encryptedFileDestination: URL, destinationURL: URL, progressHandler: @escaping ProgressHandler) async throws -> URL {
         
@@ -141,12 +204,12 @@ public struct NetworkFacade {
             throw NetworkFacadeError.HashMissmatch
         }
         
-       
+        
         guard let encryptedInputStream = InputStream(url: encryptedFileDownloadResult.url) else {
             throw NetworkFacadeError.FailedToOpenDecryptInputStream
         }
         
-       
+        
         
         guard let plainOutputStream = OutputStream(url: destinationURL, append: false) else {
             throw NetworkFacadeError.FailedToOpenDecryptOutputStream
@@ -164,7 +227,7 @@ public struct NetworkFacade {
         progressHandler(1)
         
         if decryptResult == .Success {
-    
+            
             return destinationURL
             
         } else {
