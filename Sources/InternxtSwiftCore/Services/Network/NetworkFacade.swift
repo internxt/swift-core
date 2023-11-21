@@ -133,7 +133,7 @@ public struct NetworkFacade {
             )
             
             uploadedPartsConfigs.append(uploadedPartConfig)
-            partIndex += 1
+            
         }
         
         try await encrypt.encryptFileIntoChunks(
@@ -147,6 +147,9 @@ public struct NetworkFacade {
             // If something fails here, the error is propagated
             // and the stream reading is stopped
             try await processEncryptedChunk(encryptedChunk: encryptedChunk)
+            partIndex += 1
+            
+            print("NEW PART INDEX", partIndex)
         }
             
         let finishUpload = try await uploadMultipart.finishUpload(bucketId: bucketId, uploadedParts: uploadedPartsConfigs, index: Data(index))
