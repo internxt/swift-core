@@ -91,12 +91,16 @@ public class UploadMultipart: NSObject {
             ))
         }
         
+        
+        let payload = try FinishUploadPayload(
+            index:  index.toHexString(),
+            shards: shards
+        )
+        
+        print("UPLOADS", payload.toJson())
         let finishUploadResult = try await networkAPI.finishUpload(
             bucketId: bucketId,
-            payload: FinishUploadPayload(
-                index:  index.toHexString(),
-                shards: shards
-            ),
+            payload: payload,
             debug: debug
         )
         
