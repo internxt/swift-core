@@ -33,7 +33,6 @@ extension UploadMultipart: URLSessionTaskDelegate {
     }
 }
 
-let PART_SIZE: Double = 30 * 1024 * 1024
 
 @available(macOS 10.15, *)
 public class UploadMultipart: NSObject {

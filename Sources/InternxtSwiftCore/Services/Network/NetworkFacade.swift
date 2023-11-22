@@ -9,7 +9,7 @@ import Foundation
 import CryptoKit
 
 let MULTIPART_MIN_SIZE = 100 * 1024 * 1024;
-let MULTIPART_CHUNK_SIZE = 200 * 1024 * 1024;
+let MULTIPART_CHUNK_SIZE = 100 * 1024 * 1024;
 
 @available(macOS 10.15, *)
 public struct NetworkFacade {
