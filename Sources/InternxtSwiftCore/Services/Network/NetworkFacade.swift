@@ -9,7 +9,7 @@ import Foundation
 import CryptoKit
 
 let MULTIPART_MIN_SIZE = 100 * 1024 * 1024;
-let MULTIPART_CHUNK_SIZE = 100 * 1024 * 1024;
+let MULTIPART_CHUNK_SIZE = 200 * 1024 * 1024;
 
 @available(macOS 10.15, *)
 public struct NetworkFacade {
@@ -114,12 +114,10 @@ public struct NetworkFacade {
     ) async throws -> FinishUploadResponse {
         var hasher = SHA256.init()
         
+        let parts = ceil(Double(fileSize) / Double(MULTIPART_CHUNK_SIZE))
         
         
-        let parts = ceil(Double(fileSize / MULTIPART_CHUNK_SIZE))
-        
-        
-        
+        print("Will break the file into \(parts) parts")
         var partIndex = 0
         var uploadedPartsConfigs: [UploadedPartConfig] = []
         let startUploadResult = try await uploadMultipart.start(bucketId: bucketId, fileSize: fileSize, parts: Int(parts))
