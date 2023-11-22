@@ -18,7 +18,7 @@ class ConcurrentQueue {
     }
     
     func addOperation(_ block: @escaping () async throws -> Void) {
-        queue.async {
+        queue.sync {
             self.semaphore.wait()
             Task{
                 do {
