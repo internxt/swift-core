@@ -119,7 +119,6 @@ public struct NetworkFacade {
         let parts = ceil(Double(fileSize) / Double(MULTIPART_CHUNK_SIZE))
         
         
-        print("Will break the file into \(parts) parts")
         var partIndex = 0
         var uploadedPartsConfigs: [UploadedPartConfig] = []
         let startUploadResult = try await uploadMultipart.start(bucketId: bucketId, fileSize: fileSize, parts: Int(parts))
@@ -159,13 +158,17 @@ public struct NetworkFacade {
             // and the stream reading is stopped
             queue.addOperation {
                 try await processEncryptedChunk(encryptedChunk: encryptedChunk, partIndex: partIndex)
+                print("Chunk number \(partIndex) uploaded")
+                partIndex += 1
             }
-            
-            print("Chunk number \(partIndex) uploaded")
-            
-            partIndex += 1
+        }
+        
+        // Block execution until all the operations are finished
+        queue.queue.sync(flags: .barrier) {
+            print("All chunks uploaded")
         }
           
+        
         let fileSHA256digest = hasher.finalize()
         
         var sha256Hash = [UInt8]()
@@ -186,9 +189,8 @@ public struct NetworkFacade {
             debug: debug
         )
         
-        
-        print("Chunk number \(partIndex) uploaded")
         return finishUpload
+        
     }
     
     public func downloadFile(bucketId: String, fileId: String, encryptedFileDestination: URL, destinationURL: URL, progressHandler: @escaping ProgressHandler) async throws -> URL {

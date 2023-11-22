@@ -195,9 +195,27 @@ final class EncryptTests: XCTestCase {
             XCTAssertEqual(encryptedChunks[0].count, chunkSizeInBytes)
             XCTAssertEqual(encryptedChunks.count, 1)
         }
+    }
+    
+    
+    func testConcurrentQueue() async throws {
+        let concurrentQueue = ConcurrentQueue(maxConcurrentOperations: 2)
+        var index = 0;
+        concurrentQueue.addOperation{
+                index = index + 1
+        }
         
+        concurrentQueue.addOperation{
+            index = index + 1
+        }
         
+        concurrentQueue.addOperation{
+            index = index + 1
+        }
         
+        concurrentQueue.queue.sync(flags: .barrier) {
+            print("INDEX", index)
+        }
         
         
     }
