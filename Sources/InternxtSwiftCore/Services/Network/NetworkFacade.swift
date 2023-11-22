@@ -9,7 +9,7 @@ import Foundation
 import CryptoKit
 
 let MULTIPART_MIN_SIZE = 100 * 1024 * 1024;
-let MULTIPART_CHUNK_SIZE = 60 * 1024 * 1024;
+let MULTIPART_CHUNK_SIZE = 200 * 1024 * 1024;
 
 
 @available(macOS 10.15, *)
@@ -113,7 +113,7 @@ public struct NetworkFacade {
         debug: Bool = false
     ) async throws -> FinishUploadResponse {
         var hasher = SHA256.init()
-        
+        var accumulatedProgress = 0.0
         let parts = ceil(Double(fileSize) / Double(MULTIPART_CHUNK_SIZE))
         var partIndex = 0
         var uploadedPartsConfigs: [UploadedPartConfig] = []
@@ -132,8 +132,9 @@ public struct NetworkFacade {
             
             let uploadUrl = uploadUrls[partIndex]
             let etag = try await uploadMultipart.uploadPart(encryptedChunk: encryptedChunk, uploadUrl: uploadUrl, partIndex: partIndex){progress in
+                accumulatedProgress += progress * maxProgressPerPart
                 // Each part reports the max progress per part
-                progressHandler(progress * maxProgressPerPart)
+                progressHandler(accumulatedProgress)
             }
             
             let uploadedPartConfig = UploadedPartConfig(
