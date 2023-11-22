@@ -132,7 +132,7 @@ public struct NetworkFacade {
             
             let uploadUrl = uploadUrls[partIndex]
             let etag = try await uploadMultipart.uploadPart(encryptedChunk: encryptedChunk, uploadUrl: uploadUrl, partIndex: partIndex){progress in
-                accumulatedProgress += progress * maxProgressPerPart
+                accumulatedProgress += (progress * maxProgressPerPart) / 100
                 // Each part reports the max progress per part
                 progressHandler(accumulatedProgress)
             }
