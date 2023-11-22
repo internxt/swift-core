@@ -10,6 +10,7 @@ import CryptoKit
 
 let MULTIPART_MIN_SIZE = 100 * 1024 * 1024;
 let MULTIPART_CHUNK_SIZE = 100 * 1024 * 1024;
+let MAX_CONCURRENT_OPERATIONS = 2
 
 @available(macOS 10.15, *)
 public struct NetworkFacade {
@@ -48,7 +49,6 @@ public struct NetworkFacade {
         let shouldUseMultipart = fileSize >= MULTIPART_MIN_SIZE
         
         if(shouldUseMultipart) {
-            print("MULTIPART IS NEEDED, GOING FOR IT")
             return try await self.runMultipartUpload(
                 input: input,
                 fileSize: fileSize,
@@ -112,6 +112,8 @@ public struct NetworkFacade {
         progressHandler: @escaping ProgressHandler,
         debug: Bool = false
     ) async throws -> FinishUploadResponse {
+        
+        let queue = ConcurrentQueue(maxConcurrentOperations: MAX_CONCURRENT_OPERATIONS)
         var hasher = SHA256.init()
         
         let parts = ceil(Double(fileSize) / Double(MULTIPART_CHUNK_SIZE))
@@ -155,7 +157,10 @@ public struct NetworkFacade {
             hasher.update(data: encryptedChunk)
             // If something fails here, the error is propagated
             // and the stream reading is stopped
-            try await processEncryptedChunk(encryptedChunk: encryptedChunk, partIndex: partIndex)
+            queue.addOperation {
+                try await processEncryptedChunk(encryptedChunk: encryptedChunk, partIndex: partIndex)
+            }
+            
             print("Chunk number \(partIndex) uploaded")
             
             partIndex += 1
@@ -180,6 +185,8 @@ public struct NetworkFacade {
             index: Data(index),
             debug: debug
         )
+        
+        
         print("Chunk number \(partIndex) uploaded")
         return finishUpload
     }
