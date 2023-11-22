@@ -9,8 +9,8 @@ import Foundation
 import CryptoKit
 
 let MULTIPART_MIN_SIZE = 100 * 1024 * 1024;
-let MULTIPART_CHUNK_SIZE = 100 * 1024 * 1024;
-let MAX_CONCURRENT_OPERATIONS = 2
+let MULTIPART_CHUNK_SIZE = 60 * 1024 * 1024;
+
 
 @available(macOS 10.15, *)
 public struct NetworkFacade {
@@ -112,20 +112,18 @@ public struct NetworkFacade {
         progressHandler: @escaping ProgressHandler,
         debug: Bool = false
     ) async throws -> FinishUploadResponse {
-        
-        let queue = ConcurrentQueue(maxConcurrentOperations: MAX_CONCURRENT_OPERATIONS)
         var hasher = SHA256.init()
         
         let parts = ceil(Double(fileSize) / Double(MULTIPART_CHUNK_SIZE))
-        
-        
         var partIndex = 0
         var uploadedPartsConfigs: [UploadedPartConfig] = []
         let startUploadResult = try await uploadMultipart.start(bucketId: bucketId, fileSize: fileSize, parts: Int(parts))
+        // We use 0.99 so we can determine when we reach the full 100%
+        let maxProgressPerPart: Double = 0.99 / parts
+        
         guard let uploadUrls = startUploadResult.urls else {
             throw UploadError.MissingUploadUrl
         }
-        
         
         if uploadUrls.count != Int(parts) {
             throw UploadMultipartError.MorePartsThanUploadUrls
@@ -134,8 +132,8 @@ public struct NetworkFacade {
             
             let uploadUrl = uploadUrls[partIndex]
             let etag = try await uploadMultipart.uploadPart(encryptedChunk: encryptedChunk, uploadUrl: uploadUrl, partIndex: partIndex){progress in
-                
-                //print("UPLOAD PROGRESS FOR PART \(partIndex)", progress)
+                // Each part reports the max progress per part
+                progressHandler(progress * maxProgressPerPart)
             }
             
             let uploadedPartConfig = UploadedPartConfig(
@@ -156,17 +154,12 @@ public struct NetworkFacade {
             hasher.update(data: encryptedChunk)
             // If something fails here, the error is propagated
             // and the stream reading is stopped
-            queue.addOperation {
-                try await processEncryptedChunk(encryptedChunk: encryptedChunk, partIndex: partIndex)
-                print("Chunk number \(partIndex) uploaded")
-                partIndex += 1
-            }
+            try await processEncryptedChunk(encryptedChunk: encryptedChunk, partIndex: partIndex)
+            print("Chunk number \(partIndex) uploaded")
+            partIndex += 1
         }
         
-        // Block execution until all the operations are finished
-        queue.queue.sync(flags: .barrier) {
-            print("All chunks uploaded")
-        }
+        
           
         
         let fileSHA256digest = hasher.finalize()
@@ -188,6 +181,9 @@ public struct NetworkFacade {
             index: Data(index),
             debug: debug
         )
+        
+        // Finish the progress manually
+        progressHandler(1)
         
         return finishUpload
         

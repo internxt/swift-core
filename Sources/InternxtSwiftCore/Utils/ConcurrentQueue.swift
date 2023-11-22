@@ -17,19 +17,11 @@ class ConcurrentQueue {
         self.semaphore = DispatchSemaphore(value: maxConcurrentOperations)
     }
     
-    func addOperation(_ block: @escaping () async throws -> Void) {
+    func addOperation(_ block: @escaping () -> Void) {
         queue.sync {
             self.semaphore.wait()
-            Task{
-                do {
-                    try await block()
-                    self.semaphore.signal()
-                } catch {
-                    self.semaphore.signal()
-                    throw error
-                }
-            }
-            
+            block()
+            self.semaphore.signal()
         }
     }
 }
