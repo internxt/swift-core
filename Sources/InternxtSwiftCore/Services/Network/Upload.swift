@@ -74,12 +74,13 @@ public class Upload: NSObject  {
             throw StartUploadError(apiError: apiError)
         }
         
-        print("UPLOAD", uploadStart)
         
         guard let uploadResult = uploadStart.uploads.first else {
             throw UploadError.MissingUploadUrl
         }
         
+        
+        print("UPLOAD RESULT", uploadResult.url, uploadResult.urls)
         
         guard let uploadUrl = uploadResult.url else {
             throw UploadError.MissingUploadUrl
