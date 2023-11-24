@@ -102,9 +102,7 @@ public class UploadMultipart: NSObject {
             index:  index.toHexString(),
             shards: shards
         )
-        
-        print("PAYLOAD TO SEND", payload)
-        
+                
         let finishUploadResult = try await networkAPI.finishUpload(
             bucketId: bucketId,
             payload: payload,

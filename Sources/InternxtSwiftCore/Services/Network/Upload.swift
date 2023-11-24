@@ -79,9 +79,6 @@ public class Upload: NSObject  {
             throw UploadError.MissingUploadUrl
         }
         
-        
-        print("UPLOAD RESULT", uploadResult.url, uploadResult.urls)
-        
         guard let uploadUrl = uploadResult.url else {
             throw UploadError.MissingUploadUrl
         }

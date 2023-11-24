@@ -156,12 +156,8 @@ public struct NetworkFacade {
             // If something fails here, the error is propagated
             // and the stream reading is stopped
             try await processEncryptedChunk(encryptedChunk: encryptedChunk, partIndex: partIndex)
-            print("Chunk number \(partIndex) uploaded")
             partIndex += 1
         }
-        
-        
-          
         
         let fileSHA256digest = hasher.finalize()
         
@@ -183,11 +179,10 @@ public struct NetworkFacade {
             debug: debug
         )
         
-        // Finish the progress manually
+        // Finish the progress
         progressHandler(1)
         
         return finishUpload
-        
     }
     
     public func downloadFile(bucketId: String, fileId: String, encryptedFileDestination: URL, destinationURL: URL, progressHandler: @escaping ProgressHandler) async throws -> URL {
