@@ -1,18 +1,25 @@
 //
-//  File.swift
-//  
+//  UploadMultipart.swift
 //
-//  Created by Robert Garcia on 4/8/23.
+//
+//  Created by Robert Garcia on 15/11/23.
 //
 
 import Foundation
 
-public typealias Percentage = Double
-public typealias ProgressHandler = (Percentage) -> Void
 
+enum UploadMultipartError: Error {
+    case CannotOpenInputStream
+    case MorePartsThanUploadUrls
+}
+
+public struct UploadedPartConfig {
+    let etag: String
+    let partNumber: Int
+}
 
 @available(macOS 10.15, *)
-extension Upload: URLSessionTaskDelegate {
+extension UploadMultipart: URLSessionTaskDelegate {
     public func urlSession(
             _ session: URLSession,
             task: URLSessionTask,
@@ -28,7 +35,7 @@ extension Upload: URLSessionTaskDelegate {
 
 
 @available(macOS 10.15, *)
-public class Upload: NSObject  {
+public class UploadMultipart: NSObject {
     private let encrypt = Encrypt()
     private let cryptoUtils = CryptoUtils()
     private let fileManager = FileManager.default
@@ -39,8 +46,10 @@ public class Upload: NSObject  {
            delegateQueue: .main
        )
     
+    
+    
     private var progressHandlersByTaskID = [Int : ProgressHandler]()
-
+    
     init(networkAPI: NetworkAPI, urlSession: URLSession? = nil) {
         self.networkAPI = networkAPI
         super.init()
@@ -49,68 +58,63 @@ public class Upload: NSObject  {
         }
     }
     
-   
-    func start(index: [UInt8], bucketId: String, mnemonic: String, encryptedFileURL: URL, debug: Bool = false, progressHandler: ProgressHandler? = nil) async throws -> FinishUploadResponse {
-        let source = encryptedFileURL
-         
-        let fileSize = source.fileSize
+    func start(bucketId: String, fileSize: Int, parts: Int) async throws -> StartUploadResult {
+        
+        let startUploadResponse = try await networkAPI.startUpload(bucketId: bucketId, uploadSize: fileSize, parts: parts)
+        
+        guard let startUploadResult  = startUploadResponse.uploads.first else {
+            throw UploadError.MissingUploadUrl
+        }
+        return startUploadResult
+    }
     
+    func uploadPart(encryptedChunk: Data, uploadUrl: String, partIndex: Int, progressHandler: @escaping ProgressHandler) async throws -> String {
         
-        guard let hashInputStream = InputStream(url: encryptedFileURL) else {
-            throw UploadError.CannotGenerateFileHash
-        }
+        // Upload the chunk to the given URL
+        let uploadEtag = try await self.uploadEncryptedChunk(encryptedChunk: encryptedChunk, uploadUrl: uploadUrl, progressHandler: progressHandler)
         
-        let fileHash = encrypt.getFileContentHash(stream: hashInputStream)
-        var uploadStart: StartUploadResponse
+
+        return uploadEtag        
+    }
+    
+    
+    func finishUpload(bucketId: String, fileHash: String, uploadUuid: String,uploadId: String, uploadedParts: [UploadedPartConfig], index: Data, debug: Bool = false) async throws -> FinishUploadResponse {
         
-        do {
-             uploadStart = try await networkAPI.startUpload(bucketId: bucketId, uploadSize: Int(fileSize), debug: debug)
-        } catch {
-            
-            guard let apiError = error as? APIClientError else {
-                throw StartUploadError(apiError: nil)
-            }
-            
-            throw StartUploadError(apiError: apiError)
-        }
-        
-        
-        guard let uploadResult = uploadStart.uploads.first else {
-            throw UploadError.MissingUploadUrl
-        }
-        
-        guard let uploadUrl = uploadResult.url else {
-            throw UploadError.MissingUploadUrl
-        }
-        
-        let successUpload = try await self.uploadEncryptedFile(uploadUrl: uploadUrl, encryptedFile: source, progressHandler: progressHandler)
-        
-        if successUpload == false {
-            throw UploadError.UploadNotSuccessful
-        }
         
         var shards: Array<ShardUploadPayload> = Array()
-        shards.append(ShardUploadPayload(
-            hash: cryptoUtils.bytesToHexString(Array(fileHash)),
-            uuid: uploadResult.uuid,
-            parts: nil
-        ))
-        let finishUploadResult = try await networkAPI.finishUpload(bucketId: bucketId, payload: FinishUploadPayload(
-                index:  cryptoUtils.bytesToHexString(index),
-                shards: shards
-            )
+        
+        let shardPayload = ShardUploadPayload(
+            hash: fileHash,
+            uuid: uploadUuid,
+            parts: uploadedParts.map{ uploadedPart in
+                return ShardPartPayload(
+                    ETag: uploadedPart.etag,
+                    PartNumber: uploadedPart.partNumber
+                )
+            },
+            uploadId: uploadId
         )
         
-        if finishUploadResult.size != Int(fileSize) {
-            throw UploadError.UploadedSizeNotMatching
-        }
+        shards.append(shardPayload)
         
+        
+        let payload = try FinishUploadPayload(
+            index:  index.toHexString(),
+            shards: shards
+        )
+                
+        let finishUploadResult = try await networkAPI.finishUpload(
+            bucketId: bucketId,
+            payload: payload,
+            debug: debug
+        )
         
         return finishUploadResult
     }
     
     
-    private func uploadEncryptedFile(uploadUrl: String, encryptedFile: URL, progressHandler: ProgressHandler? = nil) async throws -> Bool {
+    
+    private func uploadEncryptedChunk(encryptedChunk: Data, uploadUrl: String, progressHandler: ProgressHandler?) async throws -> String {
         return try await withCheckedThrowingContinuation { (continuation) in
             var request = URLRequest(
                 url: URL(string: uploadUrl)!,
@@ -122,14 +126,17 @@ public class Upload: NSObject  {
             
             let task = urlSession.uploadTask(
                 with: request,
-                fromFile: encryptedFile,
+                from: encryptedChunk,
                 completionHandler: { data, res, error in
                     guard let error = error else {
                         let response = res as? HTTPURLResponse
                         if response?.statusCode != 200 {
                             return continuation.resume(with: .failure(UploadError.UploadNotSuccessful))
                         } else {
-                            return continuation.resume(with: .success(true))
+                            guard let etagValue = response?.value(forHTTPHeaderField: "Etag") else {
+                                return continuation.resume(with: .failure(UploadError.MissingEtag))
+                            }
+                            return continuation.resume(with: .success(etagValue))
                         }
                         
                     }
@@ -148,5 +155,5 @@ public class Upload: NSObject  {
     }
     
     
+    
 }
-

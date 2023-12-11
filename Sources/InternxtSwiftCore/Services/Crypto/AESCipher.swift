@@ -7,7 +7,12 @@
 
 import Foundation
 import IDZSwiftCommonCrypto
+import CryptoKit
 
+
+enum EncryptError: Error {
+    case NoBytes
+}
 
 enum EncryptResultStatus {
     case Success
@@ -24,9 +29,56 @@ enum DecryptResultStatus {
 @available(macOS 10.15, *)
 class AESCipher {
     var utils = CryptoUtils()
+    
+    static var shared = AESCipher()
     let bufferSize = 1024 * 8
     private func isValidIv(iv: [UInt8]) -> Bool {
         return StreamCryptor.Algorithm.aes.blockSize() == iv.count
+    }
+    
+    public func getAES256CTRCipherStream(key: [UInt8], iv: [UInt8]) -> StreamCryptor {
+        let algorithm = StreamCryptor.Algorithm.aes
+        
+        let cryptStream = StreamCryptor(
+            operation: StreamCryptor.Operation.encrypt,
+            algorithm: algorithm,
+            mode: StreamCryptor.Mode.CTR,
+            padding: StreamCryptor.Padding.NoPadding,
+            key: key,
+            iv: iv
+        )
+        
+        return cryptStream
+    }
+    
+    
+    public func encryptData(data: Data, key: [UInt8], iv: [UInt8]) throws -> Data {
+        let algorithm = StreamCryptor.Algorithm.aes
+        
+        
+        if !self.isValidIv(iv: iv) {
+            throw CryptoError.badIv
+        }
+                
+        let cryptor = Cryptor(
+            operation: StreamCryptor.Operation.encrypt,
+            algorithm: algorithm,
+            mode: StreamCryptor.Mode.CTR,
+            padding: StreamCryptor.Padding.NoPadding,
+            key: key,
+            iv: iv
+        )
+        
+        _ = cryptor.update(data: data)
+        
+        guard let final = cryptor.final() else {
+            throw EncryptError.NoBytes
+        }
+        
+        
+        
+            
+        return Data(final)
     }
     
     // Encrypts an input stream to an output stream given a key and an IV
