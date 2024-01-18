@@ -11,10 +11,15 @@ import Foundation
 public struct DriveAPI {
     private let baseUrl: String
     private let apiClient: APIClient
-    
+    private let clientName: String
+    private let clientVersion: String
     public init(baseUrl: String, authToken: String, clientName: String, clientVersion: String) {
         self.baseUrl = baseUrl
-        self.apiClient = APIClient(urlSession: URLSession.shared, authorizationHeaderValue: "Bearer \(authToken)", clientName: clientName, clientVersion: clientVersion)
+        self.apiClient = APIClient(urlSession: URLSession.shared, authorizationHeaderValue: "Bearer \(authToken)", clientName: clientName, 
+            clientVersion: clientVersion
+        )
+        self.clientName = clientName
+        self.clientVersion = clientVersion
     }
     
     /// Get paginated files inside the given folder
@@ -151,7 +156,9 @@ public struct DriveAPI {
         return try await apiClient.fetch(type: MoveFolderResponse.self, endpoint, debugResponse: debug)
     }
     
-    public func refreshUser(debug: Bool = false) async throws -> RefreshUserResponse  {
+    public func refreshUser(currentAuthToken: String, debug: Bool = false) async throws -> RefreshUserResponse  {
+        
+        let apiClient = APIClient(urlSession: URLSession.shared, authorizationHeaderValue: "Bearer \(currentAuthToken)", clientName: clientName, clientVersion: clientVersion)
         let endpoint = Endpoint(
             path: "\(self.baseUrl)/user/refresh",
             method: .GET

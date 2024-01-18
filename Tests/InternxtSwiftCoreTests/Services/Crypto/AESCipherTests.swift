@@ -18,7 +18,7 @@ final class AESCipherTests: XCTestCase {
     }
     
     
-    func testEncrypt() throws {
+    func testEncryptStream() throws {
         let destination = getTemporaryURL()
         let inputStream = InputStream.init(data: "test".data(using: .utf8)!)
         let outputStream = OutputStream(url: destination, append: true)
@@ -39,6 +39,20 @@ final class AESCipherTests: XCTestCase {
                 XCTAssertEqual(result, "5d14c5cf")
             }
         )
+    }
+    
+    func testEncryptSync() throws {
+        let data = "test".data(using: .utf8)!
+        
+        
+        let hexKey = "4ba9058b2efc8c7c9c869b6573b725aa8bf67aecb26d3ebd678e624565570e9c"
+        let hexIv = "4ae6fcc4dd6ebcdb9076f2396d64da48"
+        
+        let result = try self.sut.encryptData(data: data, key: self.utils.hexStringToBytes(hexKey), iv: self.utils.hexStringToBytes(hexIv))
+        
+        
+        XCTAssertEqual(result.toHexString(), "5d14c5cf")
+   
     }
     
     func testDecrypt() throws {

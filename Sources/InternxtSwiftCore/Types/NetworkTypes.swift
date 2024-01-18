@@ -27,14 +27,21 @@ public struct StartUploadResponse: Decodable {
     public let uploads: Array<StartUploadResult>
 }
 
+public struct ShardPartPayload: Codable {
+    public let ETag: String
+    public let PartNumber: Int
+}
 
 public struct ShardUploadPayload: Codable {
     public let hash: String
     public let uuid: String
-    
-    init(hash: String, uuid: String) {
+    public let parts: [ShardPartPayload]?
+    public let UploadId: String?
+    init(hash: String, uuid: String, parts: [ShardPartPayload]? = nil, uploadId: String? = nil) {
         self.hash = hash
         self.uuid = uuid
+        self.parts = parts
+        self.UploadId = uploadId
     }
 }
 
