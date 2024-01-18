@@ -7,9 +7,7 @@
 
 import Foundation
 
-public struct GetAllDevicesResponse: Codable {
-    public let devices: Array<Device>
-}
+public typealias DevicesResponse = [Device]
 
 public struct Device: Codable {
     public let id: String

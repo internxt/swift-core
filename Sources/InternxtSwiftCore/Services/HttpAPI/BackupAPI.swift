@@ -17,12 +17,12 @@ public struct BackupAPI {
         self.apiClient = APIClient(urlSession: URLSession.shared, authorizationHeaderValue: "Bearer \(authToken)", clientName: clientName, clientVersion: clientVersion)
     }
 
-    public func getAllDevices(debug: Bool = false) async throws -> GetAllDevicesResponse {
+    public func getAllDevices(debug: Bool = false) async throws -> DevicesResponse {
         let endpoint = Endpoint(
             path: "\(self.baseUrl)/backup/device",
             method: .GET
         )
 
-        return try await apiClient.fetch(type: GetAllDevicesResponse.self, endpoint, debugResponse: debug)
+        return try await apiClient.fetch(type: DevicesResponse.self, endpoint, debugResponse: debug)
     }
 }
