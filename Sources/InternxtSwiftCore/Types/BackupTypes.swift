@@ -9,7 +9,7 @@ import Foundation
 
 public typealias DevicesResponse = [Device]
 
-public struct Device: Codable, Identifiable {
+public struct Device: NSObject, Codable, Identifiable {
     public let id: Int
     public let uuid: String
     public let parentId: String?
