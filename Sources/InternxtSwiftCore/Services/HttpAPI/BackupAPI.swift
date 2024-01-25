@@ -19,7 +19,7 @@ public struct BackupAPI {
 
     public func getAllDevices(debug: Bool = false) async throws -> DevicesResponse {
         let endpoint = Endpoint(
-            path: "\(self.baseUrl)/backup/device",
+            path: "\(self.baseUrl)/backup/deviceAsFolder",
             method: .GET
         )
 
