@@ -6,12 +6,14 @@
 //
 
 import Foundation
+import CryptoKit
 
 
 struct DecryptConfig {
     let key: [UInt8]
     let iv: [UInt8]
 }
+
 
 
 @available(macOS 10.15, *)
@@ -40,5 +42,34 @@ public struct Decrypt {
             })
         }
         
+    }
+    
+    public func decrypt(base64String: String, password: String, rounds: Int = 2145) throws -> String {
+
+        guard let data = Data(base64Encoded: base64String) else {
+            throw CryptoError.invalidBase64String
+        }
+        let salt = data.prefix(64)
+        let iv = data[64..<80]
+        let tag = data[80..<96]
+        let text = data.suffix(from: 96)
+        
+        
+        let key = keyDerivation.pbkdf2(
+            password: password,
+            salt: salt,
+            rounds: rounds,
+            derivedKeyLength: 32
+        )
+        
+        let sealedBox = try AES.GCM.SealedBox(
+                            nonce: AES.GCM.Nonce(data: iv),
+                            ciphertext: text,
+                            tag: tag
+        )
+        
+        let decryptedData = try AES.GCM.open(sealedBox, using: SymmetricKey(data: key))
+        
+        return String(decoding: decryptedData, as: UTF8.self)
     }
 }

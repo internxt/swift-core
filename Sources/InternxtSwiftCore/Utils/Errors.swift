@@ -16,6 +16,7 @@ enum CryptoError: Error {
     case decryptionFailed
     case bytesNotMatching
     case CannotGetCombinedData
+    case invalidBase64String
 }
 
 
