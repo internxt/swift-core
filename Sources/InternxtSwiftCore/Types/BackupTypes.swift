@@ -28,3 +28,7 @@ public struct Device: Codable, Identifiable {
     public let userId: Int?
     public let parent_id: String?
 }
+
+public struct CreateDevicePayload: Encodable {
+    public let deviceName: String
+}

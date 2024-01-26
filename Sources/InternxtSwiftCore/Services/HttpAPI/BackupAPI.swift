@@ -25,4 +25,14 @@ public struct BackupAPI {
 
         return try await apiClient.fetch(type: DevicesResponse.self, endpoint, debugResponse: debug)
     }
+
+    public func addDeviceAsFolder(deviceName: String, debug: Bool = false) async throws -> Device {
+        let endpoint = Endpoint(
+            path: "\(self.baseUrl)/backup/deviceAsFolder",
+            method: .POST,
+            body: CreateDevicePayload(deviceName: deviceName).toJson()
+        )
+
+        return try await apiClient.fetch(type: Device.self, endpoint, debugResponse: debug)
+    }
 }
