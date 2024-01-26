@@ -21,3 +21,7 @@ public struct Device: Codable {
     public let createdAt: String
     public let updatedAt: String
 }
+
+public struct CreateDevicePayload: Encodable {
+    public let deviceName: String
+}
