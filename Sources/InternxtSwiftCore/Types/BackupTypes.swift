@@ -7,19 +7,26 @@
 
 import Foundation
 
-public struct GetAllDevicesResponse: Codable {
-    public let devices: Array<Device>
-}
+public typealias DevicesResponse = [Device]
 
-public struct Device: Codable {
-    public let id: String
-    public let mac: String?
+public struct Device: Codable, Identifiable {
+    public let id: Int
+    public let uuid: String
+    public let parentId: String?
+    public let parentUuid: String?
     public let name: String?
-    public let userId: String?
-    public let newestDate: String?
-    public let oldestDate: String?
+    public let plain_name: String?
+    public let bucket: String?
+    public let user_id: Int?
+    public let encrypt_version: String?
+    public let deleted: Bool
+    public let deletedAt: String?
+    public let removed: Bool
+    public let removedAt: String?
     public let createdAt: String
     public let updatedAt: String
+    public let userId: Int?
+    public let parent_id: String?
 }
 
 public struct CreateDevicePayload: Encodable {
