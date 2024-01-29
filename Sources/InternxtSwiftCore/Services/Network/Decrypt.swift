@@ -46,9 +46,15 @@ public struct Decrypt {
     
     public func decrypt(base64String: String, password: String, rounds: Int = 2145) throws -> String {
 
+        if base64String.isEmpty    {
+            throw CryptoError.emptyBase64String
+        }
+        
         guard let data = Data(base64Encoded: base64String) else {
             throw CryptoError.invalidBase64String
         }
+        
+        
         let salt = data.prefix(64)
         let iv = data[64..<80]
         let tag = data[80..<96]

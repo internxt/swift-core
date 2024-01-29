@@ -34,6 +34,15 @@ final class DecryptTests: XCTestCase {
         
         XCTAssertEqual(result, expectedResult)
     }
+    
+    func testDecryptEmptyStringFail() throws {
+        do {
+            _ = try sut.decrypt(base64String: "",password: "passwordPASS123!lokqfqwf", rounds: 2000)
+        } catch {
+            XCTAssertEqual(error as? CryptoError, CryptoError.emptyBase64String)
+        }
+        
+    }
 
     
 
