@@ -8,7 +8,7 @@
 import Foundation
 
 
-enum CryptoError: Error {
+enum CryptoError: Error, Equatable {
     case badIv
     case badKey
     case badIndex(String)
@@ -16,6 +16,8 @@ enum CryptoError: Error {
     case decryptionFailed
     case bytesNotMatching
     case CannotGetCombinedData
+    case invalidBase64String
+    case emptyBase64String
 }
 
 
