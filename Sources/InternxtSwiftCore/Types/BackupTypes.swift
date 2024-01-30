@@ -7,9 +7,9 @@
 
 import Foundation
 
-public typealias DevicesResponse = [Device]
+public typealias DevicesResponse = [DeviceAsFolder]
 
-public struct Device: Codable, Identifiable {
+public struct DeviceAsFolder: Codable, Identifiable {
     public let id: Int
     public let uuid: String
     public let parentId: String?
