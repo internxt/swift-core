@@ -11,10 +11,12 @@ import Foundation
 public struct BackupAPI {
     private let baseUrl: String
     private let apiClient: APIClient
+    private let driveAPI: DriveAPI
 
     public init(baseUrl: String, authToken: String, clientName: String, clientVersion: String) {
         self.baseUrl = baseUrl
         self.apiClient = APIClient(urlSession: URLSession.shared, authorizationHeaderValue: "Bearer \(authToken)", clientName: clientName, clientVersion: clientVersion)
+        self.driveAPI = DriveAPI(baseUrl: baseUrl, authToken: authToken, clientName: clientName, clientVersion: clientVersion)
     }
 
     public func getAllDevices(debug: Bool = false) async throws -> DevicesResponse {
@@ -34,5 +36,13 @@ public struct BackupAPI {
         )
 
         return try await apiClient.fetch(type: DeviceAsFolder.self, endpoint, debugResponse: debug)
+    }
+
+    public func getBackupChilds(folderId: String, offset: Int = 0, limit: Int = 50, sort: String = "ASC", debug: Bool = false) async throws -> GetFolderFoldersResponse {
+        return try await driveAPI.getFolderFolders(folderId: folderId, offset: offset, limit: limit, sort: sort, debug: debug)
+    }
+
+    public func getBackupFiles(folderId: String, offset: Int = 0, limit: Int = 50, sort: String = "ASC", debug: Bool = false) async throws -> GetFolderFilesResponse {
+        return try await driveAPI.getFolderFiles(folderId: folderId, offset: offset, limit: limit, sort: sort, debug: debug)
     }
 }
