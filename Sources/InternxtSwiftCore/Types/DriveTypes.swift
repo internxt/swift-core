@@ -264,6 +264,8 @@ public struct MoveFileResponse: Decodable {
     public let moved: Bool
 }
 
+public struct DeleteFolderResponse: Decodable {}
+
 
 public struct MoveFolderPayload: Encodable {
     public let folderId: Int

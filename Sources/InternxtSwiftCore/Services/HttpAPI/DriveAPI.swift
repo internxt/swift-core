@@ -155,7 +155,27 @@ public struct DriveAPI {
     
         return try await apiClient.fetch(type: MoveFolderResponse.self, endpoint, debugResponse: debug)
     }
-    
+
+    public func deleteFolder(folderId: Int, debug: Bool = false) async throws -> Bool {
+        let endpoint = Endpoint(
+            path: "\(self.baseUrl)/storage/folder/\(folderId)",
+            method: .DELETE
+        )
+
+        do {
+            _ = try await apiClient.fetch(type: DeleteFolderResponse.self, endpoint, debugResponse: debug)
+
+            return true
+        } catch {
+
+            guard let apiClientError = error as? APIClientError else {
+                throw error
+            }
+
+            return 200...300 ~= apiClientError.statusCode
+        }
+    }
+
     public func refreshUser(currentAuthToken: String, debug: Bool = false) async throws -> RefreshUserResponse  {
         
         let apiClient = APIClient(urlSession: URLSession.shared, authorizationHeaderValue: "Bearer \(currentAuthToken)", clientName: clientName, clientVersion: clientVersion)
