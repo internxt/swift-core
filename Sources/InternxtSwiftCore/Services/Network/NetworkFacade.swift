@@ -13,7 +13,7 @@ let MULTIPART_CHUNK_SIZE = 200 * 1024 * 1024;
 
 
 @available(macOS 10.15, *)
-public struct NetworkFacade {
+public class NetworkFacade: NSObject {
     private let encrypt: Encrypt = Encrypt()
     private let decrypt: Decrypt = Decrypt()
     private let cryptoUtils: CryptoUtils = CryptoUtils()
@@ -22,7 +22,7 @@ public struct NetworkFacade {
     private let uploadMultipart: UploadMultipart
     private let download: Download
     
-    public init(mnemonic: String, networkAPI: NetworkAPI, urlSession: URLSession? = nil, debug: Bool = false){
+    public override init(mnemonic: String, networkAPI: NetworkAPI, urlSession: URLSession? = nil, debug: Bool = false){
         self.mnemonic = mnemonic
         self.upload = Upload(networkAPI: networkAPI, urlSession: urlSession)
         self.uploadMultipart = UploadMultipart(networkAPI: networkAPI, urlSession: urlSession)
