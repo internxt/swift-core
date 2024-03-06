@@ -57,4 +57,8 @@ public struct BackupAPI {
     public func deleteBackupFolder(folderId: Int, debug: Bool = false) async throws -> Bool {
         return try await driveAPI.deleteFolder(folderId: folderId, debug: debug)
     }
+
+    public func replaceFileId(fileUuid: String, newFileId: String, newSize: Int, debug: Bool = false) async throws -> ReplaceFileResponse {
+        return try await driveAPI.replaceFileId(fileUuid: fileUuid, newFileId: newFileId, newSize: newSize, debug: debug)
+    }
 }
