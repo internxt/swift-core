@@ -42,7 +42,7 @@ public struct BackupAPI {
         let endpoint = Endpoint(
             path: "\(self.baseUrl)/backup/deviceAsFolder/\(deviceId)",
             method: .PATCH,
-            body: CreateDevicePayload(deviceName: deviceName).toJson()
+            body: EditDevicePayload(deviceName: deviceName).toJson()
         )
 
         return try await apiClient.fetch(type: DeviceAsFolder.self, endpoint, debugResponse: debug)
