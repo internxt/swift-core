@@ -27,7 +27,8 @@ public struct DeviceAsFolder: Codable, Identifiable {
     public let updatedAt: String
     public let userId: Int?
     public let parent_id: String?
-    public var hasBackup: Bool? = false
+    public var hasBackups: Bool? = false
+    public let lastBackupAt: String?
 }
 
 public struct CreateDevicePayload: Encodable {
