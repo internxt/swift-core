@@ -34,3 +34,7 @@ public struct DeviceAsFolder: Codable, Identifiable {
 public struct CreateDevicePayload: Encodable {
     public let deviceName: String
 }
+
+public struct EditDevicePayload: Encodable {
+    public let deviceName: String
+}
