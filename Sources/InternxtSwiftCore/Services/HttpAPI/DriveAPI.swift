@@ -261,14 +261,15 @@ public struct DriveAPI {
     }
     
   
-    public func getFolderOrFileMetaById(id: String, debug: Bool = false) async throws -> GetMetaByIdResponse {
-
-        let fileMeta = try await getFileMetaByUuid(uuid: id)
-        if fileMeta.uuid != id {
-            let folderMeta = try await getFolderMetaById(id: id)
-            return DriveUtils.convertFolderMetaToUnified(folderMeta: folderMeta)
+    public func getFolderOrFileMetaById(id: String, debug: Bool = false) async throws -> GetDriveItemMetaByIdResponse {
+        
+        if UUID(uuidString: id) != nil{
+            let fileMeta = try await getFileMetaByUuid(uuid: id)
+            return DriveUtils.convertFileMetaToUnified(fileMeta: fileMeta)
         }
-        return DriveUtils.convertFileMetaToUnified(fileMeta: fileMeta)
+        let folderMeta = try await getFolderMetaById(id: id)
+        return DriveUtils.convertFolderMetaToUnified(folderMeta: folderMeta)
+
     }
     
 }

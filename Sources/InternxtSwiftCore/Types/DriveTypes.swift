@@ -341,7 +341,7 @@ public struct GetFileInFolderByPlainNameResponse: Decodable {
 }
 
 
-public struct GetMetaByIdResponse: Decodable {
+public struct GetDriveItemMetaByIdResponse: Decodable {
     public let id: Int
     public let parentId: Int?
     public let name: String

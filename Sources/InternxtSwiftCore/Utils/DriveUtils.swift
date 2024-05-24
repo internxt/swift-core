@@ -9,8 +9,8 @@ import Foundation
 
 public struct DriveUtils {
     
-    static func convertFileMetaToUnified(fileMeta: GetFileMetaByIdResponse) -> GetMetaByIdResponse {
-        return GetMetaByIdResponse(
+    static func convertFileMetaToUnified(fileMeta: GetFileMetaByIdResponse) -> GetDriveItemMetaByIdResponse {
+        return GetDriveItemMetaByIdResponse(
             id: fileMeta.id,
             parentId: nil,
             name: fileMeta.name,
@@ -34,8 +34,8 @@ public struct DriveUtils {
         )
     }
     
-    static func convertFolderMetaToUnified(folderMeta: GetFolderMetaByIdResponse) -> GetMetaByIdResponse {
-        return GetMetaByIdResponse(
+    static func convertFolderMetaToUnified(folderMeta: GetFolderMetaByIdResponse) -> GetDriveItemMetaByIdResponse {
+        return GetDriveItemMetaByIdResponse(
             id: folderMeta.id,
             parentId: folderMeta.parentId,
             name: folderMeta.name,
