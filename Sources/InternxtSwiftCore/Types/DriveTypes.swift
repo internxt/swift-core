@@ -339,3 +339,32 @@ public struct GetFileInFolderByPlainNameResponse: Decodable {
     public let name: String?
     public let type: String?
 }
+
+
+public struct GetMetaByIdResponse: Decodable {
+    public let id: Int
+    public let parentId: Int?
+    public let name: String
+    public let bucket: String?
+    public let userId: Int
+    public let encryptVersion: String?
+    public let deleted: Bool?
+    public let createdAt: String
+    public let updatedAt: String
+    public let deletedAt: String?
+    public let removedAt: String?
+    public let uuid: String?
+    public let plainName: String?
+    public let removed: Bool?
+    public let folderId: Int?
+    public let type: String?
+    public let size: String?
+    public let fileId: String?
+    public let modificationTime: String?
+    public let status: String?
+    
+    public var isFolder: Bool {
+        return fileId == nil
+    }
+    
+}

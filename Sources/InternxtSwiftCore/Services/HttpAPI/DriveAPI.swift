@@ -260,4 +260,15 @@ public struct DriveAPI {
         return try await apiClient.fetch(type: GetFileInFolderByPlainNameResponse.self, endpoint, debugResponse: debug)
     }
     
+  
+    public func getFolderOrFileMetaById(id: String, debug: Bool = false) async throws -> GetMetaByIdResponse {
+
+        let fileMeta = try await getFileMetaByUuid(uuid: id)
+        if fileMeta.uuid != id {
+            let folderMeta = try await getFolderMetaById(id: id)
+            return DriveUtils.convertFolderMetaToUnified(folderMeta: folderMeta)
+        }
+        return DriveUtils.convertFileMetaToUnified(fileMeta: fileMeta)
+    }
+    
 }
