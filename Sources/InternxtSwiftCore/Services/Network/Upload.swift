@@ -50,7 +50,7 @@ public class Upload: NSObject  {
     }
     
    
-    func start(index: [UInt8], bucketId: String, mnemonic: String, encryptedFileURL: URL, debug: Bool = false, progressHandler: ProgressHandler? = nil) async throws -> FinishUploadResponse {
+    func start(index: [UInt8], bucketId: String, mnemonic: String, encryptedFileURL: URL, progressHandler: ProgressHandler? = nil, debug: Bool = false) async throws -> FinishUploadResponse {
         let source = encryptedFileURL
          
         let fileSize = source.fileSize
