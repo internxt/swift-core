@@ -51,4 +51,12 @@ public struct NetworkAPI {
         )
         return try await apiClient.fetch(type: GetFileInfoResponse.self, endpoint, debugResponse: debug)
     }
+    
+    public func getFileMirrors(bucketId: String, fileId: String, debug: Bool = false) async throws -> [FileMirrorShard] {
+        let endpoint = Endpoint(
+            path: "\(self.baseUrl)/buckets/\(bucketId)/files/\(fileId)?limit=3&skip=0",
+            method: .GET
+        )
+        return try await apiClient.fetch(type: [FileMirrorShard].self, endpoint, debugResponse: debug)
+    }
 }
