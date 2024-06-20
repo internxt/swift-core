@@ -81,7 +81,8 @@ public struct NetworkFacade {
         fileKey: [UInt8],
         iv: [UInt8],
         bucketId: String,
-        progressHandler: @escaping ProgressHandler
+        progressHandler: @escaping ProgressHandler,
+        debug: Bool = false
     ) async throws -> FinishUploadResponse {
         guard let encryptedOutputStream = OutputStream(url: encryptedOutput, append: true) else {
             throw NetworkFacadeError.FailedToOpenEncryptOutputStream
@@ -185,7 +186,7 @@ public struct NetworkFacade {
         return finishUpload
     }
     
-    public func downloadFile(bucketId: String, fileId: String, encryptedFileDestination: URL, destinationURL: URL, progressHandler: @escaping ProgressHandler) async throws -> URL {
+    public func downloadFile(bucketId: String, fileId: String, encryptedFileDestination: URL, destinationURL: URL, progressHandler: @escaping ProgressHandler, debug: Bool = false) async throws -> URL {
         
         func downloadProgressHandler(downloadProgress: Double) {
             let downloadMaxProgress = 0.9;
@@ -198,7 +199,8 @@ public struct NetworkFacade {
             bucketId:bucketId,
             fileId: fileId,
             destination: encryptedFileDestination,
-            progressHandler: downloadProgressHandler
+            progressHandler: downloadProgressHandler,
+            debug: debug
         )
         
         
