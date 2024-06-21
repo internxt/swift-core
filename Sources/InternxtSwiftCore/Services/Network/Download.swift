@@ -16,6 +16,7 @@ enum DownloadError: Error {
     case InvalidBucketId
     case MissingShards
     case V1DownloadDetected
+    case NoMirrorsFound
 }
 
 public struct DownloadResult {
@@ -62,7 +63,25 @@ public class Download: NSObject {
         let info = try await networkAPI.getFileInfo(bucketId: bucketId, fileId: fileId, debug: debug)
         
         if info.version == 1 {
-            _ = try await networkAPI.getFileMirrors(bucketId: bucketId, fileId: fileId, debug: debug)
+            let mirrors = try await networkAPI.getFileMirrors(bucketId: bucketId, fileId: fileId, debug: debug)
+            guard let mirror = mirrors.first else {
+                throw DownloadError.NoMirrorsFound
+            }
+            
+            if mirrors.count > 1 {
+                // Legacy download here
+                
+                try await mirrors.asyncForEach{mirror in
+                    _ = try await downloadEncryptedFile(downloadUrl: mirror.url, destinationURL: destination)
+                }
+                
+                return DownloadResult(url: destination, expectedContentHash: "NO_CONTENT_HASH", index: info.index)
+            }
+            
+            
+            let url = try await downloadEncryptedFile(downloadUrl: mirror.url, destinationURL: destination, progressHandler: progressHandler)
+            
+            return DownloadResult(url: url, expectedContentHash: mirror.hash, index: info.index)
         }
         
         guard let shards = info.shards else {

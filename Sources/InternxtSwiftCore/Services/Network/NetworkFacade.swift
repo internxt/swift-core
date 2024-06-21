@@ -215,7 +215,7 @@ public struct NetworkFacade {
         return decryptedFileURL
     }
     
-    public func decryptFile(bucketId: String, destinationURL: URL, progressHandler: ProgressHandler, encryptedFileDownloadResult: DownloadResult) async throws -> URL {
+    public func decryptFile(bucketId: String, destinationURL: URL, progressHandler: ProgressHandler, encryptedFileDownloadResult: DownloadResult, ignoreHashMissmatchCheck: Bool = false) async throws -> URL {
         
         if encryptedFileDownloadResult.url.fileSize == 0 {
             throw NetworkFacadeError.FileIsEmpty
@@ -234,7 +234,7 @@ public struct NetworkFacade {
         
         
         let hashMatch = encryptedContentHash.toHexString() == encryptedFileDownloadResult.expectedContentHash
-        if hashMatch == false {
+        if hashMatch == false && ignoreHashMissmatchCheck != false {
             throw NetworkFacadeError.HashMissmatch
         }
         
