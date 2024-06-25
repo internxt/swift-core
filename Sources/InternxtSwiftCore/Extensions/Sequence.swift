@@ -6,6 +6,8 @@
 //
 
 import Foundation
+
+@available(macOS 10.15, *)
 extension Sequence {
     func asyncForEach(
         _ operation: (Element) async throws -> Void
