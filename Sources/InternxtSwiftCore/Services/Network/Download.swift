@@ -21,9 +21,9 @@ enum DownloadError: Error {
 
 public struct DownloadResult {
     public var url: URL
-    public var expectedContentHash: String
+    public var expectedContentHash: String?
     public var index: String
-    init(url: URL, expectedContentHash: String, index: String) {
+    init(url: URL, expectedContentHash: String?, index: String) {
         self.url = url
         self.expectedContentHash = expectedContentHash
         self.index = index
@@ -62,33 +62,25 @@ public class Download: NSObject {
         }
         let info = try await networkAPI.getFileInfo(bucketId: bucketId, fileId: fileId, debug: debug)
         
-        if info.version == 1 {
+        let isV1Download = info.version == 1
+        
+        if isV1Download {
             let mirrors = try await networkAPI.getFileMirrors(bucketId: bucketId, fileId: fileId, debug: debug)
             
             guard let mirror = mirrors.first else {
                 throw DownloadError.NoMirrorsFound
             }
-            
-            if mirrors.count > 1 {
-                // Legacy download here
                 
-                try await mirrors.asyncForEach{ mirror in
-                    let encryptedFileURL = try await downloadEncryptedFile(
-                        downloadUrl: mirror.url,
-                        destinationURL: destination,
-                        overwriteFile: false
-                    )
-                    
-                    print("FILE SIZE ON MIRROR \(mirror.hash)", encryptedFileURL.fileSize)
-                }
+            try await mirrors.asyncForEach{ mirror in
+                let _ = try await downloadEncryptedFile(
+                    downloadUrl: mirror.url,
+                    destinationURL: destination,
+                    overwriteFile: false
+                )
                 
-                return DownloadResult(url: destination, expectedContentHash: "NO_CONTENT_HASH", index: info.index)
             }
             
-            
-            let url = try await downloadEncryptedFile(downloadUrl: mirror.url, destinationURL: destination, progressHandler: progressHandler)
-            
-            return DownloadResult(url: url, expectedContentHash: mirror.hash, index: info.index)
+            return DownloadResult(url: destination, expectedContentHash: nil, index: info.index)
         }
         
         guard let shards = info.shards else {
