@@ -124,6 +124,11 @@ public class Download: NSObject {
                         if overwriteFile {
                             try FileManager.default.copyItem(at: localURL, to: destinationURL)
                         } else {
+                            let exists = FileManager.default.fileExists(atPath: destinationURL.path)
+                            
+                            if exists == false {
+                                FileManager.default.createFile(atPath: destinationURL.path, contents: nil)
+                            }
                             try self.appendToFile(origin: localURL, destination: destinationURL)
                         }
                         
