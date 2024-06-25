@@ -7,8 +7,9 @@
 
 import Foundation
 
-@available(macOS 10.15, *)
 extension Sequence {
+    
+    @available(macOS 10.15, *)
     func asyncForEach(
         _ operation: (Element) async throws -> Void
     ) async rethrows {
