@@ -136,7 +136,6 @@ public class Download: NSObject {
                         
                         continuation.resume(returning: destinationURL)
                     } catch {
-                        print("Download error", error)
                         continuation.resume(throwing: DownloadError.FailedToCopyDownloadedURL)
                     }
                     
