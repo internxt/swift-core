@@ -64,6 +64,7 @@ public class Download: NSObject {
         
         if info.version == 1 {
             let mirrors = try await networkAPI.getFileMirrors(bucketId: bucketId, fileId: fileId, debug: debug)
+            
             guard let mirror = mirrors.first else {
                 throw DownloadError.NoMirrorsFound
             }
@@ -71,8 +72,14 @@ public class Download: NSObject {
             if mirrors.count > 1 {
                 // Legacy download here
                 
-                try await mirrors.asyncForEach{mirror in
-                    _ = try await downloadEncryptedFile(downloadUrl: mirror.url, destinationURL: destination)
+                try await mirrors.asyncForEach{ mirror in
+                    let encryptedFileURL = try await downloadEncryptedFile(
+                        downloadUrl: mirror.url,
+                        destinationURL: destination,
+                        overwriteFile: false
+                    )
+                    
+                    print("FILE SIZE ON MIRROR \(mirror.hash)", encryptedFileURL.fileSize)
                 }
                 
                 return DownloadResult(url: destination, expectedContentHash: "NO_CONTENT_HASH", index: info.index)
@@ -102,11 +109,10 @@ public class Download: NSObject {
         
         return DownloadResult(url: url, expectedContentHash: shard.hash, index: info.index)
     }
+
     
     
-    
-    
-    private func downloadEncryptedFile(downloadUrl: String, destinationURL:URL, progressHandler: ProgressHandler? = nil) async throws -> URL {
+    private func downloadEncryptedFile(downloadUrl: String, destinationURL:URL, progressHandler: ProgressHandler? = nil, overwriteFile: Bool = true) async throws -> URL {
         return try await withCheckedThrowingContinuation{continuation in
             let task = urlSession.downloadTask(with: URL(string: downloadUrl)!, completionHandler: {localURL,_,_ in
                 if let localURL = localURL {
@@ -115,7 +121,13 @@ public class Download: NSObject {
                     }
                     do {
                         
-                        try FileManager.default.copyItem(at: localURL, to: destinationURL)
+                        if overwriteFile {
+                            try FileManager.default.copyItem(at: localURL, to: destinationURL)
+                        } else {
+                            try self.appendToFile(origin: localURL, destination: destinationURL)
+                        }
+                        
+                        
                         
                         continuation.resume(returning: destinationURL)
                     } catch {
@@ -136,6 +148,16 @@ public class Download: NSObject {
             task.resume()
         }
         
+    }
+    
+    private func appendToFile(origin: URL, destination: URL) throws {
+        let fileHandle = try FileHandle(forUpdating: destination)
+        defer {
+            fileHandle.closeFile()
+        }
+        fileHandle.seekToEndOfFile()
+        let originData = try Data(contentsOf: origin)
+        fileHandle.write(originData)
     }
 }
 
