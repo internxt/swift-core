@@ -251,12 +251,12 @@ public struct RefreshUserResponse: Decodable {
     public let user: DriveUser
 }
 
-public struct SyncTokenPayload: Encodable {
+public struct PushDeviceTokenPayload: Encodable {
     public let token: String
     public let type: String
 }
 
-public struct SyncTokenResponse: Decodable {}
+public struct PushDeviceTokenResponse: Decodable {}
 
 
 
