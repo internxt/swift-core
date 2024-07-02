@@ -272,4 +272,20 @@ public struct DriveAPI {
 
     }
     
+    public func registerPushDeviceToken(currentAuthToken: String, deviceToken: String, type: String, debug: Bool = false) async throws -> PushDeviceTokenResponse  {
+        
+        let apiClient = APIClient(urlSession: URLSession.shared, authorizationHeaderValue: "Bearer \(currentAuthToken)", clientName: clientName, clientVersion: clientVersion)
+        let endpoint = Endpoint(
+            path: "\(self.baseUrl)/user/notification-token",
+            method: .POST,
+            body: PushDeviceTokenPayload(
+                token: deviceToken,
+                type: type
+            ).toJson()
+        )
+        
+        return try await apiClient.fetch(type: PushDeviceTokenResponse.self, endpoint, debugResponse: debug)
+        
+    }
+    
 }
