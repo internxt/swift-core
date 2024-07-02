@@ -92,3 +92,11 @@ public struct GetFileInfoResponse: Decodable {
     public let id: String
     public let shards: Array<GetFileInfoShard>?
 }
+
+
+public struct FileMirrorShard: Decodable {
+  public let index: Int
+  public let hash: String
+  public let size: Int
+  public let url: String
+}

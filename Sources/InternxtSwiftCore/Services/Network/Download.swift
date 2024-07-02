@@ -15,13 +15,15 @@ enum DownloadError: Error {
     case FailedToCopyDownloadedURL
     case InvalidBucketId
     case MissingShards
+    case V1DownloadDetected
+    case NoMirrorsFound
 }
 
 public struct DownloadResult {
     public var url: URL
-    public var expectedContentHash: String
+    public var expectedContentHash: String?
     public var index: String
-    init(url: URL, expectedContentHash: String, index: String) {
+    init(url: URL, expectedContentHash: String?, index: String) {
         self.url = url
         self.expectedContentHash = expectedContentHash
         self.index = index
@@ -60,9 +62,32 @@ public class Download: NSObject {
         }
         let info = try await networkAPI.getFileInfo(bucketId: bucketId, fileId: fileId, debug: debug)
         
+        let isV1Download = info.version == 1
+        
+        if isV1Download {
+            let mirrors = try await networkAPI.getFileMirrors(bucketId: bucketId, fileId: fileId, debug: debug)
+            
+            guard let mirror = mirrors.first else {
+                throw DownloadError.NoMirrorsFound
+            }
+                
+            try await mirrors.asyncForEach{ mirror in
+                let _ = try await downloadEncryptedFile(
+                    downloadUrl: mirror.url,
+                    destinationURL: destination,
+                    overwriteFile: false
+                )
+                
+            }
+            
+            return DownloadResult(url: destination, expectedContentHash: nil, index: info.index)
+        }
+        
         guard let shards = info.shards else {
             throw DownloadError.MissingShards
         }
+        
+        
         
         if shards.count > 1 {
             throw DownloadError.MultipartDownloadNotSupported
@@ -76,10 +101,10 @@ public class Download: NSObject {
         
         return DownloadResult(url: url, expectedContentHash: shard.hash, index: info.index)
     }
+
     
     
-    
-    private func downloadEncryptedFile(downloadUrl: String, destinationURL:URL, progressHandler: ProgressHandler? = nil) async throws -> URL {
+    private func downloadEncryptedFile(downloadUrl: String, destinationURL:URL, progressHandler: ProgressHandler? = nil, overwriteFile: Bool = true) async throws -> URL {
         return try await withCheckedThrowingContinuation{continuation in
             let task = urlSession.downloadTask(with: URL(string: downloadUrl)!, completionHandler: {localURL,_,_ in
                 if let localURL = localURL {
@@ -88,7 +113,18 @@ public class Download: NSObject {
                     }
                     do {
                         
-                        try FileManager.default.copyItem(at: localURL, to: destinationURL)
+                        if overwriteFile {
+                            try FileManager.default.copyItem(at: localURL, to: destinationURL)
+                        } else {
+                            let exists = FileManager.default.fileExists(atPath: destinationURL.path)
+                            
+                            if exists == false {
+                                FileManager.default.createFile(atPath: destinationURL.path, contents: nil)
+                            }
+                            try self.appendToFile(origin: localURL, destination: destinationURL)
+                        }
+                        
+                        
                         
                         continuation.resume(returning: destinationURL)
                     } catch {
@@ -109,6 +145,16 @@ public class Download: NSObject {
             task.resume()
         }
         
+    }
+    
+    private func appendToFile(origin: URL, destination: URL) throws {
+        let fileHandle = try FileHandle(forUpdating: destination)
+        defer {
+            fileHandle.closeFile()
+        }
+        fileHandle.seekToEndOfFile()
+        let originData = try Data(contentsOf: origin)
+        fileHandle.write(originData)
     }
 }
 
