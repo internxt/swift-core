@@ -251,6 +251,14 @@ public struct RefreshUserResponse: Decodable {
     public let user: DriveUser
 }
 
+public struct PushDeviceTokenPayload: Encodable {
+    public let token: String
+    public let type: String
+}
+
+public struct PushDeviceTokenResponse: Decodable {}
+
+
 
 public struct MoveFilePayload: Encodable {
     public let bucketId: String
