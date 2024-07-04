@@ -281,7 +281,7 @@ public struct DriveAPI {
         
         let apiClient = APIClient(urlSession: URLSession.shared, authorizationHeaderValue: "Bearer \(currentAuthToken)", clientName: clientName, clientVersion: clientVersion)
         let endpoint = Endpoint(
-            path: "\(self.baseUrl)/user/notification-token",
+            path: "\(self.baseUrl)/users/notification-token",
             method: .POST,
             body: PushDeviceTokenPayload(
                 token: deviceToken,
