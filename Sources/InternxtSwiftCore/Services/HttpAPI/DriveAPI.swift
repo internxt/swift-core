@@ -210,6 +210,7 @@ public struct DriveAPI {
         status: String = "ALL",
         limit: Int = 50,
         offset: Int = 0,
+        bucketId: String? = nil,
         debug: Bool = false
     ) async throws -> GetUpdatedFilesResponse {
         
@@ -218,12 +219,16 @@ public struct DriveAPI {
         dateFormatter.formatOptions = [.withInternetDateTime]
         
         let formattedUpdatedAt =  dateFormatter.string(from: updatedAt)
+        var path = "\(self.baseUrl)/files?updatedAt=\(formattedUpdatedAt)&status=\(status)&offset=\(offset)&limit=\(limit)"
+        
+        if let bucket = bucketId {
+            path = "\(path)&bucket=\(bucket)"
+        }
+        
         let endpoint = Endpoint(
-            path: "\(self.baseUrl)/files?updatedAt=\(formattedUpdatedAt)&status=\(status)&offset=\(offset)&limit=\(limit)",
+            path: path,
             method: .GET
         )
-        
-    
         
         return try await apiClient.fetch(type: GetUpdatedFilesResponse.self, endpoint, debugResponse: debug)
     }
