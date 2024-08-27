@@ -8,7 +8,6 @@
 import Foundation
 import CryptoKit
 import IDZSwiftCommonCrypto
-import ripemd160_Swift
 enum HashInput {
     case message ([UInt8])
     case messages (Array<[UInt8]>)

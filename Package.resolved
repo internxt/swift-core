@@ -8,15 +8,6 @@
         "revision" : "47f9747d12137cd59d783ab376e3ccab7206319b",
         "version" : "0.16.1"
       }
-    },
-    {
-      "identity" : "ripemd160-swift",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/MiclausCorp/ripemd160-Swift.git",
-      "state" : {
-        "branch" : "master",
-        "revision" : "b7fae4fb357ee0cd7ab7f7efc0ccf66b58d49f32"
-      }
     }
   ],
   "version" : 2
