@@ -180,7 +180,7 @@ public struct DriveAPI {
         
         let apiClient = APIClient(urlSession: URLSession.shared, authorizationHeaderValue: "Bearer \(currentAuthToken)", clientName: clientName, clientVersion: clientVersion)
         let endpoint = Endpoint(
-            path: "\(self.baseUrl)/user/refresh",
+            path: "\(self.baseUrl)/users/refresh",
             method: .GET
         )
         

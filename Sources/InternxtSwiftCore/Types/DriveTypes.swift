@@ -248,7 +248,7 @@ public struct DriveUser: Codable {
 
 public struct RefreshUserResponse: Decodable {
     public let token: String
-    public let user: DriveUser
+    public let newToken: String
 }
 
 public struct PushDeviceTokenPayload: Encodable {
