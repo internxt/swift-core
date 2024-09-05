@@ -248,6 +248,11 @@ public struct DriveUser: Codable {
 
 public struct RefreshUserResponse: Decodable {
     public let token: String
+    public let user: DriveUser
+}
+
+public struct RefreshTokensResponse: Decodable {
+    public let token: String
     public let newToken: String
 }
 

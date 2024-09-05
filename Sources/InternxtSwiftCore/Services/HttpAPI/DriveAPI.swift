@@ -180,11 +180,22 @@ public struct DriveAPI {
         
         let apiClient = APIClient(urlSession: URLSession.shared, authorizationHeaderValue: "Bearer \(currentAuthToken)", clientName: clientName, clientVersion: clientVersion)
         let endpoint = Endpoint(
-            path: "\(self.baseUrl)/users/refresh",
+            path: "\(self.baseUrl)/user/refresh",
             method: .GET
         )
         
         return try await apiClient.fetch(type: RefreshUserResponse.self, endpoint, debugResponse: debug)
+    }
+    
+    public func refreshTokens(currentAuthToken: String, debug: Bool = false) async throws -> RefreshTokensResponse  {
+        
+        let apiClient = APIClient(urlSession: URLSession.shared, authorizationHeaderValue: "Bearer \(currentAuthToken)", clientName: clientName, clientVersion: clientVersion)
+        let endpoint = Endpoint(
+            path: "\(self.baseUrl)/users/refresh",
+            method: .GET
+        )
+        
+        return try await apiClient.fetch(type: RefreshTokensResponse.self, endpoint, debugResponse: debug)
     }
     
     public func getLimit(debug: Bool = false) async throws -> GetLimitResponse {
