@@ -22,9 +22,11 @@ public struct NetworkFacade {
     private let upload: Upload
     private let uploadMultipart: UploadMultipart
     private let download: Download
+    private let reduceBandwidth: Bool
     
-    public init(mnemonic: String, networkAPI: NetworkAPI, urlSession: URLSession? = nil, debug: Bool = false){
+    public init(mnemonic: String, networkAPI: NetworkAPI, urlSession: URLSession? = nil, reduceBandwidth: Bool = false, debug: Bool = false){
         self.mnemonic = mnemonic
+        self.reduceBandwidth = reduceBandwidth
         self.upload = Upload(networkAPI: networkAPI, urlSession: urlSession)
         self.uploadMultipart = UploadMultipart(networkAPI: networkAPI, urlSession: urlSession)
         self.download = Download(networkAPI: networkAPI, urlSession: urlSession)
@@ -136,7 +138,7 @@ public struct NetworkFacade {
         defer { input.close() }
         
         let operationQueue = OperationQueue()
-        operationQueue.maxConcurrentOperationCount = 6
+        operationQueue.maxConcurrentOperationCount = self.reduceBandwidth ? 1 : 6
 
         var partIndex = 0
         try await encrypt.encryptFileIntoChunks(
