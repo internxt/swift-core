@@ -40,6 +40,9 @@ public struct NetworkFacade {
         progressHandler: @escaping ProgressHandler,
         debug: Bool = false
     ) async throws -> FinishUploadResponse {
+        await NetworkLimiter.shared.updateLimit(reduceBandwidth: self.reduceBandwidth)
+        await NetworkLimiter.shared.wait()
+        
         // Generate random index, IV and fileKey
         guard let index = cryptoUtils.getRandomBytes(32) else {
             throw UploadError.InvalidIndex
@@ -52,7 +55,7 @@ public struct NetworkFacade {
         let shouldUseMultipart = fileSize >= MULTIPART_MIN_SIZE
         
         if(shouldUseMultipart) {
-            return try await self.runMultipartUpload(
+            let result = try await self.runMultipartUpload(
                 input: input,
                 fileSize: fileSize,
                 index: index,
@@ -62,18 +65,27 @@ public struct NetworkFacade {
                 progressHandler: progressHandler,
                 debug: debug
             )
+            await NetworkLimiter.shared.signal()
+            return result
         }
         
-        return try await self.runSingleFileUpload(
-            input: input,
-            encryptedOutput: encryptedOutput,
-            fileSize: fileSize,
-            index: index,
-            fileKey: fileKey,
-            iv: iv,
-            bucketId: bucketId,
-            progressHandler: progressHandler
-        )
+        do {
+            let result = try await self.runSingleFileUpload(
+                input: input,
+                encryptedOutput: encryptedOutput,
+                fileSize: fileSize,
+                index: index,
+                fileKey: fileKey,
+                iv: iv,
+                bucketId: bucketId,
+                progressHandler: progressHandler
+            )
+            await NetworkLimiter.shared.signal()
+            return result
+        } catch {
+            await NetworkLimiter.shared.signal()
+            throw error
+        }
     }
     
     private func runSingleFileUpload(
@@ -246,12 +258,13 @@ public struct NetworkFacade {
     }
     
     public func downloadFile(bucketId: String, fileId: String, encryptedFileDestination: URL, destinationURL: URL, progressHandler: @escaping ProgressHandler, debug: Bool = false) async throws -> URL {
+        await NetworkLimiter.shared.updateLimit(reduceBandwidth: self.reduceBandwidth)
+        await NetworkLimiter.shared.wait()
         
         func downloadProgressHandler(downloadProgress: Double) {
             let downloadMaxProgress = 0.9;
             // We need to wait for the decryption, so download reachs downloadMaxProgress, and not 100%
             progressHandler(downloadProgress * downloadMaxProgress)
-            
         }
         
         let encryptedFileDownloadResult = try await download.start(
@@ -263,15 +276,20 @@ public struct NetworkFacade {
         )
         
         
-        let decryptedFileURL = try await decryptFile(
-            bucketId: bucketId,
-            destinationURL: destinationURL,
-            progressHandler: progressHandler,
-            encryptedFileDownloadResult: encryptedFileDownloadResult
-        )
-        
-        
-        return decryptedFileURL
+        do {
+            let decryptedFileURL = try await decryptFile(
+                bucketId: bucketId,
+                destinationURL: destinationURL,
+                progressHandler: progressHandler,
+                encryptedFileDownloadResult: encryptedFileDownloadResult
+            )
+            
+            await NetworkLimiter.shared.signal()
+            return decryptedFileURL
+        } catch {
+            await NetworkLimiter.shared.signal()
+            throw error
+        }
     }
     
     public func decryptFile(bucketId: String, destinationURL: URL, progressHandler: ProgressHandler, encryptedFileDownloadResult: DownloadResult, ignoreHashMissmatchCheck: Bool = false) async throws -> URL {
@@ -428,4 +446,47 @@ public struct NetworkFacade {
         }
     }
 
+}
+
+
+
+public actor NetworkLimiter {
+    public static let shared = NetworkLimiter()
+    private var maxCount: Int = 6
+    private var activeCount: Int = 0
+    private var waiters: [CheckedContinuation<Void, Never>] = []
+    
+    public init() {}
+    
+    public func updateLimit(reduceBandwidth: Bool) {
+        let newLimit = reduceBandwidth ? 1 : 6
+        if maxCount != newLimit {
+            self.maxCount = newLimit
+        }
+        
+        while activeCount < maxCount, !waiters.isEmpty {
+            activeCount += 1
+            let next = waiters.removeFirst()
+            next.resume()
+        }
+    }
+    
+    public func wait() async {
+        if activeCount < maxCount {
+            activeCount += 1
+            return
+        }
+        await withCheckedContinuation { continuation in
+            waiters.append(continuation)
+        }
+    }
+    
+    public func signal() {
+        if !waiters.isEmpty {
+            let next = waiters.removeFirst()
+            next.resume()
+        } else {
+            activeCount -= 1
+        }
+    }
 }
