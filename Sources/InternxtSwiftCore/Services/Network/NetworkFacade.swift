@@ -11,6 +11,7 @@ import CryptoKit
 let MULTIPART_MIN_SIZE = 100 * 1024 * 1024;
 let MULTIPART_CHUNK_SIZE = 50 * 1024 * 1024;
 let MAX_WAIT_TIME: TimeInterval = 3600
+let THROTTLE_BYTES_PER_SECOND = 10 * 1024 * 1024
 
 
 @available(macOS 10.15, *)
@@ -27,9 +28,9 @@ public struct NetworkFacade {
     public init(mnemonic: String, networkAPI: NetworkAPI, urlSession: URLSession? = nil, reduceBandwidth: Bool = false, debug: Bool = false){
         self.mnemonic = mnemonic
         self.reduceBandwidth = reduceBandwidth
-        self.upload = Upload(networkAPI: networkAPI, urlSession: urlSession)
-        self.uploadMultipart = UploadMultipart(networkAPI: networkAPI, urlSession: urlSession)
-        self.download = Download(networkAPI: networkAPI, urlSession: urlSession)
+        self.upload = Upload(networkAPI: networkAPI, urlSession: urlSession, reduceBandwidth: reduceBandwidth)
+        self.uploadMultipart = UploadMultipart(networkAPI: networkAPI, urlSession: urlSession, reduceBandwidth: reduceBandwidth)
+        self.download = Download(networkAPI: networkAPI, urlSession: urlSession, reduceBandwidth: reduceBandwidth)
     }
     
     public func uploadFile(
@@ -40,9 +41,6 @@ public struct NetworkFacade {
         progressHandler: @escaping ProgressHandler,
         debug: Bool = false
     ) async throws -> FinishUploadResponse {
-        await NetworkLimiter.shared.updateLimit(reduceBandwidth: self.reduceBandwidth)
-        await NetworkLimiter.shared.wait()
-        
         // Generate random index, IV and fileKey
         guard let index = cryptoUtils.getRandomBytes(32) else {
             throw UploadError.InvalidIndex
@@ -55,7 +53,7 @@ public struct NetworkFacade {
         let shouldUseMultipart = fileSize >= MULTIPART_MIN_SIZE
         
         if(shouldUseMultipart) {
-            let result = try await self.runMultipartUpload(
+            return try await self.runMultipartUpload(
                 input: input,
                 fileSize: fileSize,
                 index: index,
@@ -65,27 +63,18 @@ public struct NetworkFacade {
                 progressHandler: progressHandler,
                 debug: debug
             )
-            await NetworkLimiter.shared.signal()
-            return result
         }
         
-        do {
-            let result = try await self.runSingleFileUpload(
-                input: input,
-                encryptedOutput: encryptedOutput,
-                fileSize: fileSize,
-                index: index,
-                fileKey: fileKey,
-                iv: iv,
-                bucketId: bucketId,
-                progressHandler: progressHandler
-            )
-            await NetworkLimiter.shared.signal()
-            return result
-        } catch {
-            await NetworkLimiter.shared.signal()
-            throw error
-        }
+        return try await self.runSingleFileUpload(
+            input: input,
+            encryptedOutput: encryptedOutput,
+            fileSize: fileSize,
+            index: index,
+            fileKey: fileKey,
+            iv: iv,
+            bucketId: bucketId,
+            progressHandler: progressHandler
+        )
     }
     
     private func runSingleFileUpload(
@@ -113,7 +102,16 @@ public struct NetworkFacade {
             throw NetworkFacadeError.EncryptedFileNotSameSizeAsOriginal
         }
         
-        return try await upload.start(index: index, bucketId: bucketId, mnemonic: mnemonic, encryptedFileURL: encryptedOutput, progressHandler: progressHandler)
+        let result = try await upload.start(index: index, bucketId: bucketId, mnemonic: mnemonic, encryptedFileURL: encryptedOutput, progressHandler: progressHandler)
+        
+      
+        if reduceBandwidth {
+            let targetTime = Double(fileSize) / Double(THROTTLE_BYTES_PER_SECOND)
+            let delay = max(0, targetTime * 0.3) // 30% extra delay to bring speed down
+            try await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000))
+        }
+        
+        return result
     }
     
     
@@ -175,7 +173,8 @@ public struct NetworkFacade {
                 uploadState: uploadState,
                 maxProgressPerPart: maxProgressPerPart,
                 progressHandler: { _ in },
-                uploadedPartsActor: uploadedPartsActor
+                uploadedPartsActor: uploadedPartsActor,
+                targetBytesPerSecond: self.reduceBandwidth ? THROTTLE_BYTES_PER_SECOND : nil
             )
 
             operation.completionBlock = {
@@ -258,13 +257,12 @@ public struct NetworkFacade {
     }
     
     public func downloadFile(bucketId: String, fileId: String, encryptedFileDestination: URL, destinationURL: URL, progressHandler: @escaping ProgressHandler, debug: Bool = false) async throws -> URL {
-        await NetworkLimiter.shared.updateLimit(reduceBandwidth: self.reduceBandwidth)
-        await NetworkLimiter.shared.wait()
         
         func downloadProgressHandler(downloadProgress: Double) {
             let downloadMaxProgress = 0.9;
             // We need to wait for the decryption, so download reachs downloadMaxProgress, and not 100%
             progressHandler(downloadProgress * downloadMaxProgress)
+            
         }
         
         let encryptedFileDownloadResult = try await download.start(
@@ -276,20 +274,15 @@ public struct NetworkFacade {
         )
         
         
-        do {
-            let decryptedFileURL = try await decryptFile(
-                bucketId: bucketId,
-                destinationURL: destinationURL,
-                progressHandler: progressHandler,
-                encryptedFileDownloadResult: encryptedFileDownloadResult
-            )
-            
-            await NetworkLimiter.shared.signal()
-            return decryptedFileURL
-        } catch {
-            await NetworkLimiter.shared.signal()
-            throw error
-        }
+        let decryptedFileURL = try await decryptFile(
+            bucketId: bucketId,
+            destinationURL: destinationURL,
+            progressHandler: progressHandler,
+            encryptedFileDownloadResult: encryptedFileDownloadResult
+        )
+        
+        
+        return decryptedFileURL
     }
     
     public func decryptFile(bucketId: String, destinationURL: URL, progressHandler: ProgressHandler, encryptedFileDownloadResult: DownloadResult, ignoreHashMissmatchCheck: Bool = false) async throws -> URL {
@@ -355,6 +348,7 @@ public struct NetworkFacade {
         let maxProgressPerPart: Double
         let progressHandler: (Double) -> Void
         let uploadedPartsActor: UploadedPartsActor
+        let targetBytesPerSecond: Int?
         
         init(
             encryptedChunk: Data,
@@ -364,7 +358,8 @@ public struct NetworkFacade {
             uploadState: UploadState,
             maxProgressPerPart: Double,
             progressHandler: @escaping (Double) -> Void,
-            uploadedPartsActor: UploadedPartsActor
+            uploadedPartsActor: UploadedPartsActor,
+            targetBytesPerSecond: Int? = nil
         ) {
             self.encryptedChunk = encryptedChunk
             self.partIndex = partIndex
@@ -374,12 +369,25 @@ public struct NetworkFacade {
             self.maxProgressPerPart = maxProgressPerPart
             self.progressHandler = progressHandler
             self.uploadedPartsActor = uploadedPartsActor
+            self.targetBytesPerSecond = targetBytesPerSecond
         }
         
         override func main() {
             Task {
                 do {
+                    let chunkSize = encryptedChunk?.count ?? 0
+                    let startTime = CFAbsoluteTimeGetCurrent()
+                    
                     try await uploadPartWithRetry()
+                    if let target = targetBytesPerSecond, chunkSize > 0 {
+                        let targetTime = Double(chunkSize) / Double(target)
+                        let elapsed = CFAbsoluteTimeGetCurrent() - startTime
+                        if elapsed < targetTime {
+                            let delay = targetTime - elapsed
+                            try await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000))
+                        }
+                    }
+                    
                     completeOperation()
                 } catch {
                     await uploadState.setAborted()
@@ -446,47 +454,4 @@ public struct NetworkFacade {
         }
     }
 
-}
-
-
-
-public actor NetworkLimiter {
-    public static let shared = NetworkLimiter()
-    private var maxCount: Int = 6
-    private var activeCount: Int = 0
-    private var waiters: [CheckedContinuation<Void, Never>] = []
-    
-    public init() {}
-    
-    public func updateLimit(reduceBandwidth: Bool) {
-        let newLimit = reduceBandwidth ? 1 : 6
-        if maxCount != newLimit {
-            self.maxCount = newLimit
-        }
-        
-        while activeCount < maxCount, !waiters.isEmpty {
-            activeCount += 1
-            let next = waiters.removeFirst()
-            next.resume()
-        }
-    }
-    
-    public func wait() async {
-        if activeCount < maxCount {
-            activeCount += 1
-            return
-        }
-        await withCheckedContinuation { continuation in
-            waiters.append(continuation)
-        }
-    }
-    
-    public func signal() {
-        if !waiters.isEmpty {
-            let next = waiters.removeFirst()
-            next.resume()
-        } else {
-            activeCount -= 1
-        }
-    }
 }
