@@ -40,18 +40,26 @@ public class UploadMultipart: NSObject {
     private let cryptoUtils = CryptoUtils()
     private let fileManager = FileManager.default
     private let networkAPI: NetworkAPI
-    private lazy var urlSession = URLSession(
-           configuration: .default,
-           delegate: self,
-           delegateQueue: .main
-       )
+    private let reduceBandwidth: Bool
+    private lazy var urlSession: URLSession = {
+        let config = URLSessionConfiguration.default
+        if reduceBandwidth {
+            config.httpMaximumConnectionsPerHost = 1
+        }
+        return URLSession(
+            configuration: config,
+            delegate: self,
+            delegateQueue: .main
+        )
+    }()
     
     
     
     private var progressHandlersByTaskID = [Int : ProgressHandler]()
     private let progressHandlerStore = ProgressHandlerStore()
-    init(networkAPI: NetworkAPI, urlSession: URLSession? = nil) {
+    init(networkAPI: NetworkAPI, urlSession: URLSession? = nil, reduceBandwidth: Bool = false) {
         self.networkAPI = networkAPI
+        self.reduceBandwidth = reduceBandwidth
         super.init()
         if urlSession != nil {
             self.urlSession = urlSession!

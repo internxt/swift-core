@@ -40,12 +40,16 @@ public class Download: NSObject {
 
     private var progressHandlersByTaskID = [Int : ProgressHandler]()
     private var urlSession: URLSession
-    init(networkAPI: NetworkAPI, urlSession: URLSession?) {
+    init(networkAPI: NetworkAPI, urlSession: URLSession?, reduceBandwidth: Bool = false) {
         self.networkAPI = networkAPI
         if let urlSession = urlSession {
             self.urlSession = urlSession
         } else {
-            self.urlSession = APIClient.ephemeralSession
+            let config = URLSessionConfiguration.ephemeral
+            if reduceBandwidth {
+                config.httpMaximumConnectionsPerHost = 1
+            }
+            self.urlSession = URLSession(configuration: config)
         }
         
         super.init()
