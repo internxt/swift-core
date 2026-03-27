@@ -411,8 +411,8 @@ public struct CreateFileResponseNew: Decodable {
     public let deleted: Bool?
     public let status: String
     public let id: Int
-    public let name: String
-    public let plain_name: String?
+    public let name: String?
+    public let plain_name: String
     public let type: String?
     public let size: String?
     public let folderId: Int
