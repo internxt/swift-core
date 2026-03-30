@@ -333,6 +333,15 @@ struct APIClient {
         return min(baseDelay * adaptiveMultiplier, rateLimitConfiguration.maxDelay)
     }
     
+  
+    private func safeEndpointDescription(_ endpoint: Endpoint) -> String {
+        let method = endpoint.method.rawValue
+        guard let url = URL(string: endpoint.path) else {
+            return "[\(method) unknown]"
+        }
+        return "[\(method) \(url.path)]"
+    }
+    
     private func buildURLRequest(endpoint: Endpoint) throws -> URLRequest {
         guard let url = URL(string: endpoint.path) else {
             throw APIClientError(statusCode: -1, message: "Unable to build URL from \(endpoint.path)")
@@ -428,15 +437,17 @@ extension APIClient {
                             continuation.resume(with: .failure(CancellationError()))
                             return
                         }
+                        let endpointDesc = self.safeEndpointDescription(endpoint)
                         if debugResponse == true {
-                            print("API CLIENT ERROR", error)
+                            print("API CLIENT ERROR \(endpointDesc)", error)
                         }
-                        continuation.resume(with: .failure(APIClientError(statusCode: -1, message: error.localizedDescription)))
+                        continuation.resume(with: .failure(APIClientError(statusCode: -1, message: "\(endpointDesc) \(error.localizedDescription)")))
                         return
                     }
                     
                     guard let httpResponse = response as? HTTPURLResponse else {
-                        continuation.resume(with: .failure(APIClientError(statusCode: -1, message: "No HTTP response")))
+                        let endpointDesc = self.safeEndpointDescription(endpoint)
+                        continuation.resume(with: .failure(APIClientError(statusCode: -1, message: "\(endpointDesc) No HTTP response")))
                         return
                     }
                     
@@ -448,20 +459,22 @@ extension APIClient {
                     
                     do {
                         guard let data = data else {
+                            let endpointDesc = self.safeEndpointDescription(endpoint)
                             throw APIClientError(
                                 statusCode: httpResponse.statusCode,
-                                message: "Response is empty",
+                                message: "\(endpointDesc) Response is empty",
                                 headers: headers
                             )
                         }
                         
                         if !(200...399).contains(httpResponse.statusCode) {
+                            let endpointDesc = self.safeEndpointDescription(endpoint)
                             let errorMessage: String
                             
                             if let decodedError = try? JSONDecoder().decode(APIErrorResponse.self, from: data) {
-                                errorMessage = decodedError.message
+                                errorMessage = "\(endpointDesc) \(decodedError.message)"
                             } else {
-                                errorMessage = HTTPURLResponse.localizedString(forStatusCode: httpResponse.statusCode)
+                                errorMessage = "\(endpointDesc) \(HTTPURLResponse.localizedString(forStatusCode: httpResponse.statusCode))"
                             }
                             
                             let apiError = APIClientError(
@@ -483,7 +496,8 @@ extension APIClient {
                         continuation.resume(with: .success(json))
                         
                     } catch let decodingError as DecodingError {
-                        let message = decodingError.localizedDescription
+                        let endpointDesc = self.safeEndpointDescription(endpoint)
+                        let message = "\(endpointDesc) \(decodingError.localizedDescription)"
                         continuation.resume(with: .failure(APIClientError(
                             statusCode: httpResponse.statusCode,
                             message: message,
@@ -491,7 +505,8 @@ extension APIClient {
                             headers: headers
                         )))
                     } catch {
-                        let message = error.localizedDescription
+                        let endpointDesc = self.safeEndpointDescription(endpoint)
+                        let message = "\(endpointDesc) \(error.localizedDescription)"
                         continuation.resume(with: .failure(APIClientError(
                             statusCode: httpResponse.statusCode,
                             message: message,

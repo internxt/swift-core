@@ -43,7 +43,12 @@ public struct NetworkFacade {
     ) async throws -> FinishUploadResponse {
         // Generate random index, IV and fileKey
         guard let index = cryptoUtils.getRandomBytes(32) else {
-            throw UploadError.InvalidIndex
+            throw EnrichedError(
+                code: .uploadInvalidIndex,
+                step: .uploadEncrypt,
+                context: ["file_size": String(fileSize)],
+                cause: UploadError.InvalidIndex
+            )
         }
         
         let iv = Array(index.prefix(16))
@@ -89,17 +94,38 @@ public struct NetworkFacade {
         debug: Bool = false
     ) async throws -> FinishUploadResponse {
         guard let encryptedOutputStream = OutputStream(url: encryptedOutput, append: true) else {
-            throw NetworkFacadeError.FailedToOpenEncryptOutputStream
+            throw EnrichedError(
+                code: .encryptionStreamFailed,
+                step: .uploadEncrypt,
+                context: [
+                    "file_size": String(fileSize),
+                    "output_path": encryptedOutput.path
+                ],
+                cause: NetworkFacadeError.FailedToOpenEncryptOutputStream
+            )
         }
         let encryptStatus = try await encrypt.start(input: input, output: encryptedOutputStream, config: EncryptConfig(key: fileKey, iv: iv))
         
         if encryptStatus != EncryptResultStatus.Success {
-            throw NetworkFacadeError.EncryptionFailed
+            throw EnrichedError(
+                code: .encryptionFailed,
+                step: .uploadEncrypt,
+                context: ["file_size": String(fileSize)],
+                cause: NetworkFacadeError.EncryptionFailed
+            )
         }
         
         let encryptedFileSize = encryptedOutput.fileSize
         if fileSize != encryptedFileSize {
-            throw NetworkFacadeError.EncryptedFileNotSameSizeAsOriginal
+            throw EnrichedError(
+                code: .encryptionSizeMismatch,
+                step: .uploadEncrypt,
+                context: [
+                    "original_size": String(fileSize),
+                    "encrypted_size": String(encryptedFileSize)
+                ],
+                cause: NetworkFacadeError.EncryptedFileNotSameSizeAsOriginal
+            )
         }
         
         let result = try await upload.start(index: index, bucketId: bucketId, mnemonic: mnemonic, encryptedFileURL: encryptedOutput, progressHandler: progressHandler)
@@ -130,14 +156,44 @@ public struct NetworkFacade {
         let parts = ceil(Double(fileSize) / Double(MULTIPART_CHUNK_SIZE))
         let maxProgressPerPart: Double = 0.99 / parts
         
-        let startUploadResult = try await uploadMultipart.start(bucketId: bucketId, fileSize: fileSize, parts: Int(parts))
+        let startUploadResult: StartUploadResult
+        do {
+            startUploadResult = try await uploadMultipart.start(bucketId: bucketId, fileSize: fileSize, parts: Int(parts))
+        } catch {
+            throw EnrichedError(
+                code: .uploadStartFailed,
+                step: .uploadMultipartStart,
+                context: [
+                    "bucket_id": bucketId,
+                    "file_size": String(fileSize),
+                    "parts": String(Int(parts))
+                ],
+                cause: error
+            )
+        }
         
         guard let uploadUrls = startUploadResult.urls else {
-            throw UploadError.MissingUploadUrl
+            throw EnrichedError(
+                code: .uploadMissingUrl,
+                step: .uploadMultipartStart,
+                context: [
+                    "bucket_id": bucketId,
+                    "upload_uuid": startUploadResult.uuid
+                ],
+                cause: UploadError.MissingUploadUrl
+            )
         }
         
         if uploadUrls.count != Int(parts) {
-            throw UploadMultipartError.MorePartsThanUploadUrls
+            throw EnrichedError(
+                code: .uploadMissingUrl,
+                step: .uploadMultipartStart,
+                context: [
+                    "expected_parts": String(Int(parts)),
+                    "received_urls": String(uploadUrls.count)
+                ],
+                cause: UploadMultipartError.MorePartsThanUploadUrls
+            )
         }
         
         
@@ -288,7 +344,15 @@ public struct NetworkFacade {
     public func decryptFile(bucketId: String, destinationURL: URL, progressHandler: ProgressHandler, encryptedFileDownloadResult: DownloadResult, ignoreHashMissmatchCheck: Bool = false) async throws -> URL {
         
         if encryptedFileDownloadResult.url.fileSize == 0 {
-            throw NetworkFacadeError.FileIsEmpty
+            throw EnrichedError(
+                code: .downloadFileEmpty,
+                step: .downloadDecrypt,
+                context: [
+                    "bucket_id": bucketId,
+                    "file_path": encryptedFileDownloadResult.url.path
+                ],
+                cause: NetworkFacadeError.FileIsEmpty
+            )
         }
         
         let fullHexString = encryptedFileDownloadResult.index
@@ -297,7 +361,15 @@ public struct NetworkFacade {
         let fileKey = try encrypt.generateFileKey(mnemonic: mnemonic, bucketId: bucketId, index: cryptoUtils.hexStringToBytes(encryptedFileDownloadResult.index))
         
         guard let hashInputStream = InputStream(url: encryptedFileDownloadResult.url) else {
-            throw NetworkFacadeError.FailedToOpenDecryptInputStream
+            throw EnrichedError(
+                code: .decryptionStreamFailed,
+                step: .downloadDecrypt,
+                context: [
+                    "bucket_id": bucketId,
+                    "file_path": encryptedFileDownloadResult.url.path
+                ],
+                cause: NetworkFacadeError.FailedToOpenDecryptInputStream
+            )
         }
         
         let encryptedContentHash = encrypt.getFileContentHash(stream: hashInputStream)
@@ -305,18 +377,36 @@ public struct NetworkFacade {
         
         let hashMatch = encryptedContentHash.toHexString() == encryptedFileDownloadResult.expectedContentHash
         if hashMatch == false && ignoreHashMissmatchCheck != false {
-            throw NetworkFacadeError.HashMissmatch
+            throw EnrichedError(
+                code: .downloadHashMismatch,
+                step: .downloadDecrypt,
+                context: [
+                    "expected_hash": encryptedFileDownloadResult.expectedContentHash ?? "unknown",
+                    "actual_hash": encryptedContentHash.toHexString()
+                ],
+                cause: NetworkFacadeError.HashMissmatch
+            )
         }
         
         
         guard let encryptedInputStream = InputStream(url: encryptedFileDownloadResult.url) else {
-            throw NetworkFacadeError.FailedToOpenDecryptInputStream
+            throw EnrichedError(
+                code: .decryptionStreamFailed,
+                step: .downloadDecrypt,
+                context: ["file_path": encryptedFileDownloadResult.url.path],
+                cause: NetworkFacadeError.FailedToOpenDecryptInputStream
+            )
         }
         
         
         
         guard let plainOutputStream = OutputStream(url: destinationURL, append: false) else {
-            throw NetworkFacadeError.FailedToOpenDecryptOutputStream
+            throw EnrichedError(
+                code: .decryptionStreamFailed,
+                step: .downloadDecrypt,
+                context: ["destination_path": destinationURL.path],
+                cause: NetworkFacadeError.FailedToOpenDecryptOutputStream
+            )
         }
         
         
@@ -335,7 +425,12 @@ public struct NetworkFacade {
             return destinationURL
             
         } else {
-            throw NetworkFacadeError.DecryptionFailed
+            throw EnrichedError(
+                code: .decryptionFailed,
+                step: .downloadDecrypt,
+                context: ["bucket_id": bucketId],
+                cause: NetworkFacadeError.DecryptionFailed
+            )
         }
     }
     
