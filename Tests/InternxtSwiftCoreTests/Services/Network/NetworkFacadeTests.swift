@@ -58,9 +58,11 @@ final class NetworkFacadeTests: XCTestCase {
        
         do {
             _ = try await sut.uploadFile(input: inputStream, encryptedOutput: destination, fileSize: 100, bucketId: "93535c0bfff5de6d59c8eec72b46b605", progressHandler: {_ in})
+            XCTFail("Expected an error to be thrown")
+        } catch let enrichedError as EnrichedError {
+            XCTAssertEqual(enrichedError.cause as? NetworkFacadeError, NetworkFacadeError.EncryptedFileNotSameSizeAsOriginal)
         } catch {
-            XCTAssertTrue(error is NetworkFacadeError)
-            XCTAssertEqual(error as? NetworkFacadeError,  NetworkFacadeError.EncryptedFileNotSameSizeAsOriginal)
+            XCTFail("Expected EnrichedError but got \(type(of: error))")
         }
     }
     
@@ -77,13 +79,13 @@ final class NetworkFacadeTests: XCTestCase {
        
         do {
             _ = try await sut.uploadFile(input: inputStream, encryptedOutput: destination, fileSize: 4, bucketId: "93535c0bfff5de6d59c8eec72b46b605", progressHandler: {_ in})
+            XCTFail("Expected an error to be thrown")
+        } catch let enrichedError as EnrichedError {
+            XCTAssertEqual(enrichedError.code, .apiServerError)
+            let apiError = enrichedError.cause as? APIClientError
+            XCTAssertEqual(apiError?.statusCode, 500)
         } catch {
-            XCTAssertTrue(error is StartUploadError)
-            let uploadError: StartUploadError = (error as? StartUploadError)!
-            
-            XCTAssertEqual(uploadError.apiError?.statusCode, 500)
-            XCTAssertEqual(String(data: uploadError.apiError!.responseBody, encoding: .utf8), errorMessage)
-           
+            XCTFail("Expected EnrichedError but got \(type(of: error))")
         }
     }
     
@@ -148,10 +150,11 @@ final class NetworkFacadeTests: XCTestCase {
        
         do {
             _ = try await sut.uploadFile(input: inputStream, encryptedOutput: destination, fileSize: 4, bucketId: "93535c0bfff5de6d59c8eec72b46b605", progressHandler: {_ in})
+            XCTFail("Expected an error to be thrown")
+        } catch let enrichedError as EnrichedError {
+            XCTAssertEqual(enrichedError.cause as? UploadError, UploadError.UploadedSizeNotMatching)
         } catch {
-            XCTAssertTrue(error is UploadError)
-            XCTAssertEqual(error as? UploadError, UploadError.UploadedSizeNotMatching)
-           
+            XCTFail("Expected EnrichedError but got \(type(of: error))")
         }
     }
     
@@ -244,9 +247,11 @@ final class NetworkFacadeTests: XCTestCase {
         
         do {
             _ = try await sut.decryptFile(bucketId: "93535c0bfff5de6d59c8eec72b46b605", destinationURL: destination, progressHandler: {_ in }, encryptedFileDownloadResult: downloadResult)
+            XCTFail("Expected an error to be thrown")
+        } catch let enrichedError as EnrichedError {
+            XCTAssertEqual(enrichedError.cause as? NetworkFacadeError, NetworkFacadeError.FileIsEmpty)
         } catch {
-            
-            XCTAssertEqual(error as? NetworkFacadeError, NetworkFacadeError.FileIsEmpty)
+            XCTFail("Expected EnrichedError but got \(type(of: error))")
         }
     }
 }
