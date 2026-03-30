@@ -65,7 +65,12 @@ public class Upload: NSObject  {
     
         
         guard let hashInputStream = InputStream(url: encryptedFileURL) else {
-            throw UploadError.CannotGenerateFileHash
+            throw EnrichedError(
+                code: .uploadCannotGenerateHash,
+                step: .uploadStart,
+                context: ["file_path": encryptedFileURL.path],
+                cause: UploadError.CannotGenerateFileHash
+            )
         }
         
         let fileHash = encrypt.getFileContentHash(stream: hashInputStream)
@@ -74,27 +79,103 @@ public class Upload: NSObject  {
         do {
              uploadStart = try await networkAPI.startUpload(bucketId: bucketId, uploadSize: Int(fileSize), debug: debug)
         } catch {
+            let errorCode: ErrorCode
+            var context: [String: String] = [
+                "bucket_id": bucketId,
+                "file_size": String(fileSize)
+            ]
             
-            guard let apiError = error as? APIClientError else {
-                throw StartUploadError(apiError: nil)
+            if let apiError = error as? APIClientError {
+                context["status_code"] = String(apiError.statusCode)
+                context["api_message"] = apiError.message
+                
+                switch apiError.statusCode {
+                case 401: errorCode = .apiUnauthorized
+                case 402: errorCode = .apiPaymentRequired
+                case 404: errorCode = .apiNotFound
+                case 500...599: errorCode = .apiServerError
+                default: errorCode = .uploadStartFailed
+                }
+            } else if let urlError = error as? URLError {
+                context["url_error_code"] = String(urlError.code.rawValue)
+                switch urlError.code {
+                case .timedOut: errorCode = .networkTimeout
+                case .notConnectedToInternet: errorCode = .networkNoConnection
+                case .networkConnectionLost: errorCode = .networkConnectionLost
+                case .cannotConnectToHost: errorCode = .networkCannotConnect
+                default: errorCode = .uploadStartFailed
+                }
+            } else {
+                errorCode = .uploadStartFailed
             }
             
-            throw StartUploadError(apiError: apiError)
+            throw EnrichedError(
+                code: errorCode,
+                step: .uploadStart,
+                context: context,
+                cause: error
+            )
         }
         
         
         guard let uploadResult = uploadStart.uploads.first else {
-            throw UploadError.MissingUploadUrl
+            throw EnrichedError(
+                code: .uploadMissingUrl,
+                step: .uploadStart,
+                context: ["bucket_id": bucketId],
+                cause: UploadError.MissingUploadUrl
+            )
         }
         
         guard let uploadUrl = uploadResult.url else {
-            throw UploadError.MissingUploadUrl
+            throw EnrichedError(
+                code: .uploadMissingUrl,
+                step: .uploadStart,
+                context: ["bucket_id": bucketId, "upload_uuid": uploadResult.uuid],
+                cause: UploadError.MissingUploadUrl
+            )
         }
         
-        let successUpload = try await self.uploadEncryptedFile(uploadUrl: uploadUrl, encryptedFile: source, progressHandler: progressHandler)
-        
-        if successUpload == false {
-            throw UploadError.UploadNotSuccessful
+        do {
+            let successUpload = try await self.uploadEncryptedFile(uploadUrl: uploadUrl, encryptedFile: source, progressHandler: progressHandler)
+            
+            if successUpload == false {
+                throw EnrichedError(
+                    code: .uploadS3Failed,
+                    step: .uploadToS3,
+                    context: [
+                        "file_size": String(fileSize)
+                    ],
+                    cause: UploadError.UploadNotSuccessful
+                )
+            }
+        } catch let enrichedError as EnrichedError {
+            throw enrichedError
+        } catch {
+            let errorCode: ErrorCode
+            var context: [String: String] = [
+                "file_size": String(fileSize)
+            ]
+            
+            if let urlError = error as? URLError {
+                context["url_error_code"] = String(urlError.code.rawValue)
+                switch urlError.code {
+                case .timedOut: errorCode = .uploadS3Timeout
+                case .notConnectedToInternet: errorCode = .networkNoConnection
+                case .networkConnectionLost: errorCode = .networkConnectionLost
+                case .cannotConnectToHost: errorCode = .networkCannotConnect
+                default: errorCode = .uploadS3Failed
+                }
+            } else {
+                errorCode = .uploadS3Failed
+            }
+            
+            throw EnrichedError(
+                code: errorCode,
+                step: .uploadToS3,
+                context: context,
+                cause: error
+            )
         }
         
         var shards: Array<ShardUploadPayload> = Array()
@@ -103,14 +184,55 @@ public class Upload: NSObject  {
             uuid: uploadResult.uuid,
             parts: nil
         ))
-        let finishUploadResult = try await networkAPI.finishUpload(bucketId: bucketId, payload: FinishUploadPayload(
-                index:  cryptoUtils.bytesToHexString(index),
-                shards: shards
+        
+        let finishUploadResult: FinishUploadResponse
+        do {
+            finishUploadResult = try await networkAPI.finishUpload(bucketId: bucketId, payload: FinishUploadPayload(
+                    index:  cryptoUtils.bytesToHexString(index),
+                    shards: shards
+                )
             )
-        )
+        } catch {
+            let errorCode: ErrorCode
+            var context: [String: String] = [
+                "bucket_id": bucketId,
+                "upload_uuid": uploadResult.uuid
+            ]
+            
+            if let apiError = error as? APIClientError {
+                context["status_code"] = String(apiError.statusCode)
+                context["api_message"] = apiError.message
+                errorCode = .uploadFinishFailed
+            } else if let urlError = error as? URLError {
+                context["url_error_code"] = String(urlError.code.rawValue)
+                switch urlError.code {
+                case .timedOut: errorCode = .networkTimeout
+                case .notConnectedToInternet: errorCode = .networkNoConnection
+                case .networkConnectionLost: errorCode = .networkConnectionLost
+                default: errorCode = .uploadFinishFailed
+                }
+            } else {
+                errorCode = .uploadFinishFailed
+            }
+            
+            throw EnrichedError(
+                code: errorCode,
+                step: .uploadFinish,
+                context: context,
+                cause: error
+            )
+        }
         
         if finishUploadResult.size != Int(fileSize) {
-            throw UploadError.UploadedSizeNotMatching
+            throw EnrichedError(
+                code: .uploadSizeMismatch,
+                step: .uploadFinish,
+                context: [
+                    "expected_size": String(fileSize),
+                    "actual_size": String(finishUploadResult.size)
+                ],
+                cause: UploadError.UploadedSizeNotMatching
+            )
         }
         
         
