@@ -714,7 +714,7 @@ public struct ExistenceFilesResponse: Codable {
 public struct GetExistenceFileInFolderResponse: Codable {
     public let id: Int
     public let uuid: String
-    public let fileId: String
+    public let fileId: String?
     public let name: String?
     public let type: String?
     public let plainName: String
