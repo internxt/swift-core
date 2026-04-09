@@ -8,8 +8,10 @@
 import Foundation
 import CryptoKit
 
-let MULTIPART_MIN_SIZE = 700 * 1024 * 1024;
-let MULTIPART_CHUNK_SIZE = 200 * 1024 * 1024;
+let MULTIPART_MIN_SIZE = 100 * 1024 * 1024;
+let MULTIPART_CHUNK_SIZE = 50 * 1024 * 1024;
+let MAX_WAIT_TIME: TimeInterval = 3600
+let THROTTLE_BYTES_PER_SECOND = 5 * 1024 * 1024
 
 
 @available(macOS 10.15, *)
@@ -21,12 +23,14 @@ public struct NetworkFacade {
     private let upload: Upload
     private let uploadMultipart: UploadMultipart
     private let download: Download
+    private let reduceBandwidth: Bool
     
-    public init(mnemonic: String, networkAPI: NetworkAPI, urlSession: URLSession? = nil, debug: Bool = false){
+    public init(mnemonic: String, networkAPI: NetworkAPI, urlSession: URLSession? = nil, reduceBandwidth: Bool = false, debug: Bool = false){
         self.mnemonic = mnemonic
-        self.upload = Upload(networkAPI: networkAPI, urlSession: urlSession)
-        self.uploadMultipart = UploadMultipart(networkAPI: networkAPI, urlSession: urlSession)
-        self.download = Download(networkAPI: networkAPI, urlSession: urlSession)
+        self.reduceBandwidth = reduceBandwidth
+        self.upload = Upload(networkAPI: networkAPI, urlSession: urlSession, reduceBandwidth: reduceBandwidth)
+        self.uploadMultipart = UploadMultipart(networkAPI: networkAPI, urlSession: urlSession, reduceBandwidth: reduceBandwidth)
+        self.download = Download(networkAPI: networkAPI, urlSession: urlSession, reduceBandwidth: reduceBandwidth)
     }
     
     public func uploadFile(
@@ -39,7 +43,12 @@ public struct NetworkFacade {
     ) async throws -> FinishUploadResponse {
         // Generate random index, IV and fileKey
         guard let index = cryptoUtils.getRandomBytes(32) else {
-            throw UploadError.InvalidIndex
+            throw EnrichedError(
+                code: .uploadInvalidIndex,
+                step: .uploadEncrypt,
+                context: ["file_size": String(fileSize)],
+                cause: UploadError.InvalidIndex
+            )
         }
         
         let iv = Array(index.prefix(16))
@@ -85,20 +94,50 @@ public struct NetworkFacade {
         debug: Bool = false
     ) async throws -> FinishUploadResponse {
         guard let encryptedOutputStream = OutputStream(url: encryptedOutput, append: true) else {
-            throw NetworkFacadeError.FailedToOpenEncryptOutputStream
+            throw EnrichedError(
+                code: .encryptionStreamFailed,
+                step: .uploadEncrypt,
+                context: [
+                    "file_size": String(fileSize),
+                    "output_path": encryptedOutput.path
+                ],
+                cause: NetworkFacadeError.FailedToOpenEncryptOutputStream
+            )
         }
         let encryptStatus = try await encrypt.start(input: input, output: encryptedOutputStream, config: EncryptConfig(key: fileKey, iv: iv))
         
         if encryptStatus != EncryptResultStatus.Success {
-            throw NetworkFacadeError.EncryptionFailed
+            throw EnrichedError(
+                code: .encryptionFailed,
+                step: .uploadEncrypt,
+                context: ["file_size": String(fileSize)],
+                cause: NetworkFacadeError.EncryptionFailed
+            )
         }
         
         let encryptedFileSize = encryptedOutput.fileSize
         if fileSize != encryptedFileSize {
-            throw NetworkFacadeError.EncryptedFileNotSameSizeAsOriginal
+            throw EnrichedError(
+                code: .encryptionSizeMismatch,
+                step: .uploadEncrypt,
+                context: [
+                    "original_size": String(fileSize),
+                    "encrypted_size": String(encryptedFileSize)
+                ],
+                cause: NetworkFacadeError.EncryptedFileNotSameSizeAsOriginal
+            )
         }
         
-        return try await upload.start(index: index, bucketId: bucketId, mnemonic: mnemonic, encryptedFileURL: encryptedOutput, progressHandler: progressHandler)
+        let result = try await upload.start(index: index, bucketId: bucketId, mnemonic: mnemonic, encryptedFileURL: encryptedOutput, progressHandler: progressHandler)
+        
+      
+        if reduceBandwidth {
+            let targetTime = Double(fileSize) / Double(THROTTLE_BYTES_PER_SECOND)
+            let delay = max(0, targetTime * 0.3) // 30% extra delay to bring speed down
+            try await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000))
+        }
+        
+        return result
     }
     
     
@@ -114,76 +153,163 @@ public struct NetworkFacade {
         debug: Bool = false
     ) async throws -> FinishUploadResponse {
         var hasher = SHA256.init()
-        var accumulatedProgress = 0.0
         let parts = ceil(Double(fileSize) / Double(MULTIPART_CHUNK_SIZE))
-        var partIndex = 0
-        var uploadedPartsConfigs: [UploadedPartConfig] = []
-        let startUploadResult = try await uploadMultipart.start(bucketId: bucketId, fileSize: fileSize, parts: Int(parts))
-        // We use 0.99 so we can determine when we reach the full 100%
         let maxProgressPerPart: Double = 0.99 / parts
         
+        let startUploadResult: StartUploadResult
+        do {
+            startUploadResult = try await uploadMultipart.start(bucketId: bucketId, fileSize: fileSize, parts: Int(parts))
+        } catch {
+            throw EnrichedError(
+                code: .uploadStartFailed,
+                step: .uploadMultipartStart,
+                context: [
+                    "bucket_id": bucketId,
+                    "file_size": String(fileSize),
+                    "parts": String(Int(parts))
+                ],
+                cause: error
+            )
+        }
+        
         guard let uploadUrls = startUploadResult.urls else {
-            throw UploadError.MissingUploadUrl
+            throw EnrichedError(
+                code: .uploadMissingUrl,
+                step: .uploadMultipartStart,
+                context: [
+                    "bucket_id": bucketId,
+                    "upload_uuid": startUploadResult.uuid
+                ],
+                cause: UploadError.MissingUploadUrl
+            )
         }
         
         if uploadUrls.count != Int(parts) {
-            throw UploadMultipartError.MorePartsThanUploadUrls
-        }
-        func processEncryptedChunk(encryptedChunk: Data, partIndex: Int, debug: Bool = false) async throws -> Void {
-            
-            let uploadUrl = uploadUrls[partIndex]
-            let etag = try await uploadMultipart.uploadPart(encryptedChunk: encryptedChunk, uploadUrl: uploadUrl, partIndex: partIndex){progress in
-                accumulatedProgress += (progress * maxProgressPerPart) / 100
-                // Each part reports the max progress per part
-                progressHandler(accumulatedProgress)
-            }
-            
-            let uploadedPartConfig = UploadedPartConfig(
-                etag: etag, partNumber: partIndex + 1
+            throw EnrichedError(
+                code: .uploadMissingUrl,
+                step: .uploadMultipartStart,
+                context: [
+                    "expected_parts": String(Int(parts)),
+                    "received_urls": String(uploadUrls.count)
+                ],
+                cause: UploadMultipartError.MorePartsThanUploadUrls
             )
-            
-            uploadedPartsConfigs.append(uploadedPartConfig)
-            
         }
         
+        
+        let uploadedPartsActor = UploadedPartsActor()
+        let uploadState = UploadState()
+        
+        input.open()
+        defer { input.close() }
+        
+        let operationQueue = OperationQueue()
+        operationQueue.maxConcurrentOperationCount = self.reduceBandwidth ? 1 : 6
+
+        var partIndex = 0
         try await encrypt.encryptFileIntoChunks(
             chunkSizeInBytes: MULTIPART_CHUNK_SIZE,
             totalBytes: fileSize,
             inputStream: input,
             key: fileKey,
             iv: iv
-        ){encryptedChunk in
+        ) { encryptedChunk in
+            guard await !uploadState.isAborted() else {
+                throw UploadError.UploadNotSuccessful
+            }
+
             hasher.update(data: encryptedChunk)
-            // If something fails here, the error is propagated
-            // and the stream reading is stopped
-            try await processEncryptedChunk(encryptedChunk: encryptedChunk, partIndex: partIndex)
+
+            let uploadUrl = uploadUrls[partIndex]
+            let operation = UploadPartOperation(
+                encryptedChunk: encryptedChunk,
+                partIndex: partIndex,
+                uploadUrl: uploadUrl,
+                uploadMultipart: uploadMultipart,
+                uploadState: uploadState,
+                maxProgressPerPart: maxProgressPerPart,
+                progressHandler: { _ in },
+                uploadedPartsActor: uploadedPartsActor,
+                targetBytesPerSecond: self.reduceBandwidth ? THROTTLE_BYTES_PER_SECOND : nil
+            )
+
+            operation.completionBlock = {
+                operation.clearMemory()
+                Task {
+                    
+                    let partsUploaded = await uploadedPartsActor.getUploadedPartsConfigs()
+                    let completedParts = partsUploaded.count
+                    let progress = Double(completedParts) / Double(parts) * 0.99
+                    progressHandler(progress)
+                }
+                
+            }
+
+            // Wait until the number of active operations is below the concurrency limit
+            while operationQueue.operationCount >= operationQueue.maxConcurrentOperationCount {
+                await Task.sleep(UInt64(100_000_000))
+            }
+
+            operationQueue.addOperation(operation)
             partIndex += 1
         }
         
-        let fileSHA256digest = hasher.finalize()
+        operationQueue.waitUntilAllOperationsAreFinished()
         
+        if await uploadState.isAborted() {
+            operationQueue.cancelAllOperations()
+            throw UploadError.UploadNotSuccessful
+        }
+        
+        let fileSHA256digest = hasher.finalize()
         var sha256Hash = [UInt8]()
-        fileSHA256digest.withUnsafeBytes {bytes in
+        fileSHA256digest.withUnsafeBytes { bytes in
             sha256Hash.append(contentsOf: bytes)
         }
         
         let fileHash = HMAC().ripemd160(message: Data(sha256Hash))
-        
         
         let finishUpload = try await uploadMultipart.finishUpload(
             bucketId: bucketId,
             fileHash: fileHash.toHexString(),
             uploadUuid: startUploadResult.uuid,
             uploadId: startUploadResult.UploadId!,
-            uploadedParts: uploadedPartsConfigs,
+            uploadedParts: await uploadedPartsActor.getUploadedPartsConfigs(),
             index: Data(index),
             debug: debug
         )
         
-        // Finish the progress
         progressHandler(1)
-        
         return finishUpload
+    }
+    
+    actor UploadedPartsActor {
+        private var uploadedPartsConfigs: [UploadedPartConfig] = []
+        
+        
+        func addUploadedPartConfig(_ partConfig: UploadedPartConfig) {
+            uploadedPartsConfigs.append(partConfig)
+        }
+
+        func getUploadedPartsConfigs() -> [UploadedPartConfig] {
+            return uploadedPartsConfigs
+        }
+        
+        func isPartUploaded(partIndex: Int) -> Bool {
+            return uploadedPartsConfigs.contains(where: { $0.partNumber == partIndex + 1 })
+        }
+    }
+    
+    actor UploadState {
+        var uploadAborted = false
+        
+        func setAborted() {
+            uploadAborted = true
+        }
+        
+        func isAborted() -> Bool {
+            return uploadAborted
+        }
     }
     
     public func downloadFile(bucketId: String, fileId: String, encryptedFileDestination: URL, destinationURL: URL, progressHandler: @escaping ProgressHandler, debug: Bool = false) async throws -> URL {
@@ -218,7 +344,15 @@ public struct NetworkFacade {
     public func decryptFile(bucketId: String, destinationURL: URL, progressHandler: ProgressHandler, encryptedFileDownloadResult: DownloadResult, ignoreHashMissmatchCheck: Bool = false) async throws -> URL {
         
         if encryptedFileDownloadResult.url.fileSize == 0 {
-            throw NetworkFacadeError.FileIsEmpty
+            throw EnrichedError(
+                code: .downloadFileEmpty,
+                step: .downloadDecrypt,
+                context: [
+                    "bucket_id": bucketId,
+                    "file_path": encryptedFileDownloadResult.url.path
+                ],
+                cause: NetworkFacadeError.FileIsEmpty
+            )
         }
         
         let fullHexString = encryptedFileDownloadResult.index
@@ -227,7 +361,15 @@ public struct NetworkFacade {
         let fileKey = try encrypt.generateFileKey(mnemonic: mnemonic, bucketId: bucketId, index: cryptoUtils.hexStringToBytes(encryptedFileDownloadResult.index))
         
         guard let hashInputStream = InputStream(url: encryptedFileDownloadResult.url) else {
-            throw NetworkFacadeError.FailedToOpenDecryptInputStream
+            throw EnrichedError(
+                code: .decryptionStreamFailed,
+                step: .downloadDecrypt,
+                context: [
+                    "bucket_id": bucketId,
+                    "file_path": encryptedFileDownloadResult.url.path
+                ],
+                cause: NetworkFacadeError.FailedToOpenDecryptInputStream
+            )
         }
         
         let encryptedContentHash = encrypt.getFileContentHash(stream: hashInputStream)
@@ -235,18 +377,36 @@ public struct NetworkFacade {
         
         let hashMatch = encryptedContentHash.toHexString() == encryptedFileDownloadResult.expectedContentHash
         if hashMatch == false && ignoreHashMissmatchCheck != false {
-            throw NetworkFacadeError.HashMissmatch
+            throw EnrichedError(
+                code: .downloadHashMismatch,
+                step: .downloadDecrypt,
+                context: [
+                    "expected_hash": encryptedFileDownloadResult.expectedContentHash ?? "unknown",
+                    "actual_hash": encryptedContentHash.toHexString()
+                ],
+                cause: NetworkFacadeError.HashMissmatch
+            )
         }
         
         
         guard let encryptedInputStream = InputStream(url: encryptedFileDownloadResult.url) else {
-            throw NetworkFacadeError.FailedToOpenDecryptInputStream
+            throw EnrichedError(
+                code: .decryptionStreamFailed,
+                step: .downloadDecrypt,
+                context: ["file_path": encryptedFileDownloadResult.url.path],
+                cause: NetworkFacadeError.FailedToOpenDecryptInputStream
+            )
         }
         
         
         
         guard let plainOutputStream = OutputStream(url: destinationURL, append: false) else {
-            throw NetworkFacadeError.FailedToOpenDecryptOutputStream
+            throw EnrichedError(
+                code: .decryptionStreamFailed,
+                step: .downloadDecrypt,
+                context: ["destination_path": destinationURL.path],
+                cause: NetworkFacadeError.FailedToOpenDecryptOutputStream
+            )
         }
         
         
@@ -265,7 +425,128 @@ public struct NetworkFacade {
             return destinationURL
             
         } else {
-            throw NetworkFacadeError.DecryptionFailed
+            throw EnrichedError(
+                code: .decryptionFailed,
+                step: .downloadDecrypt,
+                context: ["bucket_id": bucketId],
+                cause: NetworkFacadeError.DecryptionFailed
+            )
         }
     }
+    
+    class UploadPartOperation: AsyncOperation {
+        var encryptedChunk: Data?
+        let partIndex: Int
+        let uploadUrl: String
+        let uploadMultipart: UploadMultipart
+        let uploadState: UploadState
+        let maxProgressPerPart: Double
+        let progressHandler: (Double) -> Void
+        let uploadedPartsActor: UploadedPartsActor
+        let targetBytesPerSecond: Int?
+        
+        init(
+            encryptedChunk: Data,
+            partIndex: Int,
+            uploadUrl: String,
+            uploadMultipart: UploadMultipart,
+            uploadState: UploadState,
+            maxProgressPerPart: Double,
+            progressHandler: @escaping (Double) -> Void,
+            uploadedPartsActor: UploadedPartsActor,
+            targetBytesPerSecond: Int? = nil
+        ) {
+            self.encryptedChunk = encryptedChunk
+            self.partIndex = partIndex
+            self.uploadUrl = uploadUrl
+            self.uploadMultipart = uploadMultipart
+            self.uploadState = uploadState
+            self.maxProgressPerPart = maxProgressPerPart
+            self.progressHandler = progressHandler
+            self.uploadedPartsActor = uploadedPartsActor
+            self.targetBytesPerSecond = targetBytesPerSecond
+        }
+        
+        override func main() {
+            Task {
+                do {
+                    let chunkSize = encryptedChunk?.count ?? 0
+                    let startTime = CFAbsoluteTimeGetCurrent()
+                    
+                    try await uploadPartWithRetry()
+                    if let target = targetBytesPerSecond, chunkSize > 0 {
+                        let targetTime = Double(chunkSize) / Double(target)
+                        let elapsed = CFAbsoluteTimeGetCurrent() - startTime
+                        if elapsed < targetTime {
+                            let delay = targetTime - elapsed
+                            try await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000))
+                        }
+                    }
+                    
+                    completeOperation()
+                } catch {
+                    await uploadState.setAborted()
+                    completeOperation()
+                }
+            }
+        }
+        
+        private func uploadPartWithRetry() async throws {
+            var attempt = 0
+            let maxRetries = 3
+
+            while attempt < maxRetries {
+                if await uploadState.isAborted() {
+                    throw UploadError.UploadNotSuccessful
+                }
+
+                do {
+                  
+                    if !NetworkMonitor.shared.isConnected {
+                        let startTime = Date()
+
+                        while !NetworkMonitor.shared.isConnected {
+                            try await Task.sleep(nanoseconds: 20 * 1_000_000_000) // Check every 20 seconds
+                            if Date().timeIntervalSince(startTime) > MAX_WAIT_TIME {
+                                await uploadState.setAborted()
+                                throw UploadError.UploadNotSuccessful
+                            }
+                        }
+                    }
+                    guard let chunk = encryptedChunk else {
+                        throw UploadError.MissingChunk
+                    }
+                    let etag = try await uploadMultipart.uploadPart(
+                        encryptedChunk: chunk,
+                        uploadUrl: uploadUrl,
+                        partIndex: partIndex
+                    ) { progress in
+                        self.progressHandler(progress * self.maxProgressPerPart / 100)
+                    }
+
+                    let uploadedPartConfig = UploadedPartConfig(etag: etag, partNumber: partIndex + 1)
+                    await uploadedPartsActor.addUploadedPartConfig(uploadedPartConfig)
+                    return
+                }
+                catch {
+                    if let urlError = error as? URLError,
+                           urlError.code == .notConnectedToInternet || urlError.code == .networkConnectionLost  {
+                    }else {
+                        
+                        attempt += 1
+                        if attempt >= maxRetries {
+                            await uploadState.setAborted()
+                            throw UploadError.PartUploadFailed(partIndex: partIndex, error: error)
+                        }
+                    }
+
+                }
+            }
+        }
+        
+        func clearMemory() {
+            encryptedChunk = nil
+        }
+    }
+
 }

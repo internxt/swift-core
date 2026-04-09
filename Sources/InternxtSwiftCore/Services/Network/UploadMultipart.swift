@@ -40,18 +40,26 @@ public class UploadMultipart: NSObject {
     private let cryptoUtils = CryptoUtils()
     private let fileManager = FileManager.default
     private let networkAPI: NetworkAPI
-    private lazy var urlSession = URLSession(
-           configuration: .default,
-           delegate: self,
-           delegateQueue: .main
-       )
+    private let reduceBandwidth: Bool
+    private lazy var urlSession: URLSession = {
+        let config = URLSessionConfiguration.default
+        if reduceBandwidth {
+            config.httpMaximumConnectionsPerHost = 1
+        }
+        return URLSession(
+            configuration: config,
+            delegate: self,
+            delegateQueue: .main
+        )
+    }()
     
     
     
     private var progressHandlersByTaskID = [Int : ProgressHandler]()
-    
-    init(networkAPI: NetworkAPI, urlSession: URLSession? = nil) {
+    private let progressHandlerStore = ProgressHandlerStore()
+    init(networkAPI: NetworkAPI, urlSession: URLSession? = nil, reduceBandwidth: Bool = false) {
         self.networkAPI = networkAPI
+        self.reduceBandwidth = reduceBandwidth
         super.init()
         if urlSession != nil {
             self.urlSession = urlSession!
@@ -83,15 +91,19 @@ public class UploadMultipart: NSObject {
         
         var shards: Array<ShardUploadPayload> = Array()
         
-        let shardPayload = ShardUploadPayload(
-            hash: fileHash,
-            uuid: uploadUuid,
-            parts: uploadedParts.map{ uploadedPart in
-                return ShardPartPayload(
+        let sortedParts = uploadedParts
+            .map { uploadedPart in
+                ShardPartPayload(
                     ETag: uploadedPart.etag,
                     PartNumber: uploadedPart.partNumber
                 )
-            },
+            }
+            .sorted { $0.PartNumber < $1.PartNumber }
+
+        let shardPayload = ShardUploadPayload(
+            hash: fileHash,
+            uuid: uploadUuid,
+            parts: sortedParts,
             uploadId: uploadId
         )
         
@@ -144,9 +156,9 @@ public class UploadMultipart: NSObject {
                     continuation.resume(throwing: error)
                 }
             )
-            
-            if progressHandler != nil {
-                progressHandlersByTaskID[task.taskIdentifier] = progressHandler
+                        
+            Task {
+                await progressHandlerStore.setHandler(for: task.taskIdentifier, handler: progressHandler)
             }
             
             
@@ -157,3 +169,22 @@ public class UploadMultipart: NSObject {
     
     
 }
+
+actor ProgressHandlerStore {
+    private var handlers: [Int: ProgressHandler] = [:]
+    
+    func setHandler(for taskID: Int, handler: ProgressHandler?) {
+        if let handler = handler {
+            handlers[taskID] = handler
+        }
+    }
+    
+    func getHandler(for taskID: Int) -> ProgressHandler? {
+        return handlers[taskID]
+    }
+    
+    func removeHandler(for taskID: Int) {
+        handlers.removeValue(forKey: taskID)
+    }
+}
+

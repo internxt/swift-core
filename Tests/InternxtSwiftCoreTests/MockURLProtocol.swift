@@ -9,7 +9,7 @@ import Foundation
 
 
 class MockURLProtocol: URLProtocol {
-  static var requestHandler: ((URLRequest) throws -> (HTTPURLResponse, Data?))?
+  static var requestHandler: ((URLRequest) async throws -> (HTTPURLResponse, Data?))?
 
   override class func canInit(with request: URLRequest) -> Bool {
     // To check if this protocol can handle the given request.
@@ -26,24 +26,24 @@ class MockURLProtocol: URLProtocol {
           fatalError("RequestHandler is unavailable")
         }
           
-        do {
-          // 2. Call handler with received request and capture the tuple of response and data.
-          let (response, data) = try handler(request)
-          
-          // 3. Send received response to the client.
-          client?.urlProtocol(self, didReceive: response, cacheStoragePolicy: .notAllowed)
-          
-          if let data = data {
-            // 4. Send received data to the client.
-            client?.urlProtocol(self, didLoad: data)
+      Task {
+          do {
+              // 2. Call handler with received request and capture the tuple of response and data.
+              let (response, data) = try await handler(request)
+              // 3. Send received response to the client.
+              self.client?.urlProtocol(self, didReceive: response, cacheStoragePolicy: .notAllowed)
+              
+              if let data = data {
+                  // 4. Send received data to the client.
+                  self.client?.urlProtocol(self, didLoad: data)
+              }
+              // 5. Notify request has been finished.
+              self.client?.urlProtocolDidFinishLoading(self)
+          } catch {
+              // 6. Notify received error.
+              self.client?.urlProtocol(self, didFailWithError: error)
           }
-          
-          // 5. Notify request has been finished.
-          client?.urlProtocolDidFinishLoading(self)
-        } catch {
-          // 6. Notify received error.
-          client?.urlProtocol(self, didFailWithError: error)
-        }
+      }
   }
 
   override func stopLoading() {

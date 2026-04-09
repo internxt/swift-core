@@ -41,10 +41,13 @@ final class DownloadTests: XCTestCase {
         let destination = getTemporaryDestination()
         do {
             _ = try await sut.start(bucketId: "bucketNotBucket", fileId: "file123", destination: destination)
+            XCTFail("Expected an error to be thrown")
+        } catch let enrichedError as EnrichedError {
+            XCTAssertEqual(enrichedError.code, .downloadInvalidBucket)
+            XCTAssertEqual(enrichedError.cause as? DownloadError, DownloadError.InvalidBucketId)
         } catch {
-            XCTAssertEqual(error as? DownloadError,  DownloadError.InvalidBucketId)
+            XCTFail("Expected EnrichedError but got \(type(of: error))")
         }
-        
     }
     
     // Multipart check until we implement it
@@ -84,8 +87,11 @@ final class DownloadTests: XCTestCase {
         
         do {
             _ = try await sut.start(bucketId: "93535c0bfff5de6d59c8eec72b46b605", fileId: "64d677aeed70fe00082983bc", destination: destination)
+            XCTFail("Expected an error to be thrown")
+        } catch let enrichedError as EnrichedError {
+            XCTAssertEqual(enrichedError.cause as? DownloadError, DownloadError.MultipartDownloadNotSupported)
         } catch {
-            XCTAssertEqual(error as? DownloadError,  DownloadError.MultipartDownloadNotSupported)
+            XCTFail("Expected EnrichedError but got \(type(of: error))")
         }
     }
     

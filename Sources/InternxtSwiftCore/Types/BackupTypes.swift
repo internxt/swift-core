@@ -15,7 +15,7 @@ public struct DeviceAsFolder: Codable, Identifiable {
     public let parentId: String?
     public let parentUuid: String?
     public let name: String?
-    public let plain_name: String?
+    public let plainName: String?
     public let bucket: String?
     public let user_id: Int?
     public let encrypt_version: String?
