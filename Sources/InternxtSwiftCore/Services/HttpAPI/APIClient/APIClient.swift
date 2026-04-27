@@ -230,7 +230,7 @@ private class DateFormatterCache {
 }
 
 @available(macOS 10.15, *)
-struct APIClient {
+public struct APIClient {
     /// Shared ephemeral URLSession that avoids DNS and HTTP caching.
     public static let ephemeralSession: URLSession = {
         let config = URLSessionConfiguration.ephemeral
@@ -239,6 +239,8 @@ struct APIClient {
         config.httpCookieStorage = nil
         return URLSession(configuration: config)
     }()
+    
+    public static var onUnauthorized: (() -> Void)? = nil
     
     var urlSession: URLSession
     var authorizationHeaderValue: String? = nil
@@ -543,6 +545,11 @@ extension APIClient {
             throw CancellationError()
             
         } catch let error as APIClientError {
+            if error.statusCode == 401 {
+                APIClient.onUnauthorized?()
+                throw error
+            }
+            
             if error.statusCode == 429 {
                 let serverRetryAfter = extractRetryAfter(from: error)
                 let waitTime: TimeInterval
