@@ -582,7 +582,7 @@ public struct ReplaceFileResponse: Decodable {
 public struct GetFileInFolderByPlainNameResponse: Decodable {
     public let id: Int
     public let uuid: String
-    public let fileId: String
+    public let fileId: String?
     public let name: String?
     public let type: String?
 }
