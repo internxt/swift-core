@@ -21,7 +21,9 @@ extension Upload: URLSessionTaskDelegate {
             totalBytesExpectedToSend: Int64
     ) {
             let progress = Double(totalBytesSent) / Double(totalBytesExpectedToSend)
+            progressHandlersLock.lock()
             let handler = progressHandlersByTaskID[task.taskIdentifier]
+            progressHandlersLock.unlock()
             handler?(progress)
     }
 }
@@ -46,6 +48,7 @@ public class Upload: NSObject  {
         )
     }()
     
+    private let progressHandlersLock = NSLock()
     private var progressHandlersByTaskID = [Int : ProgressHandler]()
 
     init(networkAPI: NetworkAPI, urlSession: URLSession? = nil, reduceBandwidth: Bool = false) {
@@ -250,10 +253,18 @@ public class Upload: NSObject  {
             
             request.httpMethod = "PUT"
             
+            var taskRef: URLSessionUploadTask? = nil
+            
             let task = urlSession.uploadTask(
                 with: request,
                 fromFile: encryptedFile,
-                completionHandler: { data, res, error in
+                completionHandler: { [weak self] data, res, error in
+                    if let self = self, let id = taskRef?.taskIdentifier {
+                        self.progressHandlersLock.lock()
+                        self.progressHandlersByTaskID.removeValue(forKey: id)
+                        self.progressHandlersLock.unlock()
+                    }
+                    
                     guard let error = error else {
                         let response = res as? HTTPURLResponse
                         if response?.statusCode != 200 {
@@ -268,8 +279,12 @@ public class Upload: NSObject  {
                 }
             )
             
+            taskRef = task
+            
             if progressHandler != nil {
+                progressHandlersLock.lock()
                 progressHandlersByTaskID[task.taskIdentifier] = progressHandler
+                progressHandlersLock.unlock()
             }
             
             

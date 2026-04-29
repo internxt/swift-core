@@ -254,7 +254,11 @@ public struct NetworkFacade {
             partIndex += 1
         }
         
-        operationQueue.waitUntilAllOperationsAreFinished()
+        await withCheckedContinuation { continuation in
+            operationQueue.addBarrierBlock {
+                continuation.resume()
+            }
+        }
         
         if await uploadState.isAborted() {
             operationQueue.cancelAllOperations()
