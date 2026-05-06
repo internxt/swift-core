@@ -598,4 +598,14 @@ public struct DriveAPI {
         
         return try await apiClient.fetch(type: ExistentFoldersResponse.self, endpoint, debugResponse: debug)
     }
+    
+    public func createSharing(payload: CreateSharingPayload, debug: Bool = false) async throws -> CreateSharingResponse {
+        let endpoint = Endpoint(
+            path: "\(self.baseUrl)/sharings/",
+            method: .POST,
+            body: payload.toJson()
+        )
+        
+        return try await apiClient.fetch(type: CreateSharingResponse.self, endpoint, debugResponse: debug)
+    }
 }

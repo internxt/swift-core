@@ -800,3 +800,26 @@ public struct GetNotificationsResponse: Codable {
     public let readAt: String
     public let isRead: Bool
 }
+
+public struct CreateSharingPayload: Encodable {
+    public let itemId: String
+    public let itemType: String
+    public let encryptionKey: String
+    public let encryptionAlgorithm: String
+    public let encryptedCode: String
+    public let encryptedPassword: String
+    public let persistPreviousSharing: Bool
+    
+    public init(itemId: String, itemType: String, encryptionKey: String, encryptionAlgorithm: String, encryptedCode: String, encryptedPassword: String, persistPreviousSharing: Bool) {
+        self.itemId = itemId
+        self.itemType = itemType
+        self.encryptionKey = encryptionKey
+        self.encryptionAlgorithm = encryptionAlgorithm
+        self.encryptedCode = encryptedCode
+        self.encryptedPassword = encryptedPassword
+        self.persistPreviousSharing = persistPreviousSharing
+    }
+}
+
+public struct CreateSharingResponse: Decodable {}
+
