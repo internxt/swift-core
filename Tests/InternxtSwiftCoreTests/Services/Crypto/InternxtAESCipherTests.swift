@@ -61,6 +61,14 @@ final class InternxtAESCipherTests: XCTestCase {
             XCTAssertEqual(error as? InternxtAESError, InternxtAESError.invalidPayloadLength)
         }
     }
+    func testDecryptCiphertext() throws {
+        let plaintext = "test-mnemonic-pattern-secret"
+        let password = "test-password-123"
+        let encryptedBase64 = "Q8Yduw7dKJFZ98qcAgPk7VrZqEx+3a/L0kUDkPJslIY5m4X+xbjO5VwzPKEHu1asZSwfimNOR42/I+QEUyFaENnDAU4wiLaiQWyEQ72dSuLJ3l3ptSrhTnQui7L8zCG5Y4BD9C8LQw5G7iQLT+zenaeIMHfUktlJ46zGOw=="
+        
+        let decryptedText = try cipher.decrypt(cipherBase64: encryptedBase64, password: password)
+        XCTAssertEqual(decryptedText, plaintext)
+    }
     
     func testGenerateRandomUrlSafeString() throws {
         let length = 8
