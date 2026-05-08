@@ -62,9 +62,9 @@ final class InternxtAESCipherTests: XCTestCase {
         }
     }
     
-    func testGenerateRandomUrlSafeString() {
+    func testGenerateRandomUrlSafeString() throws {
         let length = 8
-        let randomString = cipher.generateRandomUrlSafeString(length: length)
+        let randomString = try cipher.generateRandomUrlSafeString(length: length)
         
         XCTAssertEqual(randomString.count, length)
         // Ensure no standard base64 characters like '+' or '/' or '='

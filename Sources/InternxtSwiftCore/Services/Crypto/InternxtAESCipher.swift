@@ -107,11 +107,15 @@ public struct InternxtAESCipher {
     }
     
 
-    public func generateRandomUrlSafeString(length: Int) -> String {
+    public func generateRandomUrlSafeString(length: Int) throws -> String {
         if length <= 0 { return "" }
         let numBytes = Int(ceil(Double(length * 3) / 4.0))
         var bytes = [UInt8](repeating: 0, count: numBytes)
-        _ = SecRandomCopyBytes(kSecRandomDefault, numBytes, &bytes)
+        
+        let status = SecRandomCopyBytes(kSecRandomDefault, numBytes, &bytes)
+        guard status == errSecSuccess else {
+            throw InternxtAESError.randomBytesFailed
+        }
         
         let base64 = Data(bytes).base64EncodedString()
         let urlSafe = base64
