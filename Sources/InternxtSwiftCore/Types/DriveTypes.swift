@@ -841,3 +841,15 @@ public struct CreateSharingResponse: Decodable {
 public struct ShareDomainsResponse: Decodable {
     public let list: [String]
 }
+
+public struct FileLimitsResponse: Codable {
+    public let versioning: Versioning?
+    public let maxUploadFileSize: Int?
+}
+
+public struct Versioning: Codable {
+    public let enabled: Bool?
+    public let maxFileSize: Int?
+    public let retentionDays: Int?
+    public let maxVersions: Int?
+}
