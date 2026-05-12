@@ -616,4 +616,12 @@ public struct DriveAPI {
         )
         return try await apiClient.fetch(type: ShareDomainsResponse.self, endpoint, debugResponse: debug)
     }
+    
+    public func getFileLimits(debug: Bool = false) async throws -> FileLimitsResponse {
+        let endpoint = Endpoint(
+            path: "\(self.baseUrl)/files/limits",
+            method: .GET
+        )
+        return try await apiClient.fetch(type: FileLimitsResponse.self, endpoint, debugResponse: debug)
+    }
 }
