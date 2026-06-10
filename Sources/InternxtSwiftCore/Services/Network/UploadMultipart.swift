@@ -43,6 +43,8 @@ public class UploadMultipart: NSObject {
     private let reduceBandwidth: Bool
     private lazy var urlSession: URLSession = {
         let config = URLSessionConfiguration.default
+        config.timeoutIntervalForRequest = 90
+        config.timeoutIntervalForResource = 3600
         if reduceBandwidth {
             config.httpMaximumConnectionsPerHost = 1
         }

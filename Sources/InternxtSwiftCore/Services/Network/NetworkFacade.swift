@@ -262,7 +262,47 @@ public struct NetworkFacade {
         
         if await uploadState.isAborted() {
             operationQueue.cancelAllOperations()
-            throw UploadError.UploadNotSuccessful
+            let abortError = await uploadState.getAbortError()
+            
+            if let enriched = abortError as? EnrichedError {
+                throw enriched
+            }
+            
+            let errorCode: ErrorCode
+            var context: [String: String] = [
+                "file_size": String(fileSize)
+            ]
+            
+            var underlyingError: Error = abortError ?? UploadError.UploadNotSuccessful
+            if let uploadError = abortError as? UploadError {
+                switch uploadError {
+                case .PartUploadFailed(let partIndex, let partError):
+                    context["part_index"] = String(partIndex)
+                    underlyingError = partError
+                default:
+                    break
+                }
+            }
+            
+            if let urlError = underlyingError as? URLError {
+                context["url_error_code"] = String(urlError.code.rawValue)
+                switch urlError.code {
+                case .timedOut: errorCode = .uploadS3Timeout
+                case .notConnectedToInternet: errorCode = .networkNoConnection
+                case .networkConnectionLost: errorCode = .networkConnectionLost
+                case .cannotConnectToHost: errorCode = .networkCannotConnect
+                default: errorCode = .uploadS3Failed
+                }
+            } else {
+                errorCode = .uploadS3Failed
+            }
+            
+            throw EnrichedError(
+                code: errorCode,
+                step: .uploadMultipartPart,
+                context: context,
+                cause: abortError ?? UploadError.UploadNotSuccessful
+            )
         }
         
         let fileSHA256digest = hasher.finalize()
@@ -306,13 +346,19 @@ public struct NetworkFacade {
     
     actor UploadState {
         var uploadAborted = false
+        var abortError: Error?
         
-        func setAborted() {
+        func setAborted(error: Error? = nil) {
             uploadAborted = true
+            self.abortError = error
         }
         
         func isAborted() -> Bool {
             return uploadAborted
+        }
+        
+        func getAbortError() -> Error? {
+            return abortError
         }
     }
     
@@ -489,7 +535,7 @@ public struct NetworkFacade {
                     
                     completeOperation()
                 } catch {
-                    await uploadState.setAborted()
+                    await uploadState.setAborted(error: error)
                     completeOperation()
                 }
             }
