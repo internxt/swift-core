@@ -61,6 +61,9 @@ public struct Encrypt {
 
         let bufferSize = 1024
         let buffer = UnsafeMutablePointer<UInt8>.allocate(capacity: bufferSize)
+        defer {
+            buffer.deallocate()
+        }
 
         while stream.hasBytesAvailable {
             let read = stream.read(buffer, maxLength: bufferSize)
