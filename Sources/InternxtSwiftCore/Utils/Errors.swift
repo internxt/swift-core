@@ -181,6 +181,31 @@ public enum UploadError: Error, Equatable {
     }
 }
 
+extension UploadError: LocalizedError {
+    public var errorDescription: String? {
+        switch self {
+        case .PartUploadFailed(let partIndex, let innerError):
+            return "PartUploadFailed(partIndex: \(partIndex), error: \(innerError.localizedDescription))"
+        case .InvalidIndex:
+            return "InvalidIndex"
+        case .CannotGenerateFileHash:
+            return "CannotGenerateFileHash"
+        case .FailedToFinishUpload:
+            return "FailedToFinishUpload"
+        case .MissingUploadUrl:
+            return "MissingUploadUrl"
+        case .UploadNotSuccessful:
+            return "UploadNotSuccessful"
+        case .UploadedSizeNotMatching:
+            return "UploadedSizeNotMatching"
+        case .MissingEtag:
+            return "MissingEtag"
+        case .MissingChunk:
+            return "MissingChunk"
+        }
+    }
+}
+
 
 public class StartUploadError: Error {
     public var apiError: APIClientError? = nil

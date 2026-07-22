@@ -81,7 +81,7 @@ public class UploadMultipart: NSObject {
     func uploadPart(encryptedChunk: Data, uploadUrl: String, partIndex: Int, progressHandler: @escaping ProgressHandler) async throws -> String {
         
         // Upload the chunk to the given URL
-        let uploadEtag = try await self.uploadEncryptedChunk(encryptedChunk: encryptedChunk, uploadUrl: uploadUrl, progressHandler: progressHandler)
+        let uploadEtag = try await self.uploadEncryptedChunk(encryptedChunk: encryptedChunk, uploadUrl: uploadUrl, partIndex: partIndex, progressHandler: progressHandler)
         
 
         return uploadEtag        
@@ -128,7 +128,7 @@ public class UploadMultipart: NSObject {
     
     
     
-    private func uploadEncryptedChunk(encryptedChunk: Data, uploadUrl: String, progressHandler: ProgressHandler?) async throws -> String {
+    private func uploadEncryptedChunk(encryptedChunk: Data, uploadUrl: String, partIndex: Int, progressHandler: ProgressHandler?) async throws -> String {
         return try await withCheckedThrowingContinuation { (continuation) in
             var request = URLRequest(
                 url: URL(string: uploadUrl)!,
@@ -144,8 +144,10 @@ public class UploadMultipart: NSObject {
                 completionHandler: { data, res, error in
                     guard let error = error else {
                         let response = res as? HTTPURLResponse
-                        if response?.statusCode != 200 {
-                            return continuation.resume(with: .failure(UploadError.UploadNotSuccessful))
+                        let statusCode = response?.statusCode ?? -999
+                        if statusCode != 200 {
+                            let apiError = APIClientError(statusCode: statusCode, message: "[PUT S3 Chunk] Returned HTTP \(statusCode)")
+                            return continuation.resume(with: .failure(UploadError.PartUploadFailed(partIndex: partIndex, error: apiError)))
                         } else {
                             guard let etagValue = response?.value(forHTTPHeaderField: "Etag") else {
                                 return continuation.resume(with: .failure(UploadError.MissingEtag))
@@ -155,7 +157,7 @@ public class UploadMultipart: NSObject {
                         
                     }
                     
-                    continuation.resume(throwing: error)
+                    continuation.resume(throwing: UploadError.PartUploadFailed(partIndex: partIndex, error: error))
                 }
             )
                         
