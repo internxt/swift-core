@@ -254,4 +254,56 @@ final class NetworkFacadeTests: XCTestCase {
             XCTFail("Expected EnrichedError but got \(type(of: error))")
         }
     }
+
+    func testUploadErrorLocalizedDescription() {
+        let innerErr = URLError(.timedOut)
+        let partError = UploadError.PartUploadFailed(partIndex: 0, error: innerErr)
+        
+        XCTAssertTrue(partError.localizedDescription.contains("PartUploadFailed"))
+        XCTAssertTrue(partError.localizedDescription.contains("partIndex: 0"))
+        XCTAssertEqual(UploadError.UploadNotSuccessful.localizedDescription, "UploadNotSuccessful")
+    }
+
+    func testUploadStatePreservesAbortError() async throws {
+        let uploadState = NetworkFacade.UploadState()
+        let expectedError = UploadError.PartUploadFailed(partIndex: 2, error: URLError(.timedOut))
+        
+        await uploadState.setAborted(error: expectedError)
+        
+        let isAborted = await uploadState.isAborted()
+        XCTAssertTrue(isAborted)
+        
+        let rawError = await uploadState.getAbortError()
+        let savedError = try XCTUnwrap(rawError, "Expected a non-nil abort error")
+        let uploadErr = try XCTUnwrap(savedError as? UploadError, "Expected abort error to be of type UploadError")
+        guard case let .PartUploadFailed(partIndex, _) = uploadErr else {
+            XCTFail("Expected UploadError.PartUploadFailed  \(uploadErr)")
+            return
+        }
+        XCTAssertEqual(partIndex, 2)
+    }
+
+    func testPartUploadFailedEqualityAndMatching() {
+        let err1 = UploadError.PartUploadFailed(partIndex: 1, error: URLError(.timedOut))
+        let err2 = UploadError.PartUploadFailed(partIndex: 1, error: URLError(.timedOut))
+        let err3 = UploadError.PartUploadFailed(partIndex: 2, error: URLError(.timedOut))
+        
+        XCTAssertEqual(err1, err2)
+        XCTAssertNotEqual(err1, err3)
+        XCTAssertNotEqual(err1, UploadError.UploadNotSuccessful)
+    }
+
+    func testIsRetryableChunkError() {
+        let timeoutError = UploadError.PartUploadFailed(partIndex: 0, error: URLError(.timedOut))
+        XCTAssertTrue(NetworkFacade.UploadPartOperation.isRetryableChunkError(timeoutError))
+
+        let serverError = UploadError.PartUploadFailed(partIndex: 0, error: APIClientError(statusCode: 500, message: "Server Error"))
+        XCTAssertTrue(NetworkFacade.UploadPartOperation.isRetryableChunkError(serverError))
+
+        let forbiddenError = UploadError.PartUploadFailed(partIndex: 0, error: APIClientError(statusCode: 403, message: "Forbidden"))
+        XCTAssertFalse(NetworkFacade.UploadPartOperation.isRetryableChunkError(forbiddenError))
+
+        let missingChunkError = UploadError.MissingChunk
+        XCTAssertFalse(NetworkFacade.UploadPartOperation.isRetryableChunkError(missingChunkError))
+    }
 }

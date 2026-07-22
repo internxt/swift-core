@@ -215,6 +215,9 @@ public struct NetworkFacade {
             iv: iv
         ) { encryptedChunk in
             guard await !uploadState.isAborted() else {
+                if let abortError = await uploadState.getAbortError() {
+                    throw abortError
+                }
                 throw UploadError.UploadNotSuccessful
             }
 
@@ -541,12 +544,61 @@ public struct NetworkFacade {
             }
         }
         
+        static func isRetryableChunkError(_ error: Error) -> Bool {
+            var unwrappedError = error
+            if case UploadError.PartUploadFailed(_, let innerError) = error {
+                unwrappedError = innerError
+            }
+
+            if let urlError = unwrappedError as? URLError {
+                switch urlError.code {
+                case .timedOut, .notConnectedToInternet, .networkConnectionLost, .cannotConnectToHost, .cannotFindHost:
+                    return true
+                default:
+                    return false
+                }
+            }
+
+            if let apiClientError = unwrappedError as? APIClientError {
+                if apiClientError.statusCode >= 500 || apiClientError.statusCode == 429 || apiClientError.statusCode == -1 {
+                    return true
+                }
+                if apiClientError.statusCode >= 400 && apiClientError.statusCode < 500 {
+                    return false
+                }
+            }
+
+            if let uploadError = unwrappedError as? UploadError {
+                switch uploadError {
+                case .MissingChunk, .MissingUploadUrl, .InvalidIndex, .CannotGenerateFileHash:
+                    return false
+                default:
+                    return true
+                }
+            }
+
+            let nsError = unwrappedError as NSError
+            if nsError.domain == NSURLErrorDomain {
+                switch nsError.code {
+                case NSURLErrorTimedOut, NSURLErrorNotConnectedToInternet, NSURLErrorNetworkConnectionLost, NSURLErrorCannotConnectToHost, NSURLErrorCannotFindHost:
+                    return true
+                default:
+                    break
+                }
+            }
+
+            return true
+        }
+
         private func uploadPartWithRetry() async throws {
             var attempt = 0
             let maxRetries = 3
 
             while attempt < maxRetries {
                 if await uploadState.isAborted() {
+                    if let abortError = await uploadState.getAbortError() {
+                        throw abortError
+                    }
                     throw UploadError.UploadNotSuccessful
                 }
 
@@ -558,8 +610,9 @@ public struct NetworkFacade {
                         while !NetworkMonitor.shared.isConnected {
                             try await Task.sleep(nanoseconds: 20 * 1_000_000_000) // Check every 20 seconds
                             if Date().timeIntervalSince(startTime) > MAX_WAIT_TIME {
-                                await uploadState.setAborted()
-                                throw UploadError.UploadNotSuccessful
+                                let abortErr = UploadError.PartUploadFailed(partIndex: partIndex, error: APIClientError(statusCode: -1, message: "Network connection wait timeout"))
+                                await uploadState.setAborted(error: abortErr)
+                                throw abortErr
                             }
                         }
                     }
@@ -579,17 +632,23 @@ public struct NetworkFacade {
                     return
                 }
                 catch {
-                    if let urlError = error as? URLError,
-                           urlError.code == .notConnectedToInternet || urlError.code == .networkConnectionLost  {
-                    }else {
-                        
-                        attempt += 1
-                        if attempt >= maxRetries {
-                            await uploadState.setAborted()
-                            throw UploadError.PartUploadFailed(partIndex: partIndex, error: error)
-                        }
+                    let partError = (error as? UploadError) ?? UploadError.PartUploadFailed(partIndex: partIndex, error: error)
+
+                    if !Self.isRetryableChunkError(partError) {
+                        await uploadState.setAborted(error: partError)
+                        throw partError
                     }
 
+                    attempt += 1
+                    if attempt >= maxRetries {
+                        await uploadState.setAborted(error: partError)
+                        throw partError
+                    }
+
+                    let baseDelay = pow(2.0, Double(attempt))
+                    let jitter = Double.random(in: 0.0...(baseDelay * 0.25))
+                    let totalDelay = baseDelay + jitter
+                    try await Task.sleep(nanoseconds: UInt64(totalDelay * 1_000_000_000))
                 }
             }
         }
