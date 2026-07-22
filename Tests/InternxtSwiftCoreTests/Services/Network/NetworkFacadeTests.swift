@@ -264,7 +264,7 @@ final class NetworkFacadeTests: XCTestCase {
         XCTAssertEqual(UploadError.UploadNotSuccessful.localizedDescription, "UploadNotSuccessful")
     }
 
-    func testUploadStatePreservesAbortError() async {
+    func testUploadStatePreservesAbortError() async throws {
         let uploadState = NetworkFacade.UploadState()
         let expectedError = UploadError.PartUploadFailed(partIndex: 2, error: URLError(.timedOut))
         
@@ -272,13 +272,15 @@ final class NetworkFacadeTests: XCTestCase {
         
         let isAborted = await uploadState.isAborted()
         XCTAssertTrue(isAborted)
-        let savedError = await uploadState.getAbortError()
-        XCTAssertNotNil(savedError)
-        if let uploadErr = savedError as? UploadError, case let .PartUploadFailed(partIndex, _) = uploadErr {
-            XCTAssertEqual(partIndex, 2)
-        } else {
-            XCTFail("Expected PartUploadFailed with partIndex 2")
+        
+        let rawError = await uploadState.getAbortError()
+        let savedError = try XCTUnwrap(rawError, "Expected a non-nil abort error")
+        let uploadErr = try XCTUnwrap(savedError as? UploadError, "Expected abort error to be of type UploadError")
+        guard case let .PartUploadFailed(partIndex, _) = uploadErr else {
+            XCTFail("Expected UploadError.PartUploadFailed  \(uploadErr)")
+            return
         }
+        XCTAssertEqual(partIndex, 2)
     }
 
     func testPartUploadFailedEqualityAndMatching() {
