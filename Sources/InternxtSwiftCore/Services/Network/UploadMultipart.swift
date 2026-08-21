@@ -43,15 +43,17 @@ public class UploadMultipart: NSObject {
     private let reduceBandwidth: Bool
     private lazy var urlSession: URLSession = {
         let config = URLSessionConfiguration.default
-        config.timeoutIntervalForRequest = 90
+        config.timeoutIntervalForRequest = 120
         config.timeoutIntervalForResource = 3600
         if reduceBandwidth {
             config.httpMaximumConnectionsPerHost = 1
         }
+        let queue = OperationQueue()
+        queue.name = "com.internxt.upload.multipart.delegate"
         return URLSession(
             configuration: config,
             delegate: self,
-            delegateQueue: .main
+            delegateQueue: queue
         )
     }()
     
@@ -63,8 +65,8 @@ public class UploadMultipart: NSObject {
         self.networkAPI = networkAPI
         self.reduceBandwidth = reduceBandwidth
         super.init()
-        if urlSession != nil {
-            self.urlSession = urlSession!
+        if let session = urlSession {
+            self.urlSession = session
         }
     }
     

@@ -38,13 +38,17 @@ public class Upload: NSObject  {
     private let reduceBandwidth: Bool
     private lazy var urlSession: URLSession = {
         let config = URLSessionConfiguration.default
+        config.timeoutIntervalForRequest = 120
+        config.timeoutIntervalForResource = 3600
         if reduceBandwidth {
             config.httpMaximumConnectionsPerHost = 1
         }
+        let queue = OperationQueue()
+        queue.name = "com.internxt.upload.delegate"
         return URLSession(
             configuration: config,
             delegate: self,
-            delegateQueue: .main
+            delegateQueue: queue
         )
     }()
     
@@ -55,16 +59,14 @@ public class Upload: NSObject  {
         self.networkAPI = networkAPI
         self.reduceBandwidth = reduceBandwidth
         super.init()
-        if urlSession != nil {
-            self.urlSession = urlSession!
+        if let session = urlSession {
+            self.urlSession = session
         }
     }
     
    
     func start(index: [UInt8], bucketId: String, mnemonic: String, encryptedFileURL: URL, progressHandler: ProgressHandler? = nil, debug: Bool = false) async throws -> FinishUploadResponse {
-        let source = encryptedFileURL
-         
-        let fileSize = source.fileSize
+        let fileSize = encryptedFileURL.fileSize
     
         
         guard let hashInputStream = InputStream(url: encryptedFileURL) else {
@@ -140,7 +142,7 @@ public class Upload: NSObject  {
         }
         
         do {
-            let successUpload = try await self.uploadEncryptedFile(uploadUrl: uploadUrl, encryptedFile: source, progressHandler: progressHandler)
+            let successUpload = try await self.uploadEncryptedFile(uploadUrl: uploadUrl, encryptedFile: encryptedFileURL, progressHandler: progressHandler)
             
             if successUpload == false {
                 throw EnrichedError(
@@ -152,6 +154,8 @@ public class Upload: NSObject  {
                     cause: UploadError.UploadNotSuccessful
                 )
             }
+        } catch is CancellationError {
+            throw CancellationError()
         } catch let enrichedError as EnrichedError {
             throw enrichedError
         } catch {
@@ -181,12 +185,11 @@ public class Upload: NSObject  {
             )
         }
         
-        var shards: Array<ShardUploadPayload> = Array()
-        shards.append(ShardUploadPayload(
+        let shards = [ShardUploadPayload(
             hash: cryptoUtils.bytesToHexString(Array(fileHash)),
             uuid: uploadResult.uuid,
             parts: nil
-        ))
+        )]
         
         let finishUploadResult: FinishUploadResponse
         do {
@@ -244,9 +247,13 @@ public class Upload: NSObject  {
     
     
     private func uploadEncryptedFile(uploadUrl: String, encryptedFile: URL, progressHandler: ProgressHandler? = nil) async throws -> Bool {
+        guard let url = URL(string: uploadUrl) else {
+            throw UploadError.MissingUploadUrl
+        }
+        
         return try await withCheckedThrowingContinuation { (continuation) in
             var request = URLRequest(
-                url: URL(string: uploadUrl)!,
+                url: url,
                 cachePolicy: .reloadIgnoringLocalCacheData
             )
             
