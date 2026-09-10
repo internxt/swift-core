@@ -727,6 +727,7 @@ public struct GetPaymentInfoResponse: Decodable {
 public struct FeaturesPerService: Codable {
     public let antivirus: Bool
     public let backups: Bool?
+    public let mail: Bool?
 }
 
 public struct LogoutResponse: Decodable {
@@ -766,13 +767,14 @@ public struct FeaturesPerServiceNew: Codable {
     public let antivirus: Bool
     public let backups: Bool?
     public let cleaner: Bool?
+    public let mail: Bool?
     
     private struct FeatureDetail: Codable {
         let enabled: Bool
     }
     
     private enum CodingKeys: String, CodingKey {
-        case antivirus, backups, cleaner
+        case antivirus, backups, cleaner, mail
     }
     
     public init(from decoder: Decoder) throws {
@@ -786,6 +788,9 @@ public struct FeaturesPerServiceNew: Codable {
         
         let cleanerDetail = try? container.decodeIfPresent(FeatureDetail.self, forKey: .cleaner)
         self.cleaner = cleanerDetail?.enabled
+        
+        let mailDetail = try? container.decodeIfPresent(FeatureDetail.self, forKey: .mail)
+        self.mail = mailDetail?.enabled
     }
 }
 
