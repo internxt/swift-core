@@ -2,7 +2,7 @@
 //  Blake3Tests.swift
 //  InternxtSwiftCoreTests
 //
-//  Official BLAKE3 test vectors from BLAKE3-team/BLAKE3 (test_vectors/test_vectors.json).
+//  Official BLAKE3 test vectors from BLAKE3-team/BLAKE3 (test_vectors/test_vectors.json) -> more context: https://github.com/BLAKE3-team/BLAKE3/blob/master/test_vectors/test_vectors.json
 //  Input is the repeating byte pattern 0,1,...,250,0,1,... of the given length.
 //
 

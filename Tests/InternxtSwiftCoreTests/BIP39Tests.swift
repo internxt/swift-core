@@ -2,7 +2,7 @@
 //  BIP39Tests.swift
 //  InternxtSwiftCoreTests
 //
-//  Official BIP-0039 English vectors (trezor/python-mnemonic vectors.json).
+//  Official BIP-0039 English vectors (trezor/python-mnemonic vectors.json) -> https://github.com/trezor/python-mnemonic/blob/master/vectors.json
 //
 
 import XCTest
