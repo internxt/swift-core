@@ -858,3 +858,10 @@ public struct Versioning: Codable {
     public let retentionDays: Int?
     public let maxVersions: Int?
 }
+
+public struct MailAccountKeysResponse: Codable {
+    public let address: String
+    public let publicKey: String
+    public let encryptionPrivateKey: String
+    public let recoveryPrivateKey: String
+}
