@@ -570,6 +570,7 @@ public struct SyncedFile: Decodable {
     public let uuid: String
     public let folderId: Int
     public let plainName: String?
+    public let name: String?
     public let type: String?
     public let size: String?
     public let status: String
