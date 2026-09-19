@@ -567,11 +567,8 @@ public typealias GetUpdatedFoldersResponse = [UpdatedFolder]
 
 
 public struct SyncedFile: Decodable {
-    public let id: Int?
     public let uuid: String
-    public let folderId: Int?
-    public let folderUuid: String?
-    public let name: String?
+    public let folderId: Int
     public let plainName: String?
     public let type: String?
     public let size: String?
@@ -586,12 +583,10 @@ public struct GetFilesSyncResponse: Decodable {
 }
 
 public struct SyncedFolder: Decodable {
-    public let id: Int?
-    public let uuid: String?
+    public let id: Int
     public let parentId: Int?
-    public let parentUuid: String?
-    public let name: String?
     public let plainName: String?
+    public let name: String?
     public let status: String
     public let updatedAt: String
     public let createdAt: String
