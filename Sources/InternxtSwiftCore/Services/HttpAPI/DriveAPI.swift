@@ -414,6 +414,62 @@ public struct DriveAPI {
         return try await apiClient.fetch(type: GetUpdatedFoldersResponse.self, endpoint, debugResponse: debug)
     }
     
+   
+    public func getFilesSync(
+        updatedAt: Date? = nil,
+        cursor: String? = nil,
+        limit: Int = 1000,
+        status: String? = nil,
+        debug: Bool = false
+    ) async throws -> GetFilesSyncResponse {
+        var queryParts: [String] = ["limit=\(limit)"]
+
+        if let cursor = cursor {
+            let encoded = cursor.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? cursor
+            queryParts.append("cursor=\(encoded)")
+        } else if let updatedAt = updatedAt {
+            let formatter = ISO8601DateFormatter()
+            formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+            queryParts.append("updatedAt=\(formatter.string(from: updatedAt))")
+        }
+
+        if let status = status {
+            queryParts.append("status=\(status)")
+        }
+
+        let path = "\(self.baseUrl)/files/sync?\(queryParts.joined(separator: "&"))"
+        let endpoint = Endpoint(path: path, method: .GET)
+        return try await apiClient.fetch(type: GetFilesSyncResponse.self, endpoint, debugResponse: debug)
+    }
+
+   
+    public func getFoldersSync(
+        updatedAt: Date? = nil,
+        cursor: String? = nil,
+        limit: Int = 1000,
+        status: String? = nil,
+        debug: Bool = false
+    ) async throws -> GetFoldersSyncResponse {
+        var queryParts: [String] = ["limit=\(limit)"]
+
+        if let cursor = cursor {
+            let encoded = cursor.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? cursor
+            queryParts.append("cursor=\(encoded)")
+        } else if let updatedAt = updatedAt {
+            let formatter = ISO8601DateFormatter()
+            formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+            queryParts.append("updatedAt=\(formatter.string(from: updatedAt))")
+        }
+
+        if let status = status {
+            queryParts.append("status=\(status)")
+        }
+
+        let path = "\(self.baseUrl)/folders/sync?\(queryParts.joined(separator: "&"))"
+        let endpoint = Endpoint(path: path, method: .GET)
+        return try await apiClient.fetch(type: GetFoldersSyncResponse.self, endpoint, debugResponse: debug)
+    }
+    
     public func getFileInFolderByPlainName(folderId: Int, plainName: String, type: String, debug: Bool = false) async throws  -> GetFileInFolderByPlainNameResponse {
         let endpoint = Endpoint(
             path: "\(self.baseUrl)/folders/\(folderId)/file?name=\(plainName)&type=\(type)",
