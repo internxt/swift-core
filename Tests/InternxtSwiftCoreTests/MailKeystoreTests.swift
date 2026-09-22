@@ -72,7 +72,7 @@ final class MailKeystoreTests: XCTestCase {
     func testRejectsInvalidBase64() {
         XCTAssertThrowsError(try MailKeystore.openEncryptionKeystore(
             address: address, publicKey: publicKey,
-            encryptedPrivateKey: "not-base64!", mnemonic: mnemonic
+            encryptedPrivateKey: "bm90LWJhc2U2NA==!", mnemonic: mnemonic
         ))
     }
 }
