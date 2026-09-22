@@ -1,1 +1,12 @@
-* @PixoDev
+* @xabg2
+
+/Sources/CBlake3/ @sg-gs
+/Sources/InternxtSwiftCore/Services/Crypto/ @sg-gs
+/Sources/InternxtSwiftCore/Utils/CryptoUtils.swift @sg-gs
+/Sources/InternxtSwiftCore/Extensions/RIPEMD160+Extension.swift @sg-gs
+
+/Tests/InternxtSwiftCoreTests/Services/Crypto/ @sg-gs
+/Tests/InternxtSwiftCoreTests/BIP39Tests.swift @sg-gs
+/Tests/InternxtSwiftCoreTests/Blake3Tests.swift @sg-gs
+/Tests/InternxtSwiftCoreTests/MailKeystoreTests.swift @sg-gs
+/Tests/InternxtSwiftCoreTests/Utils/CryptoUtilsTests.swift @sg-gs
