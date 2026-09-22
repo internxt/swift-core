@@ -34,8 +34,9 @@ public enum Blake3 {
         return output
     }
 
-    /// Plain BLAKE3 hashing, used by the test vectors.
-    public static func hash(_ input: [UInt8], outputLength: Int = 32) -> [UInt8] {
+    /// Plain BLAKE3 hashing. Nothing in the library needs it — it exists so the official
+    /// test vectors can check the vendored C implementation.
+    static func hash(_ input: [UInt8], outputLength: Int = 32) -> [UInt8] {
         var hasher = blake3_hasher()
         blake3_hasher_init(&hasher)
 
