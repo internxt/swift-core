@@ -8,7 +8,6 @@
 import Foundation
 
 public struct GetFolderFilesResult: Decodable {
-    public let id: Int
     public let fileId: String
     public let name: String
     public let type: String?
@@ -35,7 +34,6 @@ public struct GetFolderFilesResult: Decodable {
 }
 
 public struct GetFolderFilesResultV2: Decodable {
-    public let id: Int
     public let fileId: String?
     public let name: String?
     public let type: String?
@@ -211,7 +209,6 @@ public struct GetFolderMetaByIdResponse: Decodable {
 }
 
 public struct GetFileMetaByIdResponse: Decodable {
-    public let id: Int
     public let fileId: String
     public let folderId: Int
     public let name: String
@@ -233,7 +230,6 @@ public struct GetFileMetaByIdResponse: Decodable {
 }
 
 public struct GetFileMetaByIdResponseV2: Decodable {
-    public let id: Int
     public let fileId: String?
     public let folderId: Int
     public let name: String
@@ -534,7 +530,6 @@ public struct GetDriveUsageResponse: Decodable {
 
 
 public struct UpdatedFile: Decodable {
-    public let id: Int;
     public let uuid: String;
     public let folderId: Int;
     public let status: String;
