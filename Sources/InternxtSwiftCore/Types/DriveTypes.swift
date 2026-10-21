@@ -386,7 +386,6 @@ public struct CreateFileResponse: Decodable {
     public let created_at: String
     public let deleted: Bool?
     public let status: String
-    public let id: Int
     public let name: String
     public let plain_name: String?
     public let type: String?
@@ -406,7 +405,6 @@ public struct CreateFileResponse: Decodable {
 public struct CreateFileResponseNew: Decodable {
     public let deleted: Bool?
     public let status: String
-    public let id: Int
     public let name: String?
     public let plain_name: String
     public let type: String?
@@ -427,7 +425,6 @@ public struct CreateFileResponseNew: Decodable {
     enum CodingKeys: String, CodingKey {
         case deleted
         case status
-        case id
         case name
         case plain_name = "plainName"
         case type
