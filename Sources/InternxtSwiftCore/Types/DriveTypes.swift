@@ -608,7 +608,6 @@ public struct ReplaceFileResponse: Decodable {
 
 
 public struct GetFileInFolderByPlainNameResponse: Decodable {
-    public let id: Int
     public let uuid: String
     public let fileId: String?
     public let name: String?
@@ -617,7 +616,6 @@ public struct GetFileInFolderByPlainNameResponse: Decodable {
 
 
 public struct GetDriveItemMetaByIdResponse: Decodable {
-    public let id: Int
     public let parentId: Int?
     public let name: String
     public let bucket: String?
@@ -740,7 +738,6 @@ public struct ExistenceFilesResponse: Codable {
 }
 
 public struct GetExistenceFileInFolderResponse: Codable {
-    public let id: Int
     public let uuid: String
     public let fileId: String?
     public let name: String?

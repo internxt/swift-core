@@ -11,7 +11,6 @@ public struct DriveUtils {
     
     static func convertFileMetaToUnified(fileMeta: GetFileMetaByIdResponseV2) -> GetDriveItemMetaByIdResponse {
         return GetDriveItemMetaByIdResponse(
-            id: 0,
             parentId: nil,
             name: fileMeta.name,
             bucket: fileMeta.bucket,
@@ -36,7 +35,6 @@ public struct DriveUtils {
     
     static func convertFolderMetaToUnified(folderMeta: GetFolderMetaByIdResponse) -> GetDriveItemMetaByIdResponse {
         return GetDriveItemMetaByIdResponse(
-            id: folderMeta.id,
             parentId: folderMeta.parentId,
             name: (folderMeta.name ?? folderMeta.plainName) ?? "",
             bucket: folderMeta.bucket,
