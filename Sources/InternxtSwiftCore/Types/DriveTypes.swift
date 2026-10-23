@@ -8,7 +8,6 @@
 import Foundation
 
 public struct GetFolderFilesResult: Decodable {
-    public let id: Int
     public let fileId: String
     public let name: String
     public let type: String?
@@ -35,7 +34,6 @@ public struct GetFolderFilesResult: Decodable {
 }
 
 public struct GetFolderFilesResultV2: Decodable {
-    public let id: Int
     public let fileId: String?
     public let name: String?
     public let type: String?
@@ -211,7 +209,6 @@ public struct GetFolderMetaByIdResponse: Decodable {
 }
 
 public struct GetFileMetaByIdResponse: Decodable {
-    public let id: Int
     public let fileId: String
     public let folderId: Int
     public let name: String
@@ -233,7 +230,6 @@ public struct GetFileMetaByIdResponse: Decodable {
 }
 
 public struct GetFileMetaByIdResponseV2: Decodable {
-    public let id: Int
     public let fileId: String?
     public let folderId: Int
     public let name: String
@@ -390,7 +386,6 @@ public struct CreateFileResponse: Decodable {
     public let created_at: String
     public let deleted: Bool?
     public let status: String
-    public let id: Int
     public let name: String
     public let plain_name: String?
     public let type: String?
@@ -410,7 +405,6 @@ public struct CreateFileResponse: Decodable {
 public struct CreateFileResponseNew: Decodable {
     public let deleted: Bool?
     public let status: String
-    public let id: Int
     public let name: String?
     public let plain_name: String
     public let type: String?
@@ -431,7 +425,6 @@ public struct CreateFileResponseNew: Decodable {
     enum CodingKeys: String, CodingKey {
         case deleted
         case status
-        case id
         case name
         case plain_name = "plainName"
         case type
@@ -534,7 +527,6 @@ public struct GetDriveUsageResponse: Decodable {
 
 
 public struct UpdatedFile: Decodable {
-    public let id: Int;
     public let uuid: String;
     public let folderId: Int;
     public let status: String;
@@ -613,7 +605,6 @@ public struct ReplaceFileResponse: Decodable {
 
 
 public struct GetFileInFolderByPlainNameResponse: Decodable {
-    public let id: Int
     public let uuid: String
     public let fileId: String?
     public let name: String?
@@ -622,7 +613,6 @@ public struct GetFileInFolderByPlainNameResponse: Decodable {
 
 
 public struct GetDriveItemMetaByIdResponse: Decodable {
-    public let id: Int
     public let parentId: Int?
     public let name: String
     public let bucket: String?
@@ -745,7 +735,6 @@ public struct ExistenceFilesResponse: Codable {
 }
 
 public struct GetExistenceFileInFolderResponse: Codable {
-    public let id: Int
     public let uuid: String
     public let fileId: String?
     public let name: String?
