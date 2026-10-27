@@ -65,6 +65,8 @@ public struct GetFolderFilesResponseV2: Decodable {
 
 public struct GetFolderFoldersResult: Decodable {
     public let type: String?
+    public let id: Int?
+    public let parentId: Int?
     public let userId: Int
     public let encryptVersion: String?
     // ISO string
@@ -72,6 +74,7 @@ public struct GetFolderFoldersResult: Decodable {
     // ISO string
     public let updatedAt: String
     public let plainName: String?
+    public let removed: Bool?
     public let status: String
     public let uuid: String?
 }
@@ -117,7 +120,10 @@ public struct CreateFolderResponse: Decodable {
 
 public struct CreateFolderResponseNew: Decodable {
     public let bucket: String?
+    public let id: Int?
     public let plainName: String
+    public let parentId: Int?
+    public let removed: Bool?
     public let uuid: String
     // ISO Date
     public let createdAt: String
@@ -170,6 +176,8 @@ public struct UpdateFileResponseNew: Decodable {
 
 
 public struct GetFolderMetaByIdResponse: Decodable {
+    public let id: Int?
+    public let parentId: Int?
     public let bucket: String?
     public let userId: Int
     public let encryptVersion: String?
@@ -178,6 +186,7 @@ public struct GetFolderMetaByIdResponse: Decodable {
     public let updatedAt: String
     public let uuid: String?
     public let plainName: String?
+    public let removed: Bool?
     public let parentUuid: String?
 }
 
@@ -715,6 +724,8 @@ public struct ExistentFoldersResponse: Decodable {
 
 public struct FolderResponse: Decodable {
     public let type: String
+    public let id: Int?
+    public let parentId: Int?
     public let parentUuid: String?
     public let encryptVersion: String
     public let createdAt: String
@@ -722,6 +733,7 @@ public struct FolderResponse: Decodable {
     public let uuid: String
     public let plainName: String?
     public let size: Int
+    public let removed: Bool?
     public let status: String
 }
 

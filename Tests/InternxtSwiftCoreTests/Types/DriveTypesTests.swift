@@ -55,6 +55,36 @@ final class DriveTypesTests: XCTestCase {
         XCTAssertEqual(try decode(FolderResponse.self, from: folderJson).plainName, "Documents")
     }
 
+    func testFolderModelsKeepNumericIdsAndRemovedWhenTheyArrive() throws {
+        let legacyFolderJson = folderJson.replacingOccurrences(
+            of: "\"type\": \"folder\",",
+            with: "\"type\": \"folder\", \"id\": 42, \"parentId\": 7, \"removed\": false,"
+        )
+
+        let listedFolder = try decode(GetFolderFoldersResult.self, from: legacyFolderJson)
+        let folderMeta = try decode(GetFolderMetaByIdResponse.self, from: legacyFolderJson)
+        let createdFolder = try decode(CreateFolderResponseNew.self, from: legacyFolderJson)
+        let folder = try decode(FolderResponse.self, from: legacyFolderJson)
+
+        XCTAssertEqual(listedFolder.id, 42)
+        XCTAssertEqual(listedFolder.parentId, 7)
+        XCTAssertEqual(listedFolder.removed, false)
+        XCTAssertEqual(folderMeta.id, 42)
+        XCTAssertEqual(folderMeta.parentId, 7)
+        XCTAssertEqual(folderMeta.removed, false)
+        XCTAssertEqual(createdFolder.id, 42)
+        XCTAssertEqual(createdFolder.parentId, 7)
+        XCTAssertEqual(createdFolder.removed, false)
+        XCTAssertEqual(folder.id, 42)
+        XCTAssertEqual(folder.parentId, 7)
+        XCTAssertEqual(folder.removed, false)
+
+        let unifiedMeta = DriveUtils.convertFolderMetaToUnified(folderMeta: folderMeta)
+
+        XCTAssertEqual(unifiedMeta.parentId, 7)
+        XCTAssertEqual(unifiedMeta.removed, false)
+    }
+
     func testRootFolderMetaDecodesWithoutPlainName() throws {
         let rootFolderJson = """
         {
