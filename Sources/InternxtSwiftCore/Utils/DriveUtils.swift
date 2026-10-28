@@ -24,7 +24,7 @@ public struct DriveUtils {
             uuid: fileMeta.uuid,
             plainName: fileMeta.plainName,
             removed: nil,
-            folderId: nil,
+            folderId: fileMeta.folderId,
             type: fileMeta.type,
             size: fileMeta.size,
             fileId: fileMeta.fileId,

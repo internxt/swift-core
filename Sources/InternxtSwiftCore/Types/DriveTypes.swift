@@ -39,6 +39,7 @@ public struct GetFolderFilesResultV2: Decodable {
     // Size string in bytes
     public let size: String
     public let bucket: String
+    public let folderId: Int?
     public let encryptVersion: String?
     public let userId: Int
     public let modificationTime: String
@@ -213,6 +214,7 @@ public struct GetFileMetaByIdResponse: Decodable {
 
 public struct GetFileMetaByIdResponseV2: Decodable {
     public let fileId: String?
+    public let folderId: Int?
     public let type: String?
     public let size: String
     public let bucket: String
@@ -377,6 +379,7 @@ public struct CreateFileResponseNew: Decodable {
     public let plain_name: String
     public let type: String?
     public let size: String?
+    public let folderId: Int?
     public let fileId: String?
     public let bucket: String
     public let encrypt_version: String
@@ -393,6 +396,7 @@ public struct CreateFileResponseNew: Decodable {
         case plain_name = "plainName"
         case type
         case size
+        case folderId
         case fileId
         case bucket
         case encrypt_version = "encryptVersion"

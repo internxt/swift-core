@@ -121,6 +121,23 @@ final class DriveTypesTests: XCTestCase {
         XCTAssertEqual(try decode(GetFolderFilesResultV2.self, from: fileJson).plainName, "")
         XCTAssertEqual(try decode(GetFileMetaByIdResponseV2.self, from: fileJson).plainName, "")
         XCTAssertEqual(try decode(CreateFileResponseNew.self, from: fileJson).plain_name, "")
+        XCTAssertNil(try decode(GetFolderFilesResultV2.self, from: fileJson).folderId)
+        XCTAssertNil(try decode(GetFileMetaByIdResponseV2.self, from: fileJson).folderId)
+        XCTAssertNil(try decode(CreateFileResponseNew.self, from: fileJson).folderId)
+    }
+
+    func testFileModelsKeepNumericFolderIdWhenItArrives() throws {
+        let legacyFileJson = fileJson.replacingOccurrences(
+            of: "\"fileId\": \"network-file-id\",",
+            with: "\"fileId\": \"network-file-id\", \"folderId\": 7,"
+        )
+
+        let fileMeta = try decode(GetFileMetaByIdResponseV2.self, from: legacyFileJson)
+
+        XCTAssertEqual(try decode(GetFolderFilesResultV2.self, from: legacyFileJson).folderId, 7)
+        XCTAssertEqual(fileMeta.folderId, 7)
+        XCTAssertEqual(try decode(CreateFileResponseNew.self, from: legacyFileJson).folderId, 7)
+        XCTAssertEqual(DriveUtils.convertFileMetaToUnified(fileMeta: fileMeta).folderId, 7)
     }
 
     func testCreateFilePayloadSendsFolderUuidAndNoDeprecatedFields() throws {
