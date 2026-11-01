@@ -50,6 +50,7 @@ final class DriveTypesTests: XCTestCase {
     func testFolderModelsDecodeWithoutDeprecatedFields() throws {
         XCTAssertEqual(try decode(GetFolderFoldersResult.self, from: folderJson).plainName, "Documents")
         XCTAssertEqual(try decode(GetFolderMetaByIdResponse.self, from: folderJson).plainName, "Documents")
+        XCTAssertEqual(try decode(GetFolderMetaByIdResponse.self, from: folderJson).status, "EXISTS")
         XCTAssertEqual(try decode(CreateFolderResponseNew.self, from: folderJson).plainName, "Documents")
         XCTAssertEqual(try decode(UpdateFolderResponse.self, from: folderJson).plainName, "Documents")
         XCTAssertEqual(try decode(FolderResponse.self, from: folderJson).plainName, "Documents")

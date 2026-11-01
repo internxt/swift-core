@@ -53,7 +53,7 @@ public struct DriveUtils {
             size: nil,
             fileId: nil,
             modificationTime: nil,
-            status: nil
+            status: folderMeta.status
         )
     }
 }
