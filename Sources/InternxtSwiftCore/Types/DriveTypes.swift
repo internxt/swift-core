@@ -188,6 +188,7 @@ public struct GetFolderMetaByIdResponse: Decodable {
     public let uuid: String?
     public let plainName: String?
     public let removed: Bool?
+    public let status: String
     public let parentUuid: String?
 }
 
