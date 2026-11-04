@@ -395,6 +395,23 @@ final class APIClientTests: XCTestCase {
             XCTFail("Expected APIClientError, got: \(type(of: error))")
         }
     }
+
+    // MARK: - Request Building Tests
+
+    func testRequestsAreSentWithTheHTTPMethodInUppercase() async throws {
+        var receivedMethods: [String] = []
+
+        MockURLProtocol.requestHandler = { request in
+            receivedMethods.append(request.httpMethod ?? "")
+            return self.createSuccessResponse()
+        }
+
+        for method in [HTTPMethod.GET, .POST, .PUT, .PATCH, .DELETE] {
+            _ = try await client.fetch(type: DummyResponse.self, Endpoint(path: "https://mock.test", method: method))
+        }
+
+        XCTAssertEqual(receivedMethods, ["GET", "POST", "PUT", "PATCH", "DELETE"])
+    }
 }
 
 // MARK: - Helper Classes
