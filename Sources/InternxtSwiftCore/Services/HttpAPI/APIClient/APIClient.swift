@@ -17,6 +17,10 @@ public struct APIClientError: Error {
     public var localizedDescription: String {
         return self.message
     }
+
+    public var isUpdateRequired: Bool {
+        return self.statusCode == 426
+    }
     
     public init(statusCode: Int, message: String, responseBody: Data = Data(), headers: [String: String] = [:]) {
         self.statusCode = statusCode
@@ -241,6 +245,7 @@ public struct APIClient {
     }()
     
     public static var onUnauthorized: (() -> Void)? = nil
+    public static var onUpdateRequired: (() -> Void)? = nil
     
     var urlSession: URLSession
     var authorizationHeaderValue: String? = nil
@@ -547,6 +552,11 @@ extension APIClient {
         } catch let error as APIClientError {
             if error.statusCode == 401 {
                 APIClient.onUnauthorized?()
+                throw error
+            }
+
+            if error.statusCode == 426 {
+                APIClient.onUpdateRequired?()
                 throw error
             }
             
