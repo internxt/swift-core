@@ -18,8 +18,15 @@ public struct APIClientError: Error {
         return self.message
     }
 
+    public var errorCode: String? {
+        guard let body = try? JSONSerialization.jsonObject(with: responseBody) as? [String: Any] else {
+            return nil
+        }
+        return (body["errorCode"] as? String) ?? (body["code"] as? String)
+    }
+
     public var isUpdateRequired: Bool {
-        return self.statusCode == 426
+        return self.errorCode == "CLIENT_VERSION_UNSUPPORTED"
     }
     
     public init(statusCode: Int, message: String, responseBody: Data = Data(), headers: [String: String] = [:]) {
@@ -555,7 +562,7 @@ extension APIClient {
                 throw error
             }
 
-            if error.statusCode == 426 {
+            if error.isUpdateRequired {
                 APIClient.onUpdateRequired?()
                 throw error
             }

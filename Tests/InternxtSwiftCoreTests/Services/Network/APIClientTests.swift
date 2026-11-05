@@ -395,6 +395,44 @@ final class APIClientTests: XCTestCase {
             XCTFail("Expected APIClientError, got: \(type(of: error))")
         }
     }
+
+    func testClientVersionUnsupportedTriggersOnUpdateRequiredAndNoRetry() async {
+        var onUpdateRequiredCalled = false
+        var requestCount = 0
+
+        APIClient.onUpdateRequired = {
+            onUpdateRequiredCalled = true
+        }
+
+        MockURLProtocol.requestHandler = { request in
+            requestCount += 1
+            let body = """
+            {
+                "message": "This version of the app is no longer supported. Please update to a newer version.",
+                "error": "Forbidden",
+                "statusCode": 403,
+                "errorCode": "CLIENT_VERSION_UNSUPPORTED",
+                "recommendedVersion": "2.8.1"
+            }
+            """
+            return self.createMockResponse(statusCode: 403, body: body)
+        }
+
+        let endpoint = Endpoint(path: "https://mock.test", method: .GET)
+
+        do {
+            _ = try await client.fetch(type: DummyResponse.self, endpoint)
+            XCTFail("Expected APIClientError")
+        } catch let error as APIClientError {
+            XCTAssertEqual(error.statusCode, 403)
+            XCTAssertEqual(error.errorCode, "CLIENT_VERSION_UNSUPPORTED")
+            XCTAssertTrue(error.isUpdateRequired)
+            XCTAssertEqual(requestCount, 1, "Unsupported version error should not be retried")
+            XCTAssertTrue(onUpdateRequiredCalled, "APIClient.onUpdateRequired should be triggered")
+        } catch {
+            XCTFail("Expected APIClientError, got: \(type(of: error))")
+        }
+    }
 }
 
 // MARK: - Helper Classes
