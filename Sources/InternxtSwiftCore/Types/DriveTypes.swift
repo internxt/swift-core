@@ -898,3 +898,25 @@ public struct MailAccountKeysResponse: Codable {
     public let encryptionPrivateKey: String
     public let recoveryPrivateKey: String
 }
+
+public enum ClientCompatibilityStatus: String, Codable {
+    case upToDate = "up_to_date"
+    case updateRecommended = "update_recommended"
+    case deprecated = "deprecated"
+    case unsupported = "unsupported"
+}
+
+public struct ClientCompatibilityResponse: Codable {
+    public let status: ClientCompatibilityStatus
+    public let message: String?
+    public let recommendedVersion: String?
+    public let sunsetAt: String?
+
+    public init(status: ClientCompatibilityStatus, message: String? = nil, recommendedVersion: String? = nil, sunsetAt: String? = nil) {
+        self.status = status
+        self.message = message
+        self.recommendedVersion = recommendedVersion
+        self.sunsetAt = sunsetAt
+    }
+}
+

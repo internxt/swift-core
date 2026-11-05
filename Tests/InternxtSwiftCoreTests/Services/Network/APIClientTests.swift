@@ -433,6 +433,30 @@ final class APIClientTests: XCTestCase {
             XCTFail("Expected APIClientError, got: \(type(of: error))")
         }
     }
+
+    func testGetClientCompatibilityDecodesResponse() async throws {
+        let testClient = APIClient(urlSession: mockSession, clientName: "test-client", clientVersion: "1.0.0")
+        MockURLProtocol.requestHandler = { request in
+            XCTAssertEqual(request.value(forHTTPHeaderField: "internxt-client"), "test-client")
+            XCTAssertEqual(request.value(forHTTPHeaderField: "internxt-version"), "1.0.0")
+            let body = """
+            {
+                "status": "deprecated",
+                "message": "This version of the app is deprecated. Please update.",
+                "recommendedVersion": "2.8.1",
+                "sunsetAt": "2026-12-01T00:00:00.000Z"
+            }
+            """
+            return self.createMockResponse(statusCode: 200, body: body)
+        }
+
+        let endpoint = Endpoint(path: "https://mock.test/clients/compatibility", method: .GET)
+        let response = try await testClient.fetch(type: ClientCompatibilityResponse.self, endpoint)
+
+        XCTAssertEqual(response.status, .deprecated)
+        XCTAssertEqual(response.recommendedVersion, "2.8.1")
+        XCTAssertEqual(response.sunsetAt, "2026-12-01T00:00:00.000Z")
+    }
 }
 
 // MARK: - Helper Classes

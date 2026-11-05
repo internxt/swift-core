@@ -680,4 +680,12 @@ public struct DriveAPI {
         )
         return try await apiClient.fetch(type: FileLimitsResponse.self, endpoint, debugResponse: debug)
     }
+
+    public func getClientCompatibility(debug: Bool = false) async throws -> ClientCompatibilityResponse {
+        let endpoint = Endpoint(
+            path: "\(self.baseUrl)/clients/compatibility",
+            method: .GET
+        )
+        return try await apiClient.fetch(type: ClientCompatibilityResponse.self, endpoint, debugResponse: debug)
+    }
 }
