@@ -362,7 +362,7 @@ public struct APIClient {
         }
 
         var urlRequest = URLRequest(url: url)
-        urlRequest.httpMethod = endpoint.method.rawValue.lowercased()
+        urlRequest.httpMethod = endpoint.method.rawValue
         
         if let authorizationHeaderValue = self.authorizationHeaderValue {
             urlRequest.setValue(authorizationHeaderValue, forHTTPHeaderField: "Authorization")
