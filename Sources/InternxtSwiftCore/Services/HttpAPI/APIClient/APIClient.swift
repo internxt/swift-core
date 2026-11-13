@@ -17,6 +17,17 @@ public struct APIClientError: Error {
     public var localizedDescription: String {
         return self.message
     }
+
+    public var errorCode: String? {
+        guard let body = try? JSONSerialization.jsonObject(with: responseBody) as? [String: Any] else {
+            return nil
+        }
+        return (body["errorCode"] as? String) ?? (body["code"] as? String)
+    }
+
+    public var isUpdateRequired: Bool {
+        return self.errorCode == "CLIENT_VERSION_UNSUPPORTED"
+    }
     
     public init(statusCode: Int, message: String, responseBody: Data = Data(), headers: [String: String] = [:]) {
         self.statusCode = statusCode
@@ -241,6 +252,7 @@ public struct APIClient {
     }()
     
     public static var onUnauthorized: (() -> Void)? = nil
+    public static var onUpdateRequired: (() -> Void)? = nil
     
     var urlSession: URLSession
     var authorizationHeaderValue: String? = nil
@@ -547,6 +559,11 @@ extension APIClient {
         } catch let error as APIClientError {
             if error.statusCode == 401 {
                 APIClient.onUnauthorized?()
+                throw error
+            }
+
+            if error.isUpdateRequired {
+                APIClient.onUpdateRequired?()
                 throw error
             }
             

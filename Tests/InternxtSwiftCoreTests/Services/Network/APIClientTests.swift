@@ -396,6 +396,68 @@ final class APIClientTests: XCTestCase {
         }
     }
 
+    func testClientVersionUnsupportedTriggersOnUpdateRequiredAndNoRetry() async {
+        var onUpdateRequiredCalled = false
+        var requestCount = 0
+
+        APIClient.onUpdateRequired = {
+            onUpdateRequiredCalled = true
+        }
+
+        MockURLProtocol.requestHandler = { request in
+            requestCount += 1
+            let body = """
+            {
+                "message": "This version of the app is no longer supported. Please update to a newer version.",
+                "error": "Forbidden",
+                "statusCode": 403,
+                "errorCode": "CLIENT_VERSION_UNSUPPORTED",
+                "recommendedVersion": "2.8.1"
+            }
+            """
+            return self.createMockResponse(statusCode: 403, body: body)
+        }
+
+        let endpoint = Endpoint(path: "https://mock.test", method: .GET)
+
+        do {
+            _ = try await client.fetch(type: DummyResponse.self, endpoint)
+            XCTFail("Expected APIClientError")
+        } catch let error as APIClientError {
+            XCTAssertEqual(error.statusCode, 403)
+            XCTAssertEqual(error.errorCode, "CLIENT_VERSION_UNSUPPORTED")
+            XCTAssertTrue(error.isUpdateRequired)
+            XCTAssertEqual(requestCount, 1, "Unsupported version error should not be retried")
+            XCTAssertTrue(onUpdateRequiredCalled, "APIClient.onUpdateRequired should be triggered")
+        } catch {
+            XCTFail("Expected APIClientError, got: \(type(of: error))")
+        }
+    }
+
+    func testGetClientCompatibilityDecodesResponse() async throws {
+        let testClient = APIClient(urlSession: mockSession, clientName: "test-client", clientVersion: "1.0.0")
+        MockURLProtocol.requestHandler = { request in
+            XCTAssertEqual(request.value(forHTTPHeaderField: "internxt-client"), "test-client")
+            XCTAssertEqual(request.value(forHTTPHeaderField: "internxt-version"), "1.0.0")
+            let body = """
+            {
+                "status": "deprecated",
+                "message": "This version of the app is deprecated. Please update.",
+                "recommendedVersion": "2.8.1",
+                "sunsetAt": "2026-12-01T00:00:00.000Z"
+            }
+            """
+            return self.createMockResponse(statusCode: 200, body: body)
+        }
+
+        let endpoint = Endpoint(path: "https://mock.test/clients/compatibility", method: .GET)
+        let response = try await testClient.fetch(type: ClientCompatibilityResponse.self, endpoint)
+
+        XCTAssertEqual(response.status, .deprecated)
+        XCTAssertEqual(response.recommendedVersion, "2.8.1")
+        XCTAssertEqual(response.sunsetAt, "2026-12-01T00:00:00.000Z")
+    }
+
     // MARK: - Request Building Tests
 
     func testRequestsAreSentWithTheHTTPMethodInUppercase() async throws {
