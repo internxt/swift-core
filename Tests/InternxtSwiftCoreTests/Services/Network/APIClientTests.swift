@@ -458,6 +458,7 @@ final class APIClientTests: XCTestCase {
         XCTAssertEqual(response.sunsetAt, "2026-12-01T00:00:00.000Z")
     }
 
+    // MARK: - Request Building Tests
 
     func testRequestsAreSentWithTheHTTPMethodInUppercase() async throws {
         var receivedMethods: [String] = []

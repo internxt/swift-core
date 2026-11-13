@@ -11,20 +11,19 @@ public struct DriveUtils {
     
     static func convertFileMetaToUnified(fileMeta: GetFileMetaByIdResponseV2) -> GetDriveItemMetaByIdResponse {
         return GetDriveItemMetaByIdResponse(
-            id: fileMeta.id,
             parentId: nil,
-            name: fileMeta.name,
+            name: fileMeta.plainName,
             bucket: fileMeta.bucket,
             userId: fileMeta.userId,
             encryptVersion: nil,
-            deleted: fileMeta.deleted,
+            deleted: nil,
             createdAt: fileMeta.createdAt,
             updatedAt: fileMeta.updatedAt,
-            deletedAt: fileMeta.deletedAt,
-            removedAt: fileMeta.removedAt,
+            deletedAt: nil,
+            removedAt: nil,
             uuid: fileMeta.uuid,
             plainName: fileMeta.plainName,
-            removed: fileMeta.removed,
+            removed: nil,
             folderId: fileMeta.folderId,
             type: fileMeta.type,
             size: fileMeta.size,
@@ -36,17 +35,16 @@ public struct DriveUtils {
     
     static func convertFolderMetaToUnified(folderMeta: GetFolderMetaByIdResponse) -> GetDriveItemMetaByIdResponse {
         return GetDriveItemMetaByIdResponse(
-            id: folderMeta.id,
             parentId: folderMeta.parentId,
-            name: (folderMeta.name ?? folderMeta.plainName) ?? "",
+            name: folderMeta.plainName ?? "",
             bucket: folderMeta.bucket,
             userId: folderMeta.userId,
             encryptVersion: folderMeta.encryptVersion,
-            deleted: folderMeta.deleted,
+            deleted: nil,
             createdAt: folderMeta.createdAt,
             updatedAt: folderMeta.updatedAt,
-            deletedAt: folderMeta.deletedAt,
-            removedAt: folderMeta.removedAt,
+            deletedAt: nil,
+            removedAt: nil,
             uuid: folderMeta.uuid,
             plainName: folderMeta.plainName,
             removed: folderMeta.removed,
@@ -55,7 +53,7 @@ public struct DriveUtils {
             size: nil,
             fileId: nil,
             modificationTime: nil,
-            status: nil
+            status: folderMeta.status
         )
     }
 }

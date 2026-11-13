@@ -429,7 +429,7 @@ public struct NetworkFacade {
         
         
         let hashMatch = encryptedContentHash.toHexString() == encryptedFileDownloadResult.expectedContentHash
-        if hashMatch == false && ignoreHashMissmatchCheck != false {
+        if hashMatch == false && ignoreHashMissmatchCheck == false {
             throw EnrichedError(
                 code: .downloadHashMismatch,
                 step: .downloadDecrypt,

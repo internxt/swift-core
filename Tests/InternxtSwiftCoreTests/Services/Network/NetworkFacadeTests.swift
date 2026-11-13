@@ -232,9 +232,26 @@ final class NetworkFacadeTests: XCTestCase {
         
         do {
             _ = try await sut.decryptFile(bucketId: "93535c0bfff5de6d59c8eec72b46b605", destinationURL: destination, progressHandler: {_ in }, encryptedFileDownloadResult: downloadResult)
+            XCTFail("Expected an error to be thrown")
+        } catch let enrichedError as EnrichedError {
+            XCTAssertEqual(enrichedError.cause as? NetworkFacadeError, NetworkFacadeError.HashMissmatch)
         } catch {
-            
-            XCTAssertEqual(error as? NetworkFacadeError, NetworkFacadeError.HashMissmatch)
+            XCTFail("Expected EnrichedError but got \(type(of: error))")
+        }
+    }
+
+    func testShouldNotFailIfHashIsNotMatchingAndIgnoreFlagIsTrue() async throws {
+        let destination = getTemporaryDestination()
+        let contentURL = getTemporaryDestination()
+        // Write into the file
+        try "filedata".data(using: .utf8)?.write(to: contentURL)
+        
+        let downloadResult = DownloadResult(url: contentURL, expectedContentHash: "4ae6fcc4dd6ebcdb9076f2396d64da48", index: "2ec6d83f8987fe2bd04d0260208521d49d4c79187d71989a16ca79d41b90b8f1")
+        
+        do {
+            _ = try await sut.decryptFile(bucketId: "93535c0bfff5de6d59c8eec72b46b605", destinationURL: destination, progressHandler: {_ in }, encryptedFileDownloadResult: downloadResult, ignoreHashMissmatchCheck: true)
+        } catch {
+            XCTFail("Expected no error when ignoreHashMissmatchCheck is true, but got \(error)")
         }
     }
     
