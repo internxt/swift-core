@@ -19,10 +19,11 @@ public struct DeviceAsFolder: Codable, Identifiable {
     public let bucket: String?
     public let user_id: Int?
     public let encrypt_version: String?
-    public let deleted: Bool
+    public let deleted: Bool?
     public let deletedAt: String?
-    public let removed: Bool
+    public let removed: Bool?
     public let removedAt: String?
+    public let status: String
     public let createdAt: String
     public let updatedAt: String
     public let userId: Int?
