@@ -136,6 +136,9 @@ public struct CreateFolderResponseNew: Decodable {
 public struct UpdateFolderResponse: Decodable {
     public let uuid: String
     public let plainName: String
+    public let parentUuid: String?
+    public let createdAt: String?
+    public let updatedAt: String?
 }
 
 public struct FolderMetadataUpdatePayload: Encodable {
@@ -172,6 +175,11 @@ public struct UpdateFileResponse: Decodable {
 
 public struct UpdateFileResponseNew: Decodable {
     public let plainName: String
+    public let type: String?
+    public let size: String?
+    public let folderUuid: String?
+    public let createdAt: String?
+    public let updatedAt: String?
 }
 
 
@@ -453,6 +461,8 @@ public struct MoveFilePayload: Encodable {
 
 public struct MoveFilePayloadNew: Encodable {
     public let destinationFolder: String
+    public var name: String? = nil
+    public var type: String? = nil
 }
 
 
@@ -463,6 +473,11 @@ public struct MoveFileResponse: Decodable {
 public struct MoveFileResponseNew: Decodable {
     public let type: String?
     public let size: String
+    public let uuid: String?
+    public let plainName: String?
+    public let folderUuid: String?
+    public let createdAt: String?
+    public let updatedAt: String?
 }
 
 
@@ -479,7 +494,13 @@ public struct MoveFolderResponse: Decodable {
     public let moved: Bool
 }
 
-public struct MoveFolderResponseNew: Decodable {}
+public struct MoveFolderResponseNew: Decodable {
+    public let uuid: String?
+    public let plainName: String?
+    public let parentUuid: String?
+    public let createdAt: String?
+    public let updatedAt: String?
+}
 
 
 public struct GetLimitResponse: Decodable {
