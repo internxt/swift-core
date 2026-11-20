@@ -160,4 +160,75 @@ final class DriveTypesTests: XCTestCase {
         XCTAssertNil(body["folder_id"])
         XCTAssertNil(body["name"])
     }
+
+    func testWhenAMovedFileComesBackThenItsNewNameAndFolderAreRead() throws {
+        let json = """
+        {
+            "uuid": "1b2c3d4e-5f60-4718-8293-a4b5c6d7e8f9",
+            "plainName": "report 2",
+            "type": "txt",
+            "size": "1024",
+            "folderUuid": "4f1c6a52-2f5e-4a8c-9f6e-0b1d2c3e4f50",
+            "createdAt": "2026-10-20T10:00:00.000Z",
+            "updatedAt": "2026-10-21T10:00:00.000Z"
+        }
+        """
+
+        let response = try JSONDecoder().decode(MoveFileResponseNew.self, from: Data(json.utf8))
+
+        XCTAssertEqual(response.plainName, "report 2")
+        XCTAssertEqual(response.folderUuid, "4f1c6a52-2f5e-4a8c-9f6e-0b1d2c3e4f50")
+        XCTAssertEqual(response.updatedAt, "2026-10-21T10:00:00.000Z")
+    }
+
+    func testWhenAMovedFolderComesBackThenItsNewNameAndParentAreRead() throws {
+        let response = try JSONDecoder().decode(MoveFolderResponseNew.self, from: Data(folderJson.utf8))
+
+        XCTAssertEqual(response.plainName, "Documents")
+        XCTAssertEqual(response.parentUuid, "9a8b7c6d-5e4f-4a3b-8c2d-1e0f9a8b7c6d")
+        XCTAssertEqual(response.updatedAt, "2026-10-20T10:00:00.000Z")
+    }
+
+    func testWhenARenamedFileComesBackThenItsNewNameAndFolderAreRead() throws {
+        let response = try JSONDecoder().decode(UpdateFileResponseNew.self, from: Data(fileJson.utf8))
+
+        XCTAssertEqual(response.plainName, "")
+        XCTAssertEqual(response.type, "dockerfile")
+        XCTAssertEqual(response.folderUuid, "4f1c6a52-2f5e-4a8c-9f6e-0b1d2c3e4f50")
+        XCTAssertNotNil(response.updatedAt)
+    }
+
+    func testWhenARenamedFolderComesBackThenItsNewNameAndParentAreRead() throws {
+        let response = try JSONDecoder().decode(UpdateFolderResponse.self, from: Data(folderJson.utf8))
+
+        XCTAssertEqual(response.plainName, "Documents")
+        XCTAssertEqual(response.parentUuid, "9a8b7c6d-5e4f-4a3b-8c2d-1e0f9a8b7c6d")
+        XCTAssertEqual(response.updatedAt, "2026-10-20T10:00:00.000Z")
+    }
+
+    func testWhenAFileIsMovedWithoutANewNameThenOnlyTheDestinationIsSent() throws {
+        let payload = MoveFilePayloadNew(destinationFolder: "4f1c6a52-2f5e-4a8c-9f6e-0b1d2c3e4f50")
+
+        let body = try XCTUnwrap(
+            JSONSerialization.jsonObject(with: JSONEncoder().encode(payload)) as? [String: Any]
+        )
+
+        XCTAssertEqual(body.keys.sorted(), ["destinationFolder"])
+    }
+
+    func testWhenAFileIsMovedWithANewNameThenTheNameAndTypeAreSentWithTheDestination() throws {
+        let payload = MoveFilePayloadNew(
+            destinationFolder: "4f1c6a52-2f5e-4a8c-9f6e-0b1d2c3e4f50",
+            name: "report 2",
+            type: "txt"
+        )
+
+        let body = try XCTUnwrap(
+            JSONSerialization.jsonObject(with: JSONEncoder().encode(payload)) as? [String: Any]
+        )
+
+        XCTAssertEqual(body["destinationFolder"] as? String, "4f1c6a52-2f5e-4a8c-9f6e-0b1d2c3e4f50")
+        XCTAssertEqual(body["name"] as? String, "report 2")
+        XCTAssertEqual(body["type"] as? String, "txt")
+    }
 }
