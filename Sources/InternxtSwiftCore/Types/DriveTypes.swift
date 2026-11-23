@@ -755,13 +755,14 @@ public struct FeaturesPerServiceNew: Codable {
     public let backups: Bool?
     public let cleaner: Bool?
     public let mail: Bool?
+    public let vpn: Bool?
     
     private struct FeatureDetail: Codable {
         let enabled: Bool
     }
     
     private enum CodingKeys: String, CodingKey {
-        case antivirus, backups, cleaner, mail
+        case antivirus, backups, cleaner, mail, vpn
     }
     
     public init(from decoder: Decoder) throws {
@@ -778,6 +779,9 @@ public struct FeaturesPerServiceNew: Codable {
         
         let mailDetail = try? container.decodeIfPresent(FeatureDetail.self, forKey: .mail)
         self.mail = mailDetail?.enabled
+        
+        let vpnDetail = try? container.decodeIfPresent(FeatureDetail.self, forKey: .vpn)
+        self.vpn = vpnDetail?.enabled
     }
 }
 
