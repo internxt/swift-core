@@ -244,13 +244,14 @@ public struct DriveAPI {
         return try await apiClient.fetch(type: MoveFileResponse.self, endpoint, debugResponse: debug)
     }
     
-    public func moveFileNew(uuid: String,destinationFolder: String, debug: Bool = false) async throws -> MoveFileResponseNew {
+    public func moveFileNew(uuid: String,destinationFolder: String, newName: String? = nil, newType: String? = nil, debug: Bool = false) async throws -> MoveFileResponseNew {
         let endpoint = Endpoint(
             path: "\(self.baseUrl)/files/\(uuid)",
             method: .PATCH,
             body: MoveFilePayloadNew(
-                destinationFolder: destinationFolder
-             
+                destinationFolder: destinationFolder,
+                name: newName,
+                type: newType
             ).toJson()
         )
     
@@ -270,13 +271,13 @@ public struct DriveAPI {
         return try await apiClient.fetch(type: MoveFolderResponse.self, endpoint, debugResponse: debug)
     }
     
-    public func moveFolderNew(uuid: String,destinationFolder: String, debug: Bool = false) async throws -> MoveFolderResponseNew {
+    public func moveFolderNew(uuid: String,destinationFolder: String, newName: String? = nil, debug: Bool = false) async throws -> MoveFolderResponseNew {
         let endpoint = Endpoint(
             path: "\(self.baseUrl)/folders/\(uuid)",
             method: .PATCH,
             body: MoveFilePayloadNew(
-                destinationFolder: destinationFolder
-             
+                destinationFolder: destinationFolder,
+                name: newName
             ).toJson()
         )
     
